@@ -27,6 +27,7 @@
 #include <algorithm>
 #include <cmath>
 #include <iostream>
+#include <limits.h>
 
 #include "detectionComponentUtils.h"
 
@@ -76,7 +77,7 @@ namespace MPF { namespace COMPONENT {
 
         cv::Mat frame;
         uint8_t *frame_data;
-        int frames_in_segment;
+        unsigned long frames_in_segment;
         try {
             //Get the first frame so that we can figure out how much memory
             //needs to be allocated for the data.
@@ -100,17 +101,25 @@ namespace MPF { namespace COMPONENT {
             float ratio = static_cast<float>(frames_in_segment) / static_cast<float>(frame_interval);
             frames_in_segment = static_cast<int>(std::ceil(ratio));
 
-            int pixels_per_frame = frame.rows * frame.cols;
-            int frame_data_byte_size = pixels_per_frame * num_channels * bytes_per_channel;
-            int total_data_size = frames_in_segment * frame_data_byte_size;
+            unsigned long pixels_per_frame = frame.rows * frame.cols;
+            unsigned long frame_data_byte_size = pixels_per_frame * num_channels * bytes_per_channel;
+
+            // Test for overflow before calculating the total_data_size
+            if (frames_in_segment && (frame_data_byte_size > (ULONG_MAX/frames_in_segment))) {
+                rc = MPF_MEMORY_ALLOCATION_FAILED;
+                err_msg = "[" + job.job_name + "] Overflow detected in the total bytes size for frame data. Try a smaller segment size.";
+                return std::make_pair(rc, err_msg);
+            }
+
+            unsigned long total_data_size = frames_in_segment * frame_data_byte_size;
 
             //Allocate a block of memory, and carve it up into a vector of
             //byte pointers.
             frame_data = new(std::nothrow) uint8_t[total_data_size];
             if (NULL == frame_data) {
                 rc = MPF_MEMORY_ALLOCATION_FAILED;
-                err_msg = "[" + job.job_name + "] memory allocation failed: byte size = " +
-                          std::to_string(total_data_size);
+                err_msg = "[" + job.job_name + "] Memory allocation failed: byte size = " +
+                          std::to_string(total_data_size) + ". Try a smaller segment size.";
                 return std::make_pair(rc, err_msg);
             }
 
