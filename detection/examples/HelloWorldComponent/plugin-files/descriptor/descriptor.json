@@ -1,0 +1,36 @@
+{
+  "componentName" : "HelloWorldComponent",
+  "componentVersion" : "0.8.0",
+  "middlewareVersion" :  "0.8.0",
+  "sourceLanguage" : "c++",
+  "pathName" : "amq_detection_component",
+  "launchArgs" : ["${MPF_HOME}/plugins/HelloWorldComponent/lib/libmpfHelloWorld.so"],
+  "environmentVariables" : [ {
+    "name" : "LD_LIBRARY_PATH",
+    "value" : "${MPF_HOME}/plugins/HelloWorldComponent/lib:${LD_LIBRARY_PATH}"
+  } ],
+  "algorithm" : {
+    "name" : "HelloWorld",
+    "description" : "This is a dummy detection component.",
+    "actionType" : "DETECTION",
+    "requiresCollection" : {
+      "states" : []
+    },
+    "providesCollection" : {
+      "states" : [
+        "DETECTION",
+        "DETECTION_HELLO",
+        "DETECTION_HELLO_CPP"
+      ],
+      "properties" : [
+        {
+          "name" : "FRAME_INTERVAL",
+          "description" : "This is a test property with a default value of 1.",
+          "type" : "INT",
+          "defaultValue" : "1"
+        }
+      ]
+    }
+  }
+}
+
