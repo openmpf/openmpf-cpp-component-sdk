@@ -1,0 +1,78 @@
+{
+  "componentName" : "VideoCaptureComponent",
+  "componentVersion" : "0.1.0",
+  "middlewareVersion" :  "0.8.0",
+  "sourceLanguage" : "c++",
+  "pathName" : "amq_detection_component",
+  "launchArgs" : ["${MPF_HOME}/plugins/VideoCaptureComponent/lib/libmpfVideoCapture.so"],
+  "environmentVariables" : [ {
+    "name" : "LD_LIBRARY_PATH",
+    "value" : "${MPF_HOME}/plugins/VideoCaptureComponent/lib:${LD_LIBRARY_PATH}"
+  } ],
+  "algorithm" : {
+    "name" : "VideoCapture",
+    "description" : "This is a dummy detection component.",
+    "actionType" : "DETECTION",
+    "requiresCollection" : {
+      "states" : []
+    },
+    "providesCollection" : {
+      "states" : [
+        "DETECTION",
+        "DETECTION_TRANSFORMED_VIDEO",
+        "DETECTION_TRANSFORMED_VIDEO_CPP"
+      ],
+      "properties" : [
+        {
+          "name": "SEARCH_REGION_ENABLE_DETECTION",
+          "description": "Enable cropping.",
+          "type": "BOOLEAN",
+          "defaultValue": "false"
+        },
+        {
+          "name": "SEARCH_REGION_TOP_LEFT_X_DETECTION",
+          "description": "X coordinate for top left corner of cropped frame. If negative, 0 will be used.",
+          "type": "INT",
+          "defaultValue": "-1"
+        },
+        {
+          "name": "SEARCH_REGION_TOP_LEFT_Y_DETECTION",
+          "description": "Y coordinate for top left corner of cropped frame. If negative, 0 will be used.",
+          "type": "INT",
+          "defaultValue": "-1"
+        },
+        {
+          "name": "SEARCH_REGION_BOTTOM_RIGHT_X_DETECTION",
+          "description": "X coordinate for bottom right corner of cropped frame. If negative, bottom right X of input media will be used.",
+          "type": "INT",
+          "defaultValue": "-1"
+        },
+        {
+          "name": "SEARCH_REGION_BOTTOM_RIGHT_Y_DETECTION",
+          "description": "Y coordinate for bottom right corner of cropped frame. If negative, bottom right Y of input media. will be used.",
+          "type": "INT",
+          "defaultValue": "-1"
+        },
+        {
+          "name": "ROTATION",
+          "description": "Specifies the number of degrees in the clockwise direction that the media will be rotated. Only 90, 180 and 270 degrees are supported.",
+          "type": "INT",
+          "defaultValue": "0"
+        },
+        {
+          "name": "HORIZONTAL_FLIP",
+          "description": "Specifies whether or not the original media is flipped. Rotation occurs before flipping.",
+          "type": "BOOLEAN",
+          "defaultValue": "false"
+        },
+        {
+          "name" : "FRAME_INTERVAL",
+          "description" : "Controls whether the component performs detection on every frame in the video segment, or skips some frames at a regular interval. Must be greater than or equal to 0. If the frame_interval is set to 0 or 1, a frame_interval of 1 will be used, so that detections are performed on every frame. For a frame interval N > 1, every N-1 frames will be skipped.",
+          "type" : "INT",
+          "defaultValue" : "1"
+        }
+      ]
+    }
+  }
+}
+

@@ -1,0 +1,29 @@
+{
+  "componentName" : "AudioOnlyComponent",
+  "componentVersion" : "0.8.0",
+  "middlewareVersion" :  "0.8.0",
+  "sourceLanguage" : "c++",
+  "pathName" : "amq_detection_component",
+  "launchArgs" : ["${MPF_HOME}/plugins/AudioOnlyComponent/lib/libmpfAudioOnly.so"],
+  "environmentVariables" : [ {
+    "name" : "LD_LIBRARY_PATH",
+    "value" : "${MPF_HOME}/plugins/AudioOnlyComponent/lib:${LD_LIBRARY_PATH}"
+  } ],
+  "algorithm" : {
+    "name" : "AudioOnly",
+    "description" : "This is a dummy detection component.",
+    "actionType" : "DETECTION",
+    "requiresCollection" : {
+      "states" : []
+    },
+    "providesCollection" : {
+      "states" : [
+        "DETECTION",
+        "DETECTION_TEST",
+        "DETECTION_TEST_CPP"
+      ],
+      "properties" : []
+    }
+  }
+}
+
