@@ -34,10 +34,7 @@ set(CMAKE_CXX_STANDARD 11)
 add_subdirectory(AudioOnlyComponent)
 add_subdirectory(FrameDataComponent)
 add_subdirectory(HelloWorldComponent)
-
-# TODO: Un-comment after upgrading to OpenCV 3.2.
-# add_subdirectory(ImageTransformerComponent)
-
+add_subdirectory(ImageTransformerComponent)
 add_subdirectory(VideoCaptureComponent)
 
 

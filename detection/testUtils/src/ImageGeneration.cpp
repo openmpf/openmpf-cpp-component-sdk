@@ -98,20 +98,9 @@ namespace MPF { namespace COMPONENT {
     int ImageGeneration::WriteDetectionOutputImage(const string image_in_uri,
                                                    const vector<MPFVideoTrack> &detections,
                                                    const string image_out_filepath) {
-        // TODO: Revert this after upgrading to OpenCV 3.2
-        //  Mat input_image = imread(image_in_uri.c_str());
-        //  if (input_image.empty()) {
-        //    printf("Could not open the input image: %s\n", image_in_uri.c_str());
-        //    return -1;
-        //  }
-        Mat input_image;
-        cv::VideoCapture cap(image_in_uri);
-        bool success = false;
-        if (cap.isOpened()) {
-            success = cap.read(input_image);
-        }
-        if (!success) {
-            std::cout << "Could not open the input image from file: " << image_in_uri << std::endl;
+        Mat input_image = cv::imread(image_in_uri.c_str());
+        if (input_image.empty()) {
+            printf("Could not open the input image: %s\n", image_in_uri.c_str());
             return -1;
         }
 
@@ -131,22 +120,12 @@ namespace MPF { namespace COMPONENT {
     int ImageGeneration::WriteDetectionOutputImage(const string image_in_uri,
                                                    const vector<MPFImageLocation> &detections,
                                                    const string image_out_filepath) {
-        // TODO: Revert this after upgrading to OpenCV 3.2
-        // Mat input_image = imread(image_in_uri.c_str());
-        // if (input_image.empty()) {
-        //   printf("Could not open the input image: %s\n", image_in_uri.c_str());
-        //   return -1;
-        // }
-        Mat input_image;
-        cv::VideoCapture cap(image_in_uri);
-        bool success = false;
-        if (cap.isOpened()) {
-            success = cap.read(input_image);
-        }
-        if (!success) {
-            std::cout << "Could not open the input image from file: " << image_in_uri << std::endl;
+        Mat input_image = cv::imread(image_in_uri.c_str());
+        if (input_image.empty()) {
+            printf("Could not open the input image: %s\n", image_in_uri.c_str());
             return -1;
         }
+
         for (unsigned int i = 0; i < detections.size(); i++) {
             Rect face_rect(detections[i].x_left_upper,
                            detections[i].y_left_upper,
