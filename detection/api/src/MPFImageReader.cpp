@@ -24,6 +24,7 @@
  * limitations under the License.                                             *
  ******************************************************************************/
 
+#include <opencv2/opencv.hpp>
 #include <opencv2/imgcodecs.hpp>
 
 #include "frame_transformers/FrameTransformerFactory.h"
@@ -34,7 +35,7 @@
 namespace MPF { namespace COMPONENT {
 
     MPFImageReader::MPFImageReader(const MPFImageJob &job) {
-        image_ = cv::imread(job.data_uri);
+        image_ = cv::imread(job.data_uri, CV_LOAD_IMAGE_IGNORE_ORIENTATION + CV_LOAD_IMAGE_COLOR);
         frameTransformer_ = GetFrameTransformer(job, image_);
         frameTransformer_->TransformFrame(image_);
     }
