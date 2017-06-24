@@ -31,6 +31,8 @@
 
 #include <adapters/MPFImageDetectionComponentAdapter.h>
 
+//TODO: Remove this error after upgrading to OpenCV 3.2.
+#error "Do not use. MPFImageReader does not work with OpenCV-3.1.0."
 namespace MPF { namespace COMPONENT {
 
     class ImageTransformerComponent : public MPFImageDetectionComponentAdapter {
