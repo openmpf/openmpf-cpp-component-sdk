@@ -44,7 +44,7 @@ namespace MPF { namespace COMPONENT {
     }
 
     MPFVideoCapture::MPFVideoCapture(const MPFImageJob &imageJob)
-            : frameCount_(-1)
+            : frameCount_(1)
             , cvVideoCapture_(imageJob.data_uri)
             , frameTransformer_(GetFrameTransformer(imageJob)) {
     }
