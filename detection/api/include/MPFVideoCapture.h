@@ -90,6 +90,7 @@ namespace MPF { namespace COMPONENT {
         void ReverseTransform(MPFImageLocation &imageLocation);
 
     private:
+        int frameCount_;
         cv::VideoCapture cvVideoCapture_;
         const IFrameTransformer::Ptr frameTransformer_;
 
