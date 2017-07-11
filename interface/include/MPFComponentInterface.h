@@ -29,7 +29,7 @@
 #ifndef OPENMPF_CPP_COMPONENT_SDK_MPFCOMPONENTINTERFACE_H
 #define OPENMPF_CPP_COMPONENT_SDK_MPFCOMPONENTINTERFACE_H
 
-
+#include <map>
 #include <string>
 
 namespace MPF { namespace COMPONENT {
@@ -37,6 +37,26 @@ namespace MPF { namespace COMPONENT {
 
     enum MPFComponentType {
         MPF_DETECTION_COMPONENT
+    };
+
+    typedef std::map<std::string, std::string> Properties;
+
+    struct MPFJob {
+        const std::string job_name;
+        const std::string data_uri;
+        const Properties job_properties;
+        const Properties media_properties;
+
+    protected:
+        MPFJob(const std::string &job_name,
+               const std::string &data_uri,
+               const Properties &job_properties,
+               const Properties &media_properties)
+                : job_name(job_name)
+                , data_uri(data_uri)
+                , job_properties(job_properties)
+                , media_properties(media_properties) {
+        }
     };
 
 

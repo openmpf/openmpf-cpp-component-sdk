@@ -36,7 +36,6 @@
 #include "MPFComponentInterface.h"
 
 namespace MPF { namespace COMPONENT {
-    typedef std::map<std::string, std::string> Properties;
 
     enum MPFDetectionDataType {
         UNKNOWN, VIDEO, IMAGE, AUDIO, INVALID_TYPE
@@ -141,25 +140,6 @@ namespace MPF { namespace COMPONENT {
                 , stop_time(stop)
                 , confidence(confidence)
                 , detection_properties(detection_properties) { }
-    };
-
-
-    struct MPFJob {
-        const std::string job_name;
-        const std::string data_uri;
-        const Properties job_properties;
-        const Properties media_properties;
-
-    protected:
-        MPFJob(const std::string &job_name,
-               const std::string &data_uri,
-               const Properties &job_properties,
-               const Properties &media_properties)
-                : job_name(job_name)
-                , data_uri(data_uri)
-                , job_properties(job_properties)
-                , media_properties(media_properties) {
-        }
     };
 
 
