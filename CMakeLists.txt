@@ -65,6 +65,7 @@ include_directories(interface/include)
 
 add_subdirectory(detection/api)
 include_directories(detection/api/include)
+include_directories(detection/api/streaming/include)
 
 add_subdirectory(detection/utils)
 include_directories(detection/utils/include)
