@@ -30,13 +30,18 @@ project(openmpf-cpp-component-api)
 
 set(CMAKE_CXX_STANDARD 11)
 
-find_package(OpenCV 3.2 EXACT REQUIRED PATHS /opt/opencv-3.2.0
+find_package(OpenCV 3.1 EXACT REQUIRED PATHS /opt/opencv-3.1.0
     COMPONENTS opencv_core opencv_imgcodecs opencv_imgproc opencv_videoio)
 
 
 include_directories(include)
+include_directories(streaming/include)
 set(SOURCE_FILES
         include/MPFDetectionComponent.h
+
+        include/streaming/MPFFrameReader.h
+        include/streaming/MPFFrameStore.h
+        src/streaming/MPFFrameStore.cpp
 
         include/detectionComponentUtils.h
         src/detectionComponentUtils.cpp
