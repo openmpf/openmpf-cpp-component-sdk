@@ -27,6 +27,7 @@
 #include "frame_transformers/FrameTransformerFactory.h"
 
 #include "MPFVideoCapture.h"
+#include "detectionComponentUtils.h"
 
 
 namespace MPF { namespace COMPONENT {
@@ -35,10 +36,16 @@ namespace MPF { namespace COMPONENT {
     MPFVideoCapture::MPFVideoCapture(const MPFVideoJob &videoJob)
             : cvVideoCapture_(videoJob.data_uri)
             , frameTransformer_(GetFrameTransformer(videoJob)) {
+        // use the frame count provided by the media inspector if possible
+        frameCount_ = DetectionComponentUtils::GetProperty<int>(videoJob.media_properties, "FRAME_COUNT", -1);
+        if (frameCount_ < 0) {
+            frameCount_ = (int) GetPropertyInternal(cv::CAP_PROP_FRAME_COUNT);
+        }
     }
 
     MPFVideoCapture::MPFVideoCapture(const MPFImageJob &imageJob)
-            : cvVideoCapture_(imageJob.data_uri)
+            : frameCount_(1)
+            , cvVideoCapture_(imageJob.data_uri)
             , frameTransformer_(GetFrameTransformer(imageJob)) {
     }
 
@@ -52,7 +59,7 @@ namespace MPF { namespace COMPONENT {
     }
 
     int MPFVideoCapture::GetFrameCount() {
-        return (int) GetPropertyInternal(cv::CAP_PROP_FRAME_COUNT);
+        return frameCount_;
     }
 
 

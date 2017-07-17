@@ -50,22 +50,6 @@ namespace MPF { namespace COMPONENT {
          */
         explicit MPFVideoCapture(const MPFVideoJob &videoJob);
 
-        // NOTE: There are two problems with the imread() function in
-        // OpenCV 3.1.0. Functionality was introduced in that release so
-        // that when a jpeg file with EXIF information is read by
-        // cv::imread(), it automatically uses the EXIF information to
-        // return a transformed image. The first problem was that the new
-        // code may hang when reading certain jpeg files
-        // (https://github.com/opencv/opencv/issues?utf8=✓&q=6641). The
-        // second problem is that you cannot tell imread() to ignore the
-        // EXIF data and return an untransformed image
-        // (https://github.com/opencv/opencv/issues?utf8=✓&q=6348). For
-        // these reasons, we have disabled the use of the
-        // MPFImageReader. To process MPFImageJobs, use the following
-        // version of the MPFVideoCapture. The MPFImageReader will be
-        // re-enabled when we update to OpenCV 3.2.0, where these problems
-        // have been fixed.
-
         /**
          * Initializes a new MPFVideoCapture instance, using the frame
          * transformers specified in jobProperties, to be used for image
@@ -106,6 +90,7 @@ namespace MPF { namespace COMPONENT {
         void ReverseTransform(MPFImageLocation &imageLocation);
 
     private:
+        int frameCount_;
         cv::VideoCapture cvVideoCapture_;
         const IFrameTransformer::Ptr frameTransformer_;
 

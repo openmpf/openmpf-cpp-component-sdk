@@ -1,27 +1,16 @@
 # BUILD
 
-WARNING: This example is not compatible with OpenCV 3.1.0.
-         Functionality was introduced in that release so
-         that when a jpeg file with EXIF information is read by
-         cv::imread(), it automatically uses the EXIF information to
-         return a transformed image, but there have been two problems
-         reported with this. The first problem is that the new code
-         may hang when reading certain jpeg files
-         (https://github.com/opencv/opencv/issues?utf8=✓&q=6641). The
-         second problem is that you cannot tell imread() to ignore the
-         EXIF data and return an untransformed image
-         (https://github.com/opencv/opencv/issues?utf8=✓&q=6348). For
-         these reasons, we have disabled the use of the
-         MPFImageReader, and this example will not compile. To process
-         MPFImageJobs, you may use the MPFVideoCapture object instead.
-         The MPFImageReader will be re-enabled when the MPF Component
-         API functions have been ported to OpenCV 3.2.0, where these
-         problems have been fixed.
+NOTE: To build and run this component, OpenCV 3.2.0
+      must be installed first.
 
 NOTE: You must build the MPF Component API library before
       building this component. See the instructions
-      in the README in the "MPFComponentAPI/cplusplus"
+      in the README at the top-level component API
       directory.
+
+Before you build, edit the src/CMakeLists.txt file, and change
+the "find_package" command so that the PATHS option specifies
+the root directory of your OpenCV 3.2.0 installation.
 
 Run the following commands:
 ```
