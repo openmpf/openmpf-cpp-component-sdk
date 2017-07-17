@@ -34,33 +34,41 @@ namespace MPF {
 class MPFFrameStore {
 
  public:
+
     MPFFrameStore() = default;
     ~MPFFrameStore() { std::string err; Close(err); };
 
     // Creates and attaches to the storage for frame data.
     // This method must only be used by a single process of the group
     // that will share the frame storage. This is typically the
-    // frame producer.
-    void Create(const std::string &frame_store_name,
-                const size_t buffer_size,
-                std::string &error_string);
+    // frame producer. Its return value is 0 if the method is
+    // successful. If an error occurs, it returns a non-zero value and
+    // the error_string parameter will contain an explanation of the
+    // error.
+    int Create(const std::string &frame_store_name,
+               const size_t buffer_size,
+               std::string &error_string);
     // Attaches to the storage for frame data. All other processes
     // that will share the frame storage must use this method. This is
-    // typically the consumers of the frame data.
-    void Attach(const std::string &frame_store_name,
-                const size_t buffer_size,
-                std::string &error_string);
-    void Close(std::string &error_string);
+    // typically the consumers of the frame data. Its return value is
+    // 0 if the method is successful. If an error occurs, it returns a
+    // non-zero value and the error_string parameter will contain an
+    // explanation of the error.
+    int Attach(const std::string &frame_store_name,
+               const size_t buffer_size,
+               std::string &error_string);
+    int Close(std::string &error_string);
 
     // The frame byte size is supplied along with the offset so that
     // the FrameStore can check that the address computed plus the
     // size does not overflow the buffer. If it does, the returned
-    // address will be null.
+    // address will be null, and the error_string will be set.
     uint8_t* GetFrameAddress(size_t offset,
                              size_t frame_byte_size,
                              std::string &error_string);
 
   private:
+    bool initialized_ = false;
     std::string buffer_name_;
     int storage_handle_;
     uint8_t* start_addr_;
