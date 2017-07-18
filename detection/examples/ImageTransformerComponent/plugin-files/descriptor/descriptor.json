@@ -13,6 +13,7 @@
     "name" : "TransformImage",
     "description" : "This is a dummy detection component.",
     "actionType" : "DETECTION",
+    "supportsBatchProcessing": true,
     "requiresCollection" : {
       "states" : []
     },
