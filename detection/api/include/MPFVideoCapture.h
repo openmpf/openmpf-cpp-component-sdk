@@ -34,9 +34,11 @@
 
 #include "MPFDetectionComponent.h"
 #include "frame_transformers/IFrameTransformer.h"
+#include "FrameSkipper.h"
 
 
 namespace MPF { namespace COMPONENT {
+
 
     class MPFVideoCapture {
 
@@ -48,7 +50,8 @@ namespace MPF { namespace COMPONENT {
          * @param videoJob
          * @throws std::invalid_argument videoJob contains invalid property
          */
-        explicit MPFVideoCapture(const MPFVideoJob &videoJob);
+        explicit MPFVideoCapture(const MPFVideoJob &videoJob, bool enableFrameTransformers=true,
+                                 bool enableFrameSkipper=false);
 
         /**
          * Initializes a new MPFVideoCapture instance, using the frame
@@ -57,7 +60,7 @@ namespace MPF { namespace COMPONENT {
          * @param imageJob
          * @throws std::invalid_argument imageJob contains invalid property
          */
-        explicit MPFVideoCapture(const MPFImageJob &imageJob);
+        explicit MPFVideoCapture(const MPFImageJob &imageJob,  bool enableFrameTransformers=true);
 
         bool Read(cv::Mat &frame);
 
@@ -67,9 +70,12 @@ namespace MPF { namespace COMPONENT {
 
         int GetFrameCount();
 
-        void SetFramePosition(int frameIdx);
+        bool SetFramePosition(int frameIdx);
+
 
         int GetCurrentFramePosition();
+
+        int GetOriginalFramePosition();
 
         void Release();
 
@@ -79,6 +85,14 @@ namespace MPF { namespace COMPONENT {
 
         cv::Size GetOriginalFrameSize();
 
+        double GetFramePositionRatio();
+
+        bool SetFramePositionRatio(double positionRatio);
+
+        double GetCurrentTimeInMillis();
+
+        bool SetPositionInMillis(double milliseconds);
+
         double GetProperty(int propId);
 
         bool SetProperty(int propId, double value);
@@ -87,16 +101,29 @@ namespace MPF { namespace COMPONENT {
 
         void ReverseTransform(MPFVideoTrack &videoTrack);
 
-        void ReverseTransform(MPFImageLocation &imageLocation);
+        std::vector<cv::Mat> GetInitializationFramesIfAvailable(int numberOfRequestedFrames);
+
+
 
     private:
-        int frameCount_;
         cv::VideoCapture cvVideoCapture_;
-        const IFrameTransformer::Ptr frameTransformer_;
+
+        const FrameSkipper frameSkipper_;
+
+        IFrameTransformer::Ptr frameTransformer_;
 
         double GetPropertyInternal(int propId);
 
-        IFrameTransformer::Ptr GetFrameTransformer(const MPFJob &job);
+        bool SetPropertyInternal(int propId, double value);
+
+        IFrameTransformer::Ptr GetFrameTransformer(bool frameTransformersEnabled, const MPFJob &job);
+
+        static int GetFrameCount(const MPFVideoJob &job, const cv::VideoCapture &cvVideoCapture);
+
+        static FrameSkipper GetFrameSkipper(bool frameSkippingEnabled, const MPFVideoJob &job,
+                                            const cv::VideoCapture &cvVideoCapture);
+
+        bool ReadAndTransform(cv::Mat &frame);
     };
 }}
 
