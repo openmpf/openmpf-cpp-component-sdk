@@ -34,8 +34,12 @@
 namespace MPF { namespace COMPONENT {
 
     /**
-     * Handles calculations needed to support frame skipping.
-     * Frame skipping is based on start frame, stop frame, and frame interval.
+     * If a video file is long enough, the Workflow Manager will create multiple jobs, each with different start
+     * and stop frames. Additionally many components support a FRAME_INTERVAL property.
+     * These values tell components to only process certain frames in the video. Instead of having components
+     * figure out which frames process and which frames to skip, this class performs the calculations necessary
+     * to filter out frames that shouldn't be processed. From the component's point of view, it is processing
+     * the entire video, but it is really only processing a particular segment of the video.
      */
     class FrameSkipper {
 
@@ -44,26 +48,93 @@ namespace MPF { namespace COMPONENT {
 
         FrameSkipper(const MPFVideoJob &job, int originalFrameCount);
 
+
+        /**
+         * Map a frame position within the segment to a frame position in the original video.
+         * @param segmentPosition A frame position within the segment
+         * @return The matching frame position in the original video.
+         */
         int SegmentToOriginalFramePosition(int segmentPosition) const;
 
+
+        /**
+         * Map a frame position in the original video, to a position in the segment
+         * @param originalPosition  A frame position in the original video
+         * @return The matching frame position in the segment
+         */
         int OriginalToSegmentFramePosition(int originalPosition) const;
+
 
         bool IsPastEndOfSegment(int originalPosition) const;
 
+
+        /**
+         * @return The number of frames in the segment
+         */
         int GetFrameCount() const;
 
+
+        /**
+         * Gets the amount of time from the segment start to the segment end. The duration of the segment
+         * is not affected by the frame interval, instead the frame rate is adjusted so that the time
+         * from the start frame to the stop frame is the same as the original video.
+         * @param originalFrameRate Frame rate of original video
+         * @return The duration of the segment in seconds
+         */
         double GetSegmentDuration(double originalFrameRate) const;
 
+
+        /**
+         * Gets the frame rate of the segment. The frame rate is calculated so that regardless of the frame interval,
+         * the duration between the start frame and stop frame is the same as the original video.
+         * @param originalFrameRate Frame rate of original video
+         * @return Frames per second of the video segment
+         */
         double GetSegmentFrameRate(double originalFrameRate) const;
 
+
+        /**
+         * Gets the time in milliseconds between the start frame and the current position in the original video.
+         * @param originalPosition Frame position in original video
+         * @param originalFrameRate Frame rate of original video
+         * @return Time in milliseconds since the segment started
+         */
         double GetCurrentTimeInMillis(int originalPosition, double originalFrameRate) const;
 
+
+        /**
+         * Gets the segment position that is the specified number of milliseconds since the start of the segment
+         * @param originalFrameRate Frame position in original video
+         * @param milliseconds Time since start of segment in milliseconds
+         * @return Segment frame position for the specified number of milliseconds
+         */
         int GetSegmentPositionForMillis(double originalFrameRate, double milliseconds) const;
 
+
+        /**
+         * Returns a number between 0 (start of video) and 1 (end of video) that indicates the current position
+         * in the video
+         * @param originalPosition Frame position in original video
+         * @return Number between 0 and 1 indicating current position in video
+         */
         double GetPositionRatio(int originalPosition) const;
 
+
+        /**
+         * Returns the position in the original video for the given ratio
+         * @param ratio Number between 0 and 1 that indicates position in video
+         * @return Position in the original video
+         */
         int GetFramePositionForRatio(double ratio) const;
 
+
+        /**
+         * Determines whether it is possible to get numberOfRequestedFrames before the beginning of the segment.
+         * @param numberOfRequestedFrames Requested number of initialization frames
+         * @param firstInitializationFrame[out] Position in original video of first initializationFrame
+         * @param numberOfInitializationFramesAvailable[out] Number less than or equal to numberOfRequestedFrames
+         *                                                   indicating how many initialization frames are available
+         */
         void GetAvailableInitializationFrames(int numberOfRequestedFrames, int &firstInitializationFrame,
                                               int &numberOfInitializationFramesAvailable) const;
 

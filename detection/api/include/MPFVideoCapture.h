@@ -101,6 +101,14 @@ namespace MPF { namespace COMPONENT {
 
         void ReverseTransform(MPFVideoTrack &videoTrack);
 
+        /**
+         * Gets up to numberOfRequestedFrames frames before beginning of segment.
+         * If less than numberOfRequestedFrames are available, returned vector will have as many initializations frames
+         * as are available.
+         * If the job's start frame is 0, the returned vector will be empty.
+         * @param numberOfRequestedFrames
+         * @return Vector that contains between 0 and numberOfRequestedFrames frames
+         */
         std::vector<cv::Mat> GetInitializationFramesIfAvailable(int numberOfRequestedFrames);
 
 
