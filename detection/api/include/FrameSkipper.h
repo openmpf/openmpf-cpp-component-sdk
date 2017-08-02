@@ -48,7 +48,7 @@ namespace MPF { namespace COMPONENT {
 
         int OriginalToSegmentFramePosition(int originalPosition) const;
 
-        bool TryGetNextFrame(int prevFrame, int &nextFrame) const;
+        bool IsPastEndOfSegment(int originalPosition) const;
 
         int GetFrameCount() const;
 
@@ -58,7 +58,7 @@ namespace MPF { namespace COMPONENT {
 
         double GetCurrentTimeInMillis(int originalPosition, double originalFrameRate) const;
 
-        bool TryGetFramePositionForMillis(double originalFrameRate, double milliseconds, int& originalFramePos) const;
+        int GetSegmentPositionForMillis(double originalFrameRate, double milliseconds) const;
 
         double GetPositionRatio(int originalPosition) const;
 

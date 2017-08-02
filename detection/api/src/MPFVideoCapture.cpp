@@ -69,7 +69,7 @@ namespace MPF { namespace COMPONENT {
         if (enableFrameSkipper) {
             return {job, frameCount};
         }
-        return {0, frameCount, 1};
+        return {0, frameCount - 1, 1};
     }
 
 
@@ -96,7 +96,7 @@ namespace MPF { namespace COMPONENT {
 
 
     bool MPFVideoCapture::SetFramePosition(int frameIdx) {
-        if (frameIdx < 0 || frameIdx >= frameSkipper_.GetFrameCount()) {
+        if (frameIdx < 0 || frameIdx > frameSkipper_.GetFrameCount()) {
             return false;
         }
 
@@ -117,19 +117,22 @@ namespace MPF { namespace COMPONENT {
 
     bool MPFVideoCapture::Read(cv::Mat &frame) {
         int originalPosBeforeRead = GetOriginalFramePosition();
-        int nextFrame;
-        bool hasNext = frameSkipper_.TryGetNextFrame(originalPosBeforeRead, nextFrame);
-        if (!hasNext) {
+        if (frameSkipper_.IsPastEndOfSegment(originalPosBeforeRead)) {
             frame.release();
             return false;
         }
 
         bool wasRead = ReadAndTransform(frame);
-        if (wasRead && nextFrame != originalPosBeforeRead + 1) {
-            SetPropertyInternal(cv::CAP_PROP_POS_FRAMES, nextFrame);
+        if (wasRead) {
+            int segPosBeforeRead = frameSkipper_.OriginalToSegmentFramePosition(originalPosBeforeRead);
+            int nextOriginalFrame = frameSkipper_.SegmentToOriginalFramePosition(segPosBeforeRead + 1);
+            if (nextOriginalFrame != originalPosBeforeRead + 1) {
+                SetPropertyInternal(cv::CAP_PROP_POS_FRAMES, nextOriginalFrame);
+            }
         }
         return wasRead;
     }
+
 
 
     bool MPFVideoCapture::ReadAndTransform(cv::Mat &frame) {
@@ -189,11 +192,7 @@ namespace MPF { namespace COMPONENT {
 
     bool MPFVideoCapture::SetPositionInMillis(double milliseconds) {
         double originalFrameRate = GetPropertyInternal(cv::CAP_PROP_FPS);
-        int framePos;
-        if (frameSkipper_.TryGetFramePositionForMillis(originalFrameRate, milliseconds, framePos)) {
-            return SetPropertyInternal(cv::CAP_PROP_POS_FRAMES, framePos);
-        }
-        return false;
+        return SetFramePosition(frameSkipper_.GetSegmentPositionForMillis(originalFrameRate, milliseconds));
     }
 
 

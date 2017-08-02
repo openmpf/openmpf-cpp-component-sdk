@@ -45,17 +45,6 @@ namespace MPF { namespace COMPONENT {
     }
 
 
-    bool FrameSkipper::TryGetNextFrame(int prevFrame, int &nextFrame) const {
-        if (prevFrame > stopFrame_) {
-            nextFrame = -1;
-            return false;
-        }
-        int segPos = OriginalToSegmentFramePosition(prevFrame);
-        nextFrame = SegmentToOriginalFramePosition(segPos + 1);
-        return true;
-    }
-
-
     int FrameSkipper::SegmentToOriginalFramePosition(int segmentPosition) const {
         return frameInterval_ * segmentPosition + startFrame_;
     }
@@ -94,22 +83,16 @@ namespace MPF { namespace COMPONENT {
 
 
 
-    bool FrameSkipper::TryGetFramePositionForMillis(double originalFrameRate,
-                                                    double milliseconds,
-                                                    int &originalFramePos) const {
-        originalFramePos = -1;
-        if (milliseconds < 0) {
-            return false;
-        }
-
+    int FrameSkipper::GetSegmentPositionForMillis(double originalFrameRate, double milliseconds) const {
         double segmentFps = GetSegmentFrameRate(originalFrameRate);
-        int segmentPosition = (int) (segmentFps * milliseconds / 1000);
-        if (segmentPosition < GetFrameCount()) {
-            originalFramePos = SegmentToOriginalFramePosition(segmentPosition);
-            return true;
-        }
+        return (int) (segmentFps * milliseconds / 1000);
+    }
 
-        return false;
+
+    bool FrameSkipper::IsPastEndOfSegment(int originalPosition) const {
+        int lastSegmentPos = GetFrameCount() - 1;
+        int lastOriginalPos = SegmentToOriginalFramePosition(lastSegmentPos);
+        return originalPosition > lastOriginalPos;
     }
 
 
@@ -132,6 +115,7 @@ namespace MPF { namespace COMPONENT {
                : 1;
     }
 
+
     int FrameSkipper::GetStopFrame(const MPFVideoJob &job, int originalFrameCount) {
         if (job.stop_frame < originalFrameCount) {
             return job.stop_frame;
@@ -147,6 +131,7 @@ namespace MPF { namespace COMPONENT {
         return stopFrame;
     }
 
+
     void FrameSkipper::GetAvailableInitializationFrames(int numberOfRequestedFrames,
                                                         int &firstInitializationFrame,
                                                         int &numberOfInitializationFramesAvailable) const {
@@ -155,6 +140,4 @@ namespace MPF { namespace COMPONENT {
         firstInitializationFrame = startFrame_ - numberOfInitializationFramesAvailable;
 
     }
-
-
 }}

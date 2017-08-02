@@ -207,29 +207,25 @@ TEST(FrameSkipTest, CanCalculateFramePositionForRatio) {
 }
 
 
-void assertPositionForMillis(FrameSkipper skipper, double originalFrameRate, double millis, int expectedFramePos) {
-    int actualFramePos;
-    ASSERT_TRUE(skipper.TryGetFramePositionForMillis(originalFrameRate, millis, actualFramePos));
-    ASSERT_EQ(expectedFramePos, actualFramePos);
+void assertPositionForMillis(FrameSkipper skipper, double originalFrameRate, double millis, int expectedSegmentPos) {
+    int actualSegmentPos = skipper.GetSegmentPositionForMillis(originalFrameRate, millis);
+    ASSERT_EQ(expectedSegmentPos, actualSegmentPos);
 }
 
 
 TEST(FrameSkipTest, CanCalculateFramePositionForMillis) {
 
     assertPositionForMillis({0, 21, 1}, 10, 600, 6);
-    assertPositionForMillis({0, 21, 2}, 10, 600, 6);
-    assertPositionForMillis({0, 21, 3}, 10, 600, 6);
+    assertPositionForMillis({0, 21, 2}, 10, 600, 3);
+    assertPositionForMillis({0, 21, 3}, 10, 600, 2);
 
-    assertPositionForMillis({5, 26, 3}, 10, 600, 11);
-    assertPositionForMillis({5, 26, 2}, 10, 600, 11);
-    assertPositionForMillis({5, 26, 3}, 10, 600, 11);
+    assertPositionForMillis({5, 26, 1}, 10, 600, 6);
+    assertPositionForMillis({5, 26, 2}, 10, 600, 3);
+    assertPositionForMillis({5, 26, 3}, 10, 600, 2);
 
-    assertPositionForMillis({5, 260, 3}, 10, 600, 11);
-    assertPositionForMillis({5, 260, 2}, 10, 600, 11);
-    assertPositionForMillis({5, 260, 3}, 10, 600, 11);
-
-    int badPos;
-    ASSERT_FALSE(FrameSkipper(0, 1, 1).TryGetFramePositionForMillis(10, 2000, badPos));
+    assertPositionForMillis({5, 260, 1}, 10, 600, 6);
+    assertPositionForMillis({5, 260, 2}, 10, 600, 3);
+    assertPositionForMillis({5, 260, 3}, 10, 600, 2);
 }
 
 
@@ -269,11 +265,38 @@ MPFVideoCapture CreateVideoCapture(int startFrame, int stopFrame) {
 }
 
 
-MPFVideoCapture CreateVideoCapture(int startFrame, int stopFrame, int frameInterval) {
-    MPFVideoJob job("Test", "test/test_vids/frame_skip_test.avi", startFrame, stopFrame,
-                    {{"FRAME_INTERVAL", std::to_string(frameInterval)}}, {});
+MPFVideoJob CreateVideoJob(int startFrame, int stopFrame, int frameInterval) {
+    return {"Test", "test/test_vids/frame_skip_test.avi", startFrame, stopFrame,
+            {{"FRAME_INTERVAL", std::to_string(frameInterval)}}, {}};
 
-    return MPFVideoCapture(job, true, true);
+}
+
+MPFVideoCapture CreateVideoCapture(int startFrame, int stopFrame, int frameInterval) {
+    return MPFVideoCapture(CreateVideoJob(startFrame, stopFrame, frameInterval), true, true);
+}
+
+
+void assertReadFails(MPFVideoCapture &cap) {
+    cv::Mat invalidFrame;
+    bool wasRead = cap.Read(invalidFrame);
+    ASSERT_FALSE(wasRead);
+    ASSERT_TRUE(invalidFrame.empty());
+}
+
+
+
+
+TEST(FrameSkipTest, NoFramesSkippedWhenSkipParametersProvidedButFrameSkippingDisabled) {
+    MPFVideoCapture cap(CreateVideoJob(0, 1, 3), true, false);
+
+    for (int i = 0; i < 30; i++) {
+        cv::Mat frame;
+        bool wasRead = cap.Read(frame);
+        ASSERT_TRUE(wasRead);
+
+        ASSERT_EQ(i, GetFrameNumber(frame));
+    }
+    assertReadFails(cap);
 }
 
 
@@ -288,7 +311,9 @@ TEST(FrameSkipTest, NoFramesSkippedWhenDefaultValues) {
 
         ASSERT_EQ(i, GetFrameNumber(frame));
     }
+    assertReadFails(cap);
 }
+
 
 
 void assertExpectedFramesShown(int startFrame, int stopFrame, int frameInterval,
@@ -304,12 +329,14 @@ void assertExpectedFramesShown(int startFrame, int stopFrame, int frameInterval,
         ASSERT_TRUE(wasRead);
         ASSERT_EQ(expectedFrame, GetFrameNumber(frame));
     }
+    assertReadFails(cap);
 }
 
 
 
 TEST(FrameSkipTest, CanHandleStartStopFrame) {
     assertExpectedFramesShown(10, 16, 1, {10, 11, 12, 13, 14, 15, 16});
+    assertExpectedFramesShown(26, 29, 1, {26, 27, 28, 29});
 }
 
 
@@ -334,6 +361,14 @@ TEST(FrameSkipTest, CanHandleStartStopFrameWithInterval) {
     assertExpectedFramesShown(15, 29, 4, {15, 19, 23, 27});
 
     assertExpectedFramesShown(15, 29, 5, {15, 20, 25});
+
+    assertExpectedFramesShown(20, 29, 4, {20, 24, 28});
+
+    assertExpectedFramesShown(21, 29, 4, {21, 25, 29});
+
+    assertExpectedFramesShown(20, 28, 4, {20, 24, 28});
+
+    assertExpectedFramesShown(21, 28, 4, {21, 25});
 }
 
 
@@ -348,6 +383,10 @@ TEST(FrameSkipTest, CanNotSetPositionBeyondSegment) {
 
     ASSERT_FALSE(cap.SetFramePosition(-1));
     ASSERT_EQ(4, cap.GetCurrentFramePosition());
+
+    ASSERT_TRUE(cap.SetFramePosition(6));
+    ASSERT_EQ(6, cap.GetCurrentFramePosition());
+    assertReadFails(cap);
 }
 
 
