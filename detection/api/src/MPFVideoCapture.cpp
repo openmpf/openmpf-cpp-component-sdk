@@ -203,10 +203,10 @@ namespace MPF { namespace COMPONENT {
                 return GetFrameSize().width;
             case cv::CAP_PROP_FRAME_HEIGHT:
                 return GetFrameSize().height;
-            case cv::CAP_PROP_POS_FRAMES:
-                return GetCurrentFramePosition();
             case cv::CAP_PROP_FPS:
                 return GetFrameRate();
+            case cv::CAP_PROP_POS_FRAMES:
+                return GetCurrentFramePosition();
             case cv::CAP_PROP_POS_AVI_RATIO:
                 return GetFramePositionRatio();
             case cv::CAP_PROP_POS_MSEC:
@@ -218,6 +218,10 @@ namespace MPF { namespace COMPONENT {
 
     bool MPFVideoCapture::SetProperty(int propId, double value) {
         switch (propId) {
+            case cv::CAP_PROP_FRAME_WIDTH:
+            case cv::CAP_PROP_FRAME_HEIGHT:
+            case cv::CAP_PROP_FPS:
+                return false;
             case cv::CAP_PROP_POS_FRAMES:
                 return SetFramePosition((int) value);
             case cv::CAP_PROP_POS_AVI_RATIO:
