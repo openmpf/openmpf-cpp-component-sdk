@@ -438,13 +438,12 @@ TEST(FrameSkipTest, CanGetInitializationFrames) {
     assertInitializationFrameIds(10, 1, {9});
     assertInitializationFrameIds(10, 2, {8, 9});
     assertInitializationFrameIds(10, 5, {5, 6, 7, 8, 9});
-
 }
 
 
 //TEST(FrameSkipTest, CreateTestVideo) {
 //
-//    cv::VideoCapture cap("/home/mpf/sample-data/pittpatt_03.mp4");
+//    cv::VideoCapture cap("/home/mpf/sample-data/sample.mp4");
 //    int width = (int) cap.get(cv::CAP_PROP_FRAME_WIDTH);
 //    int height = (int) cap.get(cv::CAP_PROP_FRAME_HEIGHT);
 //
