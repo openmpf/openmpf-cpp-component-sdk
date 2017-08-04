@@ -1,7 +1,7 @@
 {
   "componentName" : "ImageTransformerComponent",
-  "componentVersion" : "0.1.0",
-  "middlewareVersion" :  "0.8.0",
+  "componentVersion" : "0.10.0",
+  "middlewareVersion" :  "0.10.0",
   "sourceLanguage" : "c++",
   "pathName" : "amq_detection_component",
   "launchArgs" : ["${MPF_HOME}/plugins/ImageTransformerComponent/lib/libmpfImageTransformer.so"],
