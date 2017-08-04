@@ -39,194 +39,195 @@ using std::vector;
 
 
 
-void assertFrameCount(FrameSkipper frameSkipper, int expected) {
+void assertSegmentFrameCount(FrameSkipper frameSkipper, int expected) {
     ASSERT_EQ(expected, frameSkipper.GetSegmentFrameCount());
 }
 
-TEST(FrameSkipTest, CanCalculateFrameCount) {
+TEST(FrameSkipTest, CanCalculateSegmentFrameCount) {
 
-    assertFrameCount({0, 20, 4}, 6);
-    assertFrameCount({0, 20, 3}, 7);
-    assertFrameCount({4, 10 , 1}, 7);
-    assertFrameCount({4, 10 , 2}, 4);
-    assertFrameCount({4, 10, 3}, 3);
-    assertFrameCount({4, 10, 20}, 1);
-    assertFrameCount({0, 9, 1}, 10);
-    assertFrameCount({0, 9, 2}, 5);
-    assertFrameCount({0, 9, 3}, 4);
-    assertFrameCount({3, 22, 7}, 3);
-    assertFrameCount({3, 22, 4}, 5);
+    assertSegmentFrameCount({ 0, 20, 4 }, 6);
+    assertSegmentFrameCount({ 0, 20, 3 }, 7);
+    assertSegmentFrameCount({ 4, 10, 1 }, 7);
+    assertSegmentFrameCount({ 4, 10, 2 }, 4);
+    assertSegmentFrameCount({ 4, 10, 3 }, 3);
+    assertSegmentFrameCount({ 4, 10, 20 }, 1);
+    assertSegmentFrameCount({ 0, 9, 1 }, 10);
+    assertSegmentFrameCount({ 0, 9, 2 }, 5);
+    assertSegmentFrameCount({ 0, 9, 3 }, 4);
+    assertSegmentFrameCount({ 3, 22, 7 }, 3);
+    assertSegmentFrameCount({ 3, 22, 4 }, 5);
 }
 
 
 
-void assertSegmentToOriginal(FrameSkipper skipper, int segmentIdx, int expectedOriginalIdx) {
-    ASSERT_EQ(expectedOriginalIdx, skipper.SegmentToOriginalFramePosition(segmentIdx));
+void assertSegmentToOriginalFramePosition(FrameSkipper skipper, int segmentPosition, int expectedOriginalPosition) {
+    ASSERT_EQ(expectedOriginalPosition, skipper.SegmentToOriginalFramePosition(segmentPosition));
 
 }
 
 
-TEST(FrameSkipTest, CanMapSegmentToOriginalIndices) {
-    assertSegmentToOriginal({0, 10, 1}, 0, 0);
-    assertSegmentToOriginal({0, 10, 1}, 1, 1);
+TEST(FrameSkipTest, CanMapSegmentToOriginalFramePosition) {
+    assertSegmentToOriginalFramePosition({ 0, 10, 1 }, 0, 0);
+    assertSegmentToOriginalFramePosition({ 0, 10, 1 }, 1, 1);
 
-    assertSegmentToOriginal({4, 10, 1}, 0, 4);
-    assertSegmentToOriginal({4, 10, 1}, 2, 6);
+    assertSegmentToOriginalFramePosition({ 4, 10, 1 }, 0, 4);
+    assertSegmentToOriginalFramePosition({ 4, 10, 1 }, 2, 6);
 
-    assertSegmentToOriginal({0, 20, 3}, 0, 0);
-    assertSegmentToOriginal({0, 20, 3}, 2, 6);
+    assertSegmentToOriginalFramePosition({ 0, 20, 3 }, 0, 0);
+    assertSegmentToOriginalFramePosition({ 0, 20, 3 }, 2, 6);
 
-    assertSegmentToOriginal({2, 20, 3}, 0, 2);
-    assertSegmentToOriginal({2, 20, 3}, 4, 14);
+    assertSegmentToOriginalFramePosition({ 2, 20, 3 }, 0, 2);
+    assertSegmentToOriginalFramePosition({ 2, 20, 3 }, 4, 14);
 }
 
 
-void assertOriginalToSegment(FrameSkipper skipper, int originalIdx, int expectedSegmentIdx) {
-    ASSERT_EQ(expectedSegmentIdx, skipper.OriginalToSegmentFramePosition(originalIdx));
+void assertOriginalToSegmentFramePosition(FrameSkipper skipper, int originalPosition, int expectedSegmentPosition) {
+    ASSERT_EQ(expectedSegmentPosition, skipper.OriginalToSegmentFramePosition(originalPosition));
 }
 
 
 TEST(FrameSkipTest, CanMapOriginalToSegmentIndices) {
-    assertOriginalToSegment({0, 10, 1}, 0, 0);
-    assertOriginalToSegment({0, 10, 1}, 1, 1);
+    assertOriginalToSegmentFramePosition({ 0, 10, 1 }, 0, 0);
+    assertOriginalToSegmentFramePosition({ 0, 10, 1 }, 1, 1);
 
-    assertOriginalToSegment({4, 10, 1}, 4, 0);
-    assertOriginalToSegment({4, 10, 1}, 6, 2);
+    assertOriginalToSegmentFramePosition({ 4, 10, 1 }, 4, 0);
+    assertOriginalToSegmentFramePosition({ 4, 10, 1 }, 6, 2);
 
-    assertOriginalToSegment({0, 20, 3}, 0, 0);
-    assertOriginalToSegment({0, 20, 3}, 3, 1);
+    assertOriginalToSegmentFramePosition({ 0, 20, 3 }, 0, 0);
+    assertOriginalToSegmentFramePosition({ 0, 20, 3 }, 3, 1);
 
-    assertOriginalToSegment({2, 20, 3}, 2, 0);
-    assertOriginalToSegment({2, 20, 3}, 14, 4);
+    assertOriginalToSegmentFramePosition({ 2, 20, 3 }, 2, 0);
+    assertOriginalToSegmentFramePosition({ 2, 20, 3 }, 14, 4);
 }
 
 
-void assertDuration(FrameSkipper skipper, double originalFrameRate, double expectedDuration) {
+void assertSegmentDuration(FrameSkipper skipper, double originalFrameRate, double expectedDuration) {
     ASSERT_DOUBLE_EQ(expectedDuration, skipper.GetSegmentDuration(originalFrameRate));
 }
 
 TEST(FrameSkipTest, CanGetSegmentDuration) {
-    assertDuration({0, 9, 100}, 10, 1);
-    assertDuration({0, 9, 100}, 30, 1.0 / 3);
-    assertDuration({0, 199, 100}, 10, 20);
-    assertDuration({0, 149, 100}, 10, 15);
+    assertSegmentDuration({ 0, 9, 100 }, 10, 1);
+    assertSegmentDuration({ 0, 9, 100 }, 30, 1.0 / 3);
+    assertSegmentDuration({ 0, 199, 100 }, 10, 20);
+    assertSegmentDuration({ 0, 149, 100 }, 10, 15);
 
-    assertDuration({7, 16, 100}, 10, 1);
-    assertDuration({7, 16, 100}, 30, 1.0 / 3);
-    assertDuration({7, 206, 100}, 10, 20);
-    assertDuration({7, 156, 100}, 10, 15);
+    assertSegmentDuration({ 7, 16, 100 }, 10, 1);
+    assertSegmentDuration({ 7, 16, 100 }, 30, 1.0 / 3);
+    assertSegmentDuration({ 7, 206, 100 }, 10, 20);
+    assertSegmentDuration({ 7, 156, 100 }, 10, 15);
 }
 
 
-void assertFrameRate(FrameSkipper skipper, double originalFrameRate, double expectedFrameRate) {
+void assertSegmentFrameRate(FrameSkipper skipper, double originalFrameRate, double expectedFrameRate) {
     ASSERT_DOUBLE_EQ(expectedFrameRate, skipper.GetSegmentFrameRate(originalFrameRate));
 }
 
 
-TEST(FrameSkipTest, CanCalculateFrameRate) {
-    assertFrameRate({0, 9, 1}, 30, 30);
-    assertFrameRate({100, 9000, 1}, 30, 30);
+TEST(FrameSkipTest, CanCalculateSegmentFrameRate) {
+    assertSegmentFrameRate({ 0, 9, 1 }, 30, 30);
+    assertSegmentFrameRate({ 100, 9000, 1 }, 30, 30);
 
-    assertFrameRate({0, 9, 2}, 30, 15);
-    assertFrameRate({0, 10, 2}, 30, 6.0 / 11 * 30);
-    assertFrameRate({1, 12, 2}, 30, 15);
+    assertSegmentFrameRate({ 0, 9, 2 }, 30, 15);
+    assertSegmentFrameRate({ 0, 10, 2 }, 30, 6.0 / 11 * 30);
+    assertSegmentFrameRate({ 1, 12, 2 }, 30, 15);
 
-    assertFrameRate({0, 8, 3}, 30, 10);
-    assertFrameRate({0, 9, 3}, 30, 4.0 / 10 * 30);
+    assertSegmentFrameRate({ 0, 8, 3 }, 30, 10);
+    assertSegmentFrameRate({ 0, 9, 3 }, 30, 4.0 / 10 * 30);
 }
 
 
-void assertCurrentTime(FrameSkipper skipper, int originalPosition, double originalFrameRate,
-                       double expectedTimeInMillis) {
+void assertCurrentSegmentTime(FrameSkipper skipper, int originalPosition, double originalFrameRate,
+                              double expectedTimeInMillis) {
     ASSERT_DOUBLE_EQ(expectedTimeInMillis, skipper.GetCurrentSegmentTimeInMillis(originalPosition, originalFrameRate));
 }
 
-TEST(FrameSkipTest, CanGetCurrentTime) {
-    assertCurrentTime({0, 9, 1}, 0, 30, 0);
-    assertCurrentTime({0, 9, 2}, 0, 30, 0);
-    assertCurrentTime({1, 10, 2}, 1, 30, 0);
+TEST(FrameSkipTest, CanGetCurrentSegmentTimeInMillis) {
+    assertCurrentSegmentTime({ 0, 9, 1 }, 0, 30, 0);
+    assertCurrentSegmentTime({ 0, 9, 2 }, 0, 30, 0);
+    assertCurrentSegmentTime({ 1, 10, 2 }, 1, 30, 0);
 
-    assertCurrentTime({0, 9, 1}, 1, 30, 100.0 / 3);
-    assertCurrentTime({1, 10, 1}, 2, 30, 100.0 / 3);
+    assertCurrentSegmentTime({ 0, 9, 1 }, 1, 30, 100.0 / 3);
+    assertCurrentSegmentTime({ 1, 10, 1 }, 2, 30, 100.0 / 3);
 
-    assertCurrentTime({0, 9, 1}, 2, 30, 200.0 / 3);
-    assertCurrentTime({0, 9, 2}, 2, 30, 200.0 / 3);
-    assertCurrentTime({1, 10, 2}, 3, 30, 200.0 / 3);
+    assertCurrentSegmentTime({ 0, 9, 1 }, 2, 30, 200.0 / 3);
+    assertCurrentSegmentTime({ 0, 9, 2 }, 2, 30, 200.0 / 3);
+    assertCurrentSegmentTime({ 1, 10, 2 }, 3, 30, 200.0 / 3);
 
-    assertCurrentTime({0, 9, 1}, 8, 30, 800.0 / 3);
-    assertCurrentTime({0, 9, 2}, 8, 30, 800.0 / 3);
-    assertCurrentTime({1, 10, 2}, 9, 30, 800.0 / 3);
+    assertCurrentSegmentTime({ 0, 9, 1 }, 8, 30, 800.0 / 3);
+    assertCurrentSegmentTime({ 0, 9, 2 }, 8, 30, 800.0 / 3);
+    assertCurrentSegmentTime({ 1, 10, 2 }, 9, 30, 800.0 / 3);
 
-    assertCurrentTime({0, 9, 1}, 9, 30, 300);
-    assertCurrentTime({1, 10, 1}, 10, 30, 300);
+    assertCurrentSegmentTime({ 0, 9, 1 }, 9, 30, 300);
+    assertCurrentSegmentTime({ 1, 10, 1 }, 10, 30, 300);
 
 
-    assertCurrentTime({2, 12, 1}, 6, 30, 400.0 / 3);
-    assertCurrentTime({2, 12, 2}, 6, 30, 1100.0 / 9);
+    assertCurrentSegmentTime({ 2, 12, 1 }, 6, 30, 400.0 / 3);
+    assertCurrentSegmentTime({ 2, 12, 2 }, 6, 30, 1100.0 / 9);
 }
 
 
 
-void assertPositionRatio(FrameSkipper skipper, int originalPosition, double expectedRatio) {
+void assertSegmentFramePositionRatio(FrameSkipper skipper, int originalPosition, double expectedRatio) {
     ASSERT_DOUBLE_EQ(expectedRatio, skipper.GetSegmentFramePositionRatio(originalPosition));
 }
 
 
-TEST(FrameSkipTest, CanCalculateFramePositionRatio) {
-    assertPositionRatio({0, 9, 1}, 0, 0);
-    assertPositionRatio({0, 9, 1}, 2, 0.2);
-    assertPositionRatio({0, 9, 1}, 10, 1);
+TEST(FrameSkipTest, CanCalculateSegmentFramePositionRatio) {
+    assertSegmentFramePositionRatio({ 0, 9, 1 }, 0, 0);
+    assertSegmentFramePositionRatio({ 0, 9, 1 }, 2, 0.2);
+    assertSegmentFramePositionRatio({ 0, 9, 1 }, 10, 1);
 
-    assertPositionRatio({10, 29, 1}, 10, 0);
-    assertPositionRatio({10, 29, 1}, 14, 0.2);
-    assertPositionRatio({10, 29, 1}, 30, 1);
+    assertSegmentFramePositionRatio({ 10, 29, 1 }, 10, 0);
+    assertSegmentFramePositionRatio({ 10, 29, 1 }, 14, 0.2);
+    assertSegmentFramePositionRatio({ 10, 29, 1 }, 30, 1);
 
-    assertPositionRatio({10, 29, 2}, 10, 0);
-    assertPositionRatio({10, 29, 2}, 14, 0.2);
-    assertPositionRatio({10, 29, 2}, 30, 1);
+    assertSegmentFramePositionRatio({ 10, 29, 2 }, 10, 0);
+    assertSegmentFramePositionRatio({ 10, 29, 2 }, 14, 0.2);
+    assertSegmentFramePositionRatio({ 10, 29, 2 }, 30, 1);
 
-    assertPositionRatio({1, 11, 2}, 1, 0);
-    assertPositionRatio({1, 11, 2}, 3, 1.0 / 6);
-    assertPositionRatio({1, 11, 2}, 5, 1.0 / 3);
+    assertSegmentFramePositionRatio({ 1, 11, 2 }, 1, 0);
+    assertSegmentFramePositionRatio({ 1, 11, 2 }, 3, 1.0 / 6);
+    assertSegmentFramePositionRatio({ 1, 11, 2 }, 5, 1.0 / 3);
 }
 
 
-void assertPositionForRatio(FrameSkipper skipper, double ratio, int expectedFramePosition) {
+void assertRatioToOriginalFramePosition(FrameSkipper skipper, double ratio, int expectedFramePosition) {
     ASSERT_EQ(expectedFramePosition, skipper.RatioToOriginalFramePosition(ratio));
 
 }
 
-TEST(FrameSkipTest, CanCalculateFramePositionForRatio) {
-    assertPositionForRatio({0, 4, 1}, 0.5, 2);
-    assertPositionForRatio({0, 5, 1}, 0.5, 3);
+TEST(FrameSkipTest, CanCalculateRatioToOriginalFramePosition) {
+    assertRatioToOriginalFramePosition({ 0, 4, 1 }, 0.5, 2);
+    assertRatioToOriginalFramePosition({ 0, 5, 1 }, 0.5, 3);
 
-    assertPositionForRatio({0, 4, 1}, 1.0 / 3, 1);
-    assertPositionForRatio({0, 5, 1}, 1.0 / 3, 2);
+    assertRatioToOriginalFramePosition({ 0, 4, 1 }, 1.0 / 3, 1);
+    assertRatioToOriginalFramePosition({ 0, 5, 1 }, 1.0 / 3, 2);
 
-    assertPositionForRatio({3, 14, 2}, 0.5, 9);
-    assertPositionForRatio({3, 15, 2}, 0.5, 9);
+    assertRatioToOriginalFramePosition({ 3, 14, 2 }, 0.5, 9);
+    assertRatioToOriginalFramePosition({ 3, 15, 2 }, 0.5, 9);
 }
 
 
-void assertPositionForMillis(FrameSkipper skipper, double originalFrameRate, double millis, int expectedSegmentPos) {
-    int actualSegmentPos = skipper.MillisToSegmentFramePosition(originalFrameRate, millis);
+void assertMillisToSegmentFramePosition(FrameSkipper skipper, double originalFrameRate, double segmentMillis,
+                                        int expectedSegmentPos) {
+    int actualSegmentPos = skipper.MillisToSegmentFramePosition(originalFrameRate, segmentMillis);
     ASSERT_EQ(expectedSegmentPos, actualSegmentPos);
 }
 
 
-TEST(FrameSkipTest, CanCalculateFramePositionForMillis) {
+TEST(FrameSkipTest, CanCalculateMillisToSegmentFramePosition) {
 
-    assertPositionForMillis({0, 21, 1}, 10, 600, 6);
-    assertPositionForMillis({0, 21, 2}, 10, 600, 3);
-    assertPositionForMillis({0, 21, 3}, 10, 600, 2);
+    assertMillisToSegmentFramePosition({ 0, 21, 1 }, 10, 600, 6);
+    assertMillisToSegmentFramePosition({ 0, 21, 2 }, 10, 600, 3);
+    assertMillisToSegmentFramePosition({ 0, 21, 3 }, 10, 600, 2);
 
-    assertPositionForMillis({5, 26, 1}, 10, 600, 6);
-    assertPositionForMillis({5, 26, 2}, 10, 600, 3);
-    assertPositionForMillis({5, 26, 3}, 10, 600, 2);
+    assertMillisToSegmentFramePosition({ 5, 26, 1 }, 10, 600, 6);
+    assertMillisToSegmentFramePosition({ 5, 26, 2 }, 10, 600, 3);
+    assertMillisToSegmentFramePosition({ 5, 26, 3 }, 10, 600, 2);
 
-    assertPositionForMillis({5, 260, 1}, 10, 600, 6);
-    assertPositionForMillis({5, 260, 2}, 10, 600, 3);
-    assertPositionForMillis({5, 260, 3}, 10, 600, 2);
+    assertMillisToSegmentFramePosition({ 5, 260, 1 }, 10, 600, 6);
+    assertMillisToSegmentFramePosition({ 5, 260, 2 }, 10, 600, 3);
+    assertMillisToSegmentFramePosition({ 5, 260, 3 }, 10, 600, 2);
 }
 
 
@@ -387,6 +388,8 @@ TEST(FrameSkipTest, CanNotSetPositionBeyondSegment) {
 
     ASSERT_TRUE(cap.SetFramePosition(6));
     ASSERT_EQ(6, cap.GetCurrentFramePosition());
+
+    // At end of segment so there shouldn't be any frames left to process.
     assertReadFails(cap);
 }
 
