@@ -5,11 +5,11 @@
  * under contract, and is subject to the Rights in Data-General Clause        *
  * 52.227-14, Alt. IV (DEC 2007).                                             *
  *                                                                            *
- * Copyright 2016 The MITRE Corporation. All Rights Reserved.                 *
+ * Copyright 2017 The MITRE Corporation. All Rights Reserved.                 *
  ******************************************************************************/
 
 /******************************************************************************
- * Copyright 2016 The MITRE Corporation                                       *
+ * Copyright 2017 The MITRE Corporation                                       *
  *                                                                            *
  * Licensed under the Apache License, Version 2.0 (the "License");            *
  * you may not use this file except in compliance with the License.           *
@@ -71,24 +71,27 @@ MPFDetectionError ImageTransformerComponent::GetDetections(const MPFImageJob &jo
     // For illustration purposes only, we display the input image here
     // before applying the transformation.
     cv::Mat original;
-    original = cv::imread(job.data_uri, CV_LOAD_IMAGE_COLOR);
+    original = cv::imread(job.data_uri, CV_LOAD_IMAGE_IGNORE_ORIENTATION + CV_LOAD_IMAGE_COLOR);
     std::cout << "original image rows = " << original.rows << std::endl;
     std::cout << "original image cols = " << original.cols << std::endl;
     std::cout << std::endl << std::endl;
     cv::namedWindow("Original", CV_WINDOW_AUTOSIZE);
     cv::imshow("Original", original);
     cv::waitKey(500);
-    if( !original.data ) {
+
+    if (original.empty()) {
         std::cout << "[" << job.job_name << "] Could not open original image and will not return detections" << std::endl;
         return MPF_IMAGE_READ_ERROR;
     }
 
     MPFImageReader image_reader(job);
     cv::Mat image_data(image_reader.GetImage());
-    if( !image_data.data ) {
+
+    if (image_data.empty()) {
         std::cout << "[" << job.job_name << "] Could not open transformed image and will not return detections" << std::endl;
         return MPF_IMAGE_READ_ERROR;
     }
+
     std::cout << "transformed image rows = " << image_data.rows << std::endl;
     std::cout << "transformed image cols = " << image_data.cols << std::endl;
     std::cout << std::endl << std::endl;
