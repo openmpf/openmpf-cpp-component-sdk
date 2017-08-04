@@ -270,12 +270,13 @@ namespace MPF { namespace COMPONENT {
 
         int initialFramePos = (int) GetPropertyInternal(cv::CAP_PROP_POS_FRAMES);
 
+        SetPropertyInternal(cv::CAP_PROP_POS_FRAMES, firstFrame);
+
         std::vector<cv::Mat> initializationFrames;
-        for (int i = firstFrame; i < (firstFrame + frameCount); i++) {
-            SetPropertyInternal(cv::CAP_PROP_POS_FRAMES, i);
+        for (int i = 0; i < frameCount; i++) {
             cv::Mat frame;
             if (ReadAndTransform(frame)) {
-                initializationFrames.push_back(frame);
+                initializationFrames.push_back(std::move(frame));
             }
         }
 
@@ -283,5 +284,4 @@ namespace MPF { namespace COMPONENT {
 
         return initializationFrames;
     }
-
 }}
