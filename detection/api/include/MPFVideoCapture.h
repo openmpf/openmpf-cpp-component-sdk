@@ -48,6 +48,8 @@ namespace MPF { namespace COMPONENT {
          * transformers specified in jobProperties, to be used for video
          * processing jobs.
          * @param videoJob
+         * @param enableFrameTransformers Automatically transform frames based on job properties
+         * @param enableFrameSkipper Automatically skip frames based on job start frame, stop frame, and frame interval
          * @throws std::invalid_argument videoJob contains invalid property
          */
         explicit MPFVideoCapture(const MPFVideoJob &videoJob, bool enableFrameTransformers=true,
@@ -58,6 +60,7 @@ namespace MPF { namespace COMPONENT {
          * transformers specified in jobProperties, to be used for image
          * processing jobs.
          * @param imageJob
+         * @param enableFrameTransformers Automatically transform frames based on job properties
          * @throws std::invalid_argument imageJob contains invalid property
          */
         explicit MPFVideoCapture(const MPFImageJob &imageJob,  bool enableFrameTransformers=true);
@@ -91,7 +94,7 @@ namespace MPF { namespace COMPONENT {
 
         double GetCurrentTimeInMillis() const;
 
-        bool SetPositionInMillis(double milliseconds);
+        bool SetFramePositionInMillis(double milliseconds);
 
         double GetProperty(int propId) const;
 
@@ -103,7 +106,7 @@ namespace MPF { namespace COMPONENT {
 
         /**
          * Gets up to numberOfRequestedFrames frames before beginning of segment.
-         * If less than numberOfRequestedFrames are available, returned vector will have as many initializations frames
+         * If less than numberOfRequestedFrames are available, returned vector will have as many initialization frames
          * as are available.
          * If the job's start frame is 0, the returned vector will be empty.
          * @param numberOfRequestedFrames

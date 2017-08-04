@@ -91,12 +91,12 @@ namespace MPF { namespace COMPONENT {
     }
 
     int MPFVideoCapture::GetFrameCount() const {
-        return frameSkipper_.GetFrameCount();
+        return frameSkipper_.GetSegmentFrameCount();
     }
 
 
     bool MPFVideoCapture::SetFramePosition(int frameIdx) {
-        if (frameIdx < 0 || frameIdx > frameSkipper_.GetFrameCount()) {
+        if (frameIdx < 0 || frameIdx > frameSkipper_.GetSegmentFrameCount()) {
             return false;
         }
 
@@ -127,6 +127,7 @@ namespace MPF { namespace COMPONENT {
             int segPosBeforeRead = frameSkipper_.OriginalToSegmentFramePosition(originalPosBeforeRead);
             int nextOriginalFrame = frameSkipper_.SegmentToOriginalFramePosition(segPosBeforeRead + 1);
             if (nextOriginalFrame != originalPosBeforeRead + 1) {
+                // Only set property if we skipped more than one frame.
                 SetPropertyInternal(cv::CAP_PROP_POS_FRAMES, nextOriginalFrame);
             }
         }
@@ -171,7 +172,7 @@ namespace MPF { namespace COMPONENT {
 
 
     double MPFVideoCapture::GetFramePositionRatio() const {
-        return frameSkipper_.GetPositionRatio(GetOriginalFramePosition());
+        return frameSkipper_.GetSegmentFramePositionRatio(GetOriginalFramePosition());
     }
 
 
@@ -179,20 +180,20 @@ namespace MPF { namespace COMPONENT {
         if (positionRatio < 0 || positionRatio > 1) {
             return false;
         }
-        int framePos = frameSkipper_.GetFramePositionForRatio(positionRatio);
+        int framePos = frameSkipper_.RatioToOriginalFramePosition(positionRatio);
         return SetPropertyInternal(cv::CAP_PROP_POS_FRAMES, framePos);
     }
 
 
     double MPFVideoCapture::GetCurrentTimeInMillis() const {
         double originalFrameRate = GetPropertyInternal(cv::CAP_PROP_FPS);
-        return frameSkipper_.GetCurrentTimeInMillis(GetOriginalFramePosition(), originalFrameRate);
+        return frameSkipper_.GetCurrentSegmentTimeInMillis(GetOriginalFramePosition(), originalFrameRate);
     }
 
 
-    bool MPFVideoCapture::SetPositionInMillis(double milliseconds) {
+    bool MPFVideoCapture::SetFramePositionInMillis(double milliseconds) {
         double originalFrameRate = GetPropertyInternal(cv::CAP_PROP_FPS);
-        return SetFramePosition(frameSkipper_.GetSegmentPositionForMillis(originalFrameRate, milliseconds));
+        return SetFramePosition(frameSkipper_.MillisToSegmentFramePosition(originalFrameRate, milliseconds));
     }
 
 
@@ -222,7 +223,7 @@ namespace MPF { namespace COMPONENT {
             case cv::CAP_PROP_POS_AVI_RATIO:
                 return SetFramePositionRatio(value);
             case cv::CAP_PROP_POS_MSEC:
-                return SetPositionInMillis(value);
+                return SetFramePositionInMillis(value);
             default:
                 return SetPropertyInternal(propId, value);
         }

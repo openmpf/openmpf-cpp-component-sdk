@@ -40,7 +40,7 @@ using std::vector;
 
 
 void assertFrameCount(FrameSkipper frameSkipper, int expected) {
-    ASSERT_EQ(expected, frameSkipper.GetFrameCount());
+    ASSERT_EQ(expected, frameSkipper.GetSegmentFrameCount());
 }
 
 TEST(FrameSkipTest, CanCalculateFrameCount) {
@@ -136,8 +136,9 @@ TEST(FrameSkipTest, CanCalculateFrameRate) {
 }
 
 
-void assertCurrentTime(FrameSkipper skipper, int originalPosition, double originalFrameRate, double expectedTime) {
-    ASSERT_DOUBLE_EQ(expectedTime, skipper.GetCurrentTimeInMillis(originalPosition, originalFrameRate));
+void assertCurrentTime(FrameSkipper skipper, int originalPosition, double originalFrameRate,
+                       double expectedTimeInMillis) {
+    ASSERT_DOUBLE_EQ(expectedTimeInMillis, skipper.GetCurrentSegmentTimeInMillis(originalPosition, originalFrameRate));
 }
 
 TEST(FrameSkipTest, CanGetCurrentTime) {
@@ -167,7 +168,7 @@ TEST(FrameSkipTest, CanGetCurrentTime) {
 
 
 void assertPositionRatio(FrameSkipper skipper, int originalPosition, double expectedRatio) {
-    ASSERT_DOUBLE_EQ(expectedRatio, skipper.GetPositionRatio(originalPosition));
+    ASSERT_DOUBLE_EQ(expectedRatio, skipper.GetSegmentFramePositionRatio(originalPosition));
 }
 
 
@@ -191,7 +192,7 @@ TEST(FrameSkipTest, CanCalculateFramePositionRatio) {
 
 
 void assertPositionForRatio(FrameSkipper skipper, double ratio, int expectedFramePosition) {
-    ASSERT_EQ(expectedFramePosition, skipper.GetFramePositionForRatio(ratio));
+    ASSERT_EQ(expectedFramePosition, skipper.RatioToOriginalFramePosition(ratio));
 
 }
 
@@ -208,7 +209,7 @@ TEST(FrameSkipTest, CanCalculateFramePositionForRatio) {
 
 
 void assertPositionForMillis(FrameSkipper skipper, double originalFrameRate, double millis, int expectedSegmentPos) {
-    int actualSegmentPos = skipper.GetSegmentPositionForMillis(originalFrameRate, millis);
+    int actualSegmentPos = skipper.MillisToSegmentFramePosition(originalFrameRate, millis);
     ASSERT_EQ(expectedSegmentPos, actualSegmentPos);
 }
 

@@ -71,7 +71,7 @@ namespace MPF { namespace COMPONENT {
         /**
          * @return The number of frames in the segment
          */
-        int GetFrameCount() const;
+        int GetSegmentFrameCount() const;
 
 
         /**
@@ -94,21 +94,21 @@ namespace MPF { namespace COMPONENT {
 
 
         /**
-         * Gets the time in milliseconds between the start frame and the current position in the original video.
+         * Gets the time in milliseconds between the segment start frame and the current position.
          * @param originalPosition Frame position in original video
          * @param originalFrameRate Frame rate of original video
          * @return Time in milliseconds since the segment started
          */
-        double GetCurrentTimeInMillis(int originalPosition, double originalFrameRate) const;
+        double GetCurrentSegmentTimeInMillis(int originalPosition, double originalFrameRate) const;
 
 
         /**
          * Gets the segment position that is the specified number of milliseconds since the start of the segment
          * @param originalFrameRate Frame position in original video
-         * @param milliseconds Time since start of segment in milliseconds
+         * @param segmentMilliseconds Time since start of segment in milliseconds
          * @return Segment frame position for the specified number of milliseconds
          */
-        int GetSegmentPositionForMillis(double originalFrameRate, double milliseconds) const;
+        int MillisToSegmentFramePosition(double originalFrameRate, double segmentMilliseconds) const;
 
 
         /**
@@ -117,7 +117,7 @@ namespace MPF { namespace COMPONENT {
          * @param originalPosition Frame position in original video
          * @return Number between 0 and 1 indicating current position in video
          */
-        double GetPositionRatio(int originalPosition) const;
+        double GetSegmentFramePositionRatio(int originalPosition) const;
 
 
         /**
@@ -125,7 +125,7 @@ namespace MPF { namespace COMPONENT {
          * @param ratio Number between 0 and 1 that indicates position in video
          * @return Position in the original video
          */
-        int GetFramePositionForRatio(double ratio) const;
+        int RatioToOriginalFramePosition(double ratio) const;
 
 
         /**
