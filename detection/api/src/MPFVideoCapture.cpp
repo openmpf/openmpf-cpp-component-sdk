@@ -127,7 +127,7 @@ namespace MPF { namespace COMPONENT {
             int segPosBeforeRead = frameSkipper_.OriginalToSegmentFramePosition(originalPosBeforeRead);
             int nextOriginalFrame = frameSkipper_.SegmentToOriginalFramePosition(segPosBeforeRead + 1);
             if (nextOriginalFrame != originalPosBeforeRead + 1) {
-                // Only set property if we skipped more than one frame.
+                // Only set property if we skipped one or more frames
                 SetPropertyInternal(cv::CAP_PROP_POS_FRAMES, nextOriginalFrame);
             }
         }
