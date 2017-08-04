@@ -54,7 +54,7 @@ namespace MPF { namespace COMPONENT {
 
 
 
-    IFrameTransformer::Ptr MPFVideoCapture::GetFrameTransformer(bool enableFrameTransformers, const MPFJob &job) {
+    IFrameTransformer::Ptr MPFVideoCapture::GetFrameTransformer(bool enableFrameTransformers, const MPFJob &job) const {
         if (enableFrameTransformers) {
             return FrameTransformerFactory::GetTransformer(job, GetOriginalFrameSize());
         }
@@ -90,7 +90,7 @@ namespace MPF { namespace COMPONENT {
         return cvVideoCapture_.isOpened();
     }
 
-    int MPFVideoCapture::GetFrameCount() {
+    int MPFVideoCapture::GetFrameCount() const {
         return frameSkipper_.GetFrameCount();
     }
 
@@ -105,12 +105,12 @@ namespace MPF { namespace COMPONENT {
     }
 
 
-    int MPFVideoCapture::GetCurrentFramePosition() {
+    int MPFVideoCapture::GetCurrentFramePosition() const {
         int originalFramePosition = GetOriginalFramePosition();
         return frameSkipper_.OriginalToSegmentFramePosition(originalFramePosition);
     }
 
-    int MPFVideoCapture::GetOriginalFramePosition() {
+    int MPFVideoCapture::GetOriginalFramePosition() const {
         return (int) GetPropertyInternal(cv::CAP_PROP_POS_FRAMES);
     }
 
@@ -153,24 +153,24 @@ namespace MPF { namespace COMPONENT {
         cvVideoCapture_.release();
     }
 
-    double MPFVideoCapture::GetFrameRate() {
+    double MPFVideoCapture::GetFrameRate() const {
         double originalFrameRate = GetPropertyInternal(cv::CAP_PROP_FPS);
         return frameSkipper_.GetSegmentFrameRate(originalFrameRate);
     }
 
 
-    cv::Size MPFVideoCapture::GetFrameSize() {
+    cv::Size MPFVideoCapture::GetFrameSize() const {
         return frameTransformer_->GetFrameSize();
     }
 
-    cv::Size MPFVideoCapture::GetOriginalFrameSize() {
+    cv::Size MPFVideoCapture::GetOriginalFrameSize() const {
         int width = (int) GetPropertyInternal(cv::CAP_PROP_FRAME_WIDTH);
         int height = (int) GetPropertyInternal(cv::CAP_PROP_FRAME_HEIGHT);
         return cv::Size(width, height);
     }
 
 
-    double MPFVideoCapture::GetFramePositionRatio() {
+    double MPFVideoCapture::GetFramePositionRatio() const {
         return frameSkipper_.GetPositionRatio(GetOriginalFramePosition());
     }
 
@@ -184,7 +184,7 @@ namespace MPF { namespace COMPONENT {
     }
 
 
-    double MPFVideoCapture::GetCurrentTimeInMillis() {
+    double MPFVideoCapture::GetCurrentTimeInMillis() const {
         double originalFrameRate = GetPropertyInternal(cv::CAP_PROP_FPS);
         return frameSkipper_.GetCurrentTimeInMillis(GetOriginalFramePosition(), originalFrameRate);
     }
@@ -196,7 +196,7 @@ namespace MPF { namespace COMPONENT {
     }
 
 
-    double MPFVideoCapture::GetProperty(int propId) {
+    double MPFVideoCapture::GetProperty(int propId) const {
         switch (propId) {
             case cv::CAP_PROP_FRAME_WIDTH:
                 return GetFrameSize().width;
@@ -229,7 +229,7 @@ namespace MPF { namespace COMPONENT {
     }
 
 
-    double MPFVideoCapture::GetPropertyInternal(int propId) {
+    double MPFVideoCapture::GetPropertyInternal(int propId) const {
         return cvVideoCapture_.get(propId);
     }
 
@@ -238,12 +238,12 @@ namespace MPF { namespace COMPONENT {
     }
 
 
-    int MPFVideoCapture::GetFourCharCodecCode() {
+    int MPFVideoCapture::GetFourCharCodecCode() const {
         return (int) GetPropertyInternal(cv::CAP_PROP_FOURCC);
     }
 
 
-    void MPFVideoCapture::ReverseTransform(MPFVideoTrack &videoTrack) {
+    void MPFVideoCapture::ReverseTransform(MPFVideoTrack &videoTrack) const {
         videoTrack.start_frame = frameSkipper_.SegmentToOriginalFramePosition(videoTrack.start_frame);
         videoTrack.stop_frame = frameSkipper_.SegmentToOriginalFramePosition(videoTrack.stop_frame);
 

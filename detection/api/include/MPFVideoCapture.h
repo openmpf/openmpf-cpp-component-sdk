@@ -68,38 +68,38 @@ namespace MPF { namespace COMPONENT {
 
         bool IsOpened() const;
 
-        int GetFrameCount();
+        int GetFrameCount() const;
 
         bool SetFramePosition(int frameIdx);
 
 
-        int GetCurrentFramePosition();
+        int GetCurrentFramePosition() const;
 
-        int GetOriginalFramePosition();
+        int GetOriginalFramePosition() const;
 
         void Release();
 
-        double GetFrameRate();
+        double GetFrameRate() const;
 
-        cv::Size GetFrameSize();
+        cv::Size GetFrameSize() const;
 
-        cv::Size GetOriginalFrameSize();
+        cv::Size GetOriginalFrameSize() const;
 
-        double GetFramePositionRatio();
+        double GetFramePositionRatio() const;
 
         bool SetFramePositionRatio(double positionRatio);
 
-        double GetCurrentTimeInMillis();
+        double GetCurrentTimeInMillis() const;
 
         bool SetPositionInMillis(double milliseconds);
 
-        double GetProperty(int propId);
+        double GetProperty(int propId) const;
 
         bool SetProperty(int propId, double value);
 
-        int GetFourCharCodecCode();
+        int GetFourCharCodecCode() const;
 
-        void ReverseTransform(MPFVideoTrack &videoTrack);
+        void ReverseTransform(MPFVideoTrack &videoTrack) const;
 
         /**
          * Gets up to numberOfRequestedFrames frames before beginning of segment.
@@ -120,18 +120,21 @@ namespace MPF { namespace COMPONENT {
 
         IFrameTransformer::Ptr frameTransformer_;
 
-        double GetPropertyInternal(int propId);
+        double GetPropertyInternal(int propId) const;
 
         bool SetPropertyInternal(int propId, double value);
 
-        IFrameTransformer::Ptr GetFrameTransformer(bool frameTransformersEnabled, const MPFJob &job);
+
+        IFrameTransformer::Ptr GetFrameTransformer(bool frameTransformersEnabled, const MPFJob &job) const;
+
+        bool ReadAndTransform(cv::Mat &frame);
+
 
         static int GetFrameCount(const MPFVideoJob &job, const cv::VideoCapture &cvVideoCapture);
 
         static FrameSkipper GetFrameSkipper(bool frameSkippingEnabled, const MPFVideoJob &job,
                                             const cv::VideoCapture &cvVideoCapture);
 
-        bool ReadAndTransform(cv::Mat &frame);
     };
 }}
 
