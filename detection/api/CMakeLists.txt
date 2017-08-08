@@ -5,11 +5,11 @@
 # under contract, and is subject to the Rights in Data-General Clause       #
 # 52.227-14, Alt. IV (DEC 2007).                                            #
 #                                                                           #
-# Copyright 2016 The MITRE Corporation. All Rights Reserved.                #
+# Copyright 2017 The MITRE Corporation. All Rights Reserved.                #
 #############################################################################
 
 #############################################################################
-# Copyright 2016 The MITRE Corporation                                      #
+# Copyright 2017 The MITRE Corporation                                      #
 #                                                                           #
 # Licensed under the Apache License, Version 2.0 (the "License");           #
 # you may not use this file except in compliance with the License.          #
@@ -79,7 +79,11 @@ set(SOURCE_FILES
         include/adapters/MPFImageAndVideoDetectionComponentAdapter.h
         include/adapters/MPFImageDetectionComponentAdapter.h
         include/adapters/MPFVideoDetectionComponentAdapter.h
-        include/adapters/MPFVideoFrameDataDetectionAdapter.h)
+        include/adapters/MPFVideoFrameDataDetectionAdapter.h
+
+        include/FrameSkipper.h
+        src/FrameSkipper.cpp
+    )
 
 add_library(mpfDetectionComponentApi SHARED ${SOURCE_FILES})
 target_link_libraries(mpfDetectionComponentApi mpfComponentInterface ${OpenCV_LIBS})
@@ -87,3 +91,7 @@ target_link_libraries(mpfDetectionComponentApi mpfComponentInterface ${OpenCV_LI
 
 
 export_mpf_lib(mpfDetectionComponentApi)
+
+
+add_subdirectory(test)
+

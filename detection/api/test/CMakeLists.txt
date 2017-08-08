@@ -5,11 +5,11 @@
 # under contract, and is subject to the Rights in Data-General Clause       #
 # 52.227-14, Alt. IV (DEC 2007).                                            #
 #                                                                           #
-# Copyright 2017 The MITRE Corporation. All Rights Reserved.                #
+# Copyright 2016 The MITRE Corporation. All Rights Reserved.                #
 #############################################################################
 
 #############################################################################
-# Copyright 2017 The MITRE Corporation                                      #
+# Copyright 2016 The MITRE Corporation                                      #
 #                                                                           #
 # Licensed under the Apache License, Version 2.0 (the "License");           #
 # you may not use this file except in compliance with the License.          #
@@ -26,10 +26,19 @@
 
 
 cmake_minimum_required(VERSION 3.6)
-project(mpf-cmake-helpers)
 
+project(detection-api-tests)
+set(CMAKE_CXX_STANDARD 11)
 
-install(FILES MpfHelpers.cmake CopySharedLibDependencies.cmake mpfCMakeHelpersConfig.cmake
-    DESTINATION lib/cmake/mpfCMakeHelpers)
+find_package(GTest)
+if (${GTEST_FOUND})
+    enable_testing()
+    add_executable(DetectionApiTest test_detection_api.cpp)
+    target_link_libraries(DetectionApiTest GTest::GTest GTest::Main mpfDetectionComponentApi)
 
-export(PACKAGE mpfCMakeHelpers)
+    add_test(NAME DetectionApiTest COMMAND DetectionApiTest)
+
+    file(GLOB TEST_VIDEOS test_vids/*)
+    file(COPY ${TEST_VIDEOS} DESTINATION test/test_vids)
+
+endif()
