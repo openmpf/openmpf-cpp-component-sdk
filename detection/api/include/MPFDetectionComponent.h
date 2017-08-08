@@ -207,6 +207,7 @@ namespace MPF { namespace COMPONENT {
                 : MPFJob(job_name, data_uri, job_properties, media_properties)
                 , has_feed_forward_location(false) {
         }
+
         MPFImageJob(const std::string &job_name,
                     const std::string &data_uri,
                     const MPFImageLocation &location,
