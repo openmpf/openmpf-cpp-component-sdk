@@ -45,67 +45,48 @@ namespace MPF { namespace COMPONENT {
 
         int bytes_per_channel;
         int num_channels;
-        int start_frame = job.start_frame;
-        int stop_frame = job.stop_frame;
-        int frame_interval = DetectionComponentUtils::GetProperty<int>(job.job_properties, "FRAME_INTERVAL", 1);
         MPFDetectionError rc = MPF_DETECTION_SUCCESS;
         string err_msg;
 
         output.data.clear();
 
         //Get video properties
-        int frame_count = cap.GetFrameCount();
         int fps = cap.GetFrameRate();
-
-        cap.SetFramePosition(start_frame);
-        int frame_num = cap.GetCurrentFramePosition();
-
-        // Check to see if we got to the end of the video before
-        // reaching the first frame.  If so, return an empty vector.
-        if (frame_num >= frame_count) {
-            rc = MPF_DETECTION_SUCCESS;
-            err_msg = "[" + job.job_name +
-                      "] start_frame exceeds the number of frames in the video: frame count = " +
-                      std::to_string(frame_count);
-            return std::make_pair(rc, err_msg);
-        }
-
-        int end_frame = std::min(stop_frame, (frame_count - 1));
 
         output.width = cap.GetFrameSize().width;
         output.height = cap.GetFrameSize().height;
 
         cv::Mat frame;
         uint8_t *frame_data;
-        unsigned long frames_in_segment;
+        unsigned long frames_in_segment = cap.GetFrameCount();
+        int start_frame = cap.GetCurrentFramePosition();
+        int stop_frame = frames_in_segment - 1;
+
         try {
             //Get the first frame so that we can figure out how much memory
             //needs to be allocated for the data.
-            cap.Read(frame);
-            if (frame.empty() || frame.rows == 0 || frame.cols == 0) {
+            bool success = cap.Read(frame);
+            if (!success) {
+                rc = MPF_IMAGE_READ_ERROR;
+                err_msg = "[" + job.job_name + "] Failed to read a frame at position " +
+                          std::to_string(cap.GetCurrentFramePosition());
+                return std::make_pair(rc, err_msg);
+            }
+            else if (frame.empty() || frame.rows == 0 || frame.cols == 0) {
                 rc = MPF_BAD_FRAME_SIZE;
-                err_msg = "[" + job.job_name + "] Empty frame encountered at frame " +
+                err_msg = "[" + job.job_name + "] Empty frame encountered at position " +
                           std::to_string(cap.GetCurrentFramePosition());
                 return std::make_pair(rc, err_msg);
             }
 
-            bytes_per_channel = frame.elemSize1();  // size of one channel
-            // in bytes
+            bytes_per_channel = frame.elemSize1();  // size of one channel in bytes
             num_channels = frame.channels();
-
-            //Calculate total frame data size in bytes
-
-            frames_in_segment = stop_frame - start_frame + 1;
-
-            // Adjust the frame count to account for the frame interval
-            float ratio = static_cast<float>(frames_in_segment) / static_cast<float>(frame_interval);
-            frames_in_segment = static_cast<int>(std::ceil(ratio));
 
             unsigned long pixels_per_frame = frame.rows * frame.cols;
             unsigned long frame_data_byte_size = pixels_per_frame * num_channels * bytes_per_channel;
 
             // Test for overflow before calculating the total_data_size
-            if (frames_in_segment && (frame_data_byte_size > (ULONG_MAX/frames_in_segment))) {
+            if ((frames_in_segment > 0) && (frame_data_byte_size > (ULONG_MAX/frames_in_segment))) {
                 rc = MPF_MEMORY_ALLOCATION_FAILED;
                 err_msg = "[" + job.job_name + "] Overflow detected in the total bytes size for frame data. Try a smaller segment size.";
                 return std::make_pair(rc, err_msg);
@@ -115,7 +96,7 @@ namespace MPF { namespace COMPONENT {
 
             //Allocate a block of memory, and carve it up into a vector of
             //byte pointers.
-            frame_data = new(std::nothrow) uint8_t[total_data_size];
+            frame_data = new (std::nothrow) uint8_t[total_data_size];
             if (NULL == frame_data) {
                 rc = MPF_MEMORY_ALLOCATION_FAILED;
                 err_msg = "[" + job.job_name + "] Memory allocation failed: byte size = " +
@@ -148,21 +129,14 @@ namespace MPF { namespace COMPONENT {
                 memcpy(dst_addr, ptr, bytes_per_row);
             }
 
-            // frame skip is one less than the frame interval, since the
-            // act of reading a frame advances the current frame position
-            // by 1.  So for a frame interval of 1, where we want to
-            // process every frame, the frame skip added to the current
-            // frame position needs to be 0.
-            int frame_skip = frame_interval - 1;
-            cap.SetFramePosition(cap.GetCurrentFramePosition() + frame_skip);
             int k = cap.GetCurrentFramePosition();
 
             for (int buffer_index = 1; buffer_index < frames_in_segment; buffer_index++) {
 
-                cap.Read(frame);
-                if (frame.empty() || frame.rows == 0 || frame.cols == 0) {
+                success = cap.Read(frame);
+                if (!success || (frame.empty() || frame.rows == 0 || frame.cols == 0)) {
                     rc = MPF_DETECTION_SUCCESS;
-                    err_msg = "[" + job.job_name + "] Empty frame encountered at frame " + std::to_string(k);
+                    err_msg = "[" + job.job_name + "] Frame read error at frame " + std::to_string(k);
                     stop_frame = k - 1;
                     break;
                 }
@@ -175,7 +149,6 @@ namespace MPF { namespace COMPONENT {
                 }
 
                 frame.release();
-                cap.SetFramePosition(cap.GetCurrentFramePosition() + frame_skip);
                 k = cap.GetCurrentFramePosition();
             }
         } catch (...) {
@@ -191,7 +164,7 @@ namespace MPF { namespace COMPONENT {
 
         output.start_frame = start_frame;
         output.stop_frame = stop_frame;
-        output.frame_interval = frame_interval;
+        output.frame_interval = 1;
         output.num_channels = num_channels;
         output.bytes_per_channel = bytes_per_channel;
         output.frames_in_segment = frames_in_segment;
