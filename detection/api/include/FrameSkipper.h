@@ -128,15 +128,7 @@ namespace MPF { namespace COMPONENT {
         int RatioToOriginalFramePosition(double ratio) const;
 
 
-        /**
-         * Determines whether it is possible to get numberOfRequestedFrames before the beginning of the segment.
-         * @param numberOfRequestedFrames Requested number of initialization frames
-         * @param firstInitializationFrame[out] Position in original video of first initializationFrame
-         * @param numberOfInitializationFramesAvailable[out] Number less than or equal to numberOfRequestedFrames
-         *                                                   indicating how many initialization frames are available
-         */
-        void GetAvailableInitializationFrames(int numberOfRequestedFrames, int &firstInitializationFrame,
-                                              int &numberOfInitializationFramesAvailable) const;
+        int GetAvailableInitializationFrameCount() const;
 
 
 

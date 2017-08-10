@@ -105,10 +105,10 @@ namespace MPF { namespace COMPONENT {
         void ReverseTransform(MPFVideoTrack &videoTrack) const;
 
         /**
-         * Gets up to numberOfRequestedFrames frames before beginning of segment.
+         * Gets up to numberOfRequestedFrames frames before beginning of segment skipping frameInterval frames.
          * If less than numberOfRequestedFrames are available, returned vector will have as many initialization frames
          * as are available.
-         * If the job's start frame is 0, the returned vector will be empty.
+         * If the job's start frame is less than the frame interval, the returned vector will be empty.
          * @param numberOfRequestedFrames
          * @return Vector that contains between 0 and numberOfRequestedFrames frames
          */

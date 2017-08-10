@@ -264,22 +264,24 @@ namespace MPF { namespace COMPONENT {
     }
 
 
+
     std::vector<cv::Mat> MPFVideoCapture::GetInitializationFramesIfAvailable(int numberOfRequestedFrames) {
-        int firstFrame;
-        int frameCount;
-        frameSkipper_.GetAvailableInitializationFrames(numberOfRequestedFrames, firstFrame, frameCount);
-        if (frameCount < 1) {
+        int initFramesAvailable = frameSkipper_.GetAvailableInitializationFrameCount();
+        int numFramesToGet = std::min(initFramesAvailable, numberOfRequestedFrames);
+        if (numFramesToGet < 1) {
             return {};
         }
 
+
         int initialFramePos = (int) GetPropertyInternal(cv::CAP_PROP_POS_FRAMES);
 
-        SetPropertyInternal(cv::CAP_PROP_POS_FRAMES, firstFrame);
+        int segmentPos = frameSkipper_.SegmentToOriginalFramePosition(-1 * numFramesToGet);
+        SetPropertyInternal(cv::CAP_PROP_POS_FRAMES, segmentPos);
 
         std::vector<cv::Mat> initializationFrames;
-        for (int i = 0; i < frameCount; i++) {
+        for (int i = 0; i < numFramesToGet; i++) {
             cv::Mat frame;
-            if (ReadAndTransform(frame)) {
+            if (Read(frame)) {
                 initializationFrames.push_back(std::move(frame));
             }
         }

@@ -132,12 +132,7 @@ namespace MPF { namespace COMPONENT {
     }
 
 
-    void FrameSkipper::GetAvailableInitializationFrames(int numberOfRequestedFrames,
-                                                        int &firstInitializationFrame,
-                                                        int &numberOfInitializationFramesAvailable) const {
-
-        numberOfInitializationFramesAvailable = std::min(startFrame_, numberOfRequestedFrames);
-        firstInitializationFrame = startFrame_ - numberOfInitializationFramesAvailable;
-
+    int FrameSkipper::GetAvailableInitializationFrameCount() const {
+        return startFrame_ / frameInterval_;
     }
 }}
