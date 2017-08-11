@@ -462,6 +462,28 @@ TEST(FrameSkipTest, CanGetInitializationFrames) {
 }
 
 
+TEST(FrameSkipTest, VerifyInitializationFramesIndependentOfCurrentPosition) {
+
+    auto cap = CreateVideoCapture(10, 29, 5);
+    cap.SetFramePosition(2);
+
+    cv::Mat frame;
+    cap.Read(frame);
+    ASSERT_EQ(20, GetFrameNumber(frame));
+    ASSERT_EQ(3, cap.GetCurrentFramePosition());
+
+    const auto &initFrames = cap.GetInitializationFramesIfAvailable(2);
+
+    ASSERT_EQ(2, initFrames.size());
+    ASSERT_EQ(0, GetFrameNumber(initFrames[0]));
+    ASSERT_EQ(5, GetFrameNumber(initFrames[1]));
+
+    ASSERT_EQ(3, cap.GetCurrentFramePosition());
+    cap.Read(frame);
+    ASSERT_EQ(25, GetFrameNumber(frame));
+}
+
+
 //TEST(FrameSkipTest, CreateTestVideo) {
 //
 //    cv::VideoCapture cap("/home/mpf/sample-data/sample.mp4");

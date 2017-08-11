@@ -128,6 +128,11 @@ namespace MPF { namespace COMPONENT {
         int RatioToOriginalFramePosition(double ratio) const;
 
 
+        /**
+         * Returns the number of frames before the beginning of the segment.
+         * Frames that are skipped due to the frame interval are not counted.
+         * @return Number of available initialization frames
+         */
         int GetAvailableInitializationFrameCount() const;
 
 
