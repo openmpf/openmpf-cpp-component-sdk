@@ -75,12 +75,12 @@ namespace MPF { namespace COMPONENT {
 
     int MPFVideoCapture::GetFrameCount(const MPFVideoJob &job, const cv::VideoCapture &cvVideoCapture) {
         // use the frame count provided by the media inspector if possible
-        int frameCount = DetectionComponentUtils::GetProperty<int>(job.media_properties, "FRAME_COUNT", -1);
+        int frameCount = DetectionComponentUtils::GetProperty(job.media_properties, "FRAME_COUNT", -1);
         if (frameCount > 0) {
             return frameCount;
         }
 
-        return (int) cvVideoCapture.get(cv::CAP_PROP_FRAME_COUNT);
+        return static_cast<int>(cvVideoCapture.get(cv::CAP_PROP_FRAME_COUNT));
     }
 
 
@@ -111,7 +111,7 @@ namespace MPF { namespace COMPONENT {
     }
 
     int MPFVideoCapture::GetOriginalFramePosition() const {
-        return (int) GetPropertyInternal(cv::CAP_PROP_POS_FRAMES);
+        return static_cast<int>(GetPropertyInternal(cv::CAP_PROP_POS_FRAMES));
     }
 
 
@@ -165,9 +165,9 @@ namespace MPF { namespace COMPONENT {
     }
 
     cv::Size MPFVideoCapture::GetOriginalFrameSize() const {
-        int width = (int) GetPropertyInternal(cv::CAP_PROP_FRAME_WIDTH);
-        int height = (int) GetPropertyInternal(cv::CAP_PROP_FRAME_HEIGHT);
-        return cv::Size(width, height);
+        auto width = static_cast<int>(GetPropertyInternal(cv::CAP_PROP_FRAME_WIDTH));
+        auto height = static_cast<int>(GetPropertyInternal(cv::CAP_PROP_FRAME_HEIGHT));
+        return {width, height};
     }
 
 
@@ -223,7 +223,7 @@ namespace MPF { namespace COMPONENT {
             case cv::CAP_PROP_FPS:
                 return false;
             case cv::CAP_PROP_POS_FRAMES:
-                return SetFramePosition((int) value);
+                return SetFramePosition(static_cast<int>(value));
             case cv::CAP_PROP_POS_AVI_RATIO:
                 return SetFramePositionRatio(value);
             case cv::CAP_PROP_POS_MSEC:
@@ -244,7 +244,7 @@ namespace MPF { namespace COMPONENT {
 
 
     int MPFVideoCapture::GetFourCharCodecCode() const {
-        return (int) GetPropertyInternal(cv::CAP_PROP_FOURCC);
+        return static_cast<int>(GetPropertyInternal(cv::CAP_PROP_FOURCC));
     }
 
 
@@ -273,7 +273,7 @@ namespace MPF { namespace COMPONENT {
         }
 
 
-        int initialFramePos = (int) GetPropertyInternal(cv::CAP_PROP_POS_FRAMES);
+        auto initialFramePos = static_cast<int>(GetPropertyInternal(cv::CAP_PROP_POS_FRAMES));
 
         int segmentPos = frameSkipper_.SegmentToOriginalFramePosition(-1 * numFramesToGet);
         SetPropertyInternal(cv::CAP_PROP_POS_FRAMES, segmentPos);

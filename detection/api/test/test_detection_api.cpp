@@ -259,7 +259,7 @@ TEST(FrameSkipTest, CanDetermineAvailableInitializationFrames) {
 
 int GetFrameNumber(const cv::Mat &frame)  {
     cv::Scalar_<uchar> color = frame.at<cv::Scalar_<uchar>>(0, 0);
-    return (int) color.val[0];
+    return static_cast<int>(color.val[0]);
 }
 
 
