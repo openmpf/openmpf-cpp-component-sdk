@@ -46,7 +46,6 @@ namespace MPF { namespace COMPONENT {
         int height;
         int num_channels;
         int bytes_per_channel;
-        int frame_interval;
         int frames_in_segment;
         int fps;
         std::vector<uint8_t *> data;

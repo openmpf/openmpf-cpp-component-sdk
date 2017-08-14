@@ -164,7 +164,6 @@ namespace MPF { namespace COMPONENT {
 
         output.start_frame = start_frame;
         output.stop_frame = stop_frame;
-        output.frame_interval = 1;
         output.num_channels = num_channels;
         output.bytes_per_channel = bytes_per_channel;
         output.frames_in_segment = frames_in_segment;
