@@ -39,8 +39,7 @@ namespace MPF { namespace COMPONENT {
     FrameSkipper::FrameSkipper(int startFrame, int stopFrame, int frameInterval)
             : startFrame_(startFrame)
             , stopFrame_(stopFrame)
-            , frameInterval_(frameInterval)
-    {
+            , frameInterval_(frameInterval) {
 
     }
 
@@ -48,6 +47,7 @@ namespace MPF { namespace COMPONENT {
     int FrameSkipper::SegmentToOriginalFramePosition(int segmentPosition) const {
         return frameInterval_ * segmentPosition + startFrame_;
     }
+
 
     int FrameSkipper::OriginalToSegmentFramePosition(int originalPosition) const {
         return (originalPosition - startFrame_) / frameInterval_;
@@ -70,9 +70,11 @@ namespace MPF { namespace COMPONENT {
         return range / originalFrameRate;
     }
 
+
     double FrameSkipper::GetSegmentFrameRate(double originalFrameRate) const {
         return GetSegmentFrameCount() / GetSegmentDuration(originalFrameRate);
     }
+
 
     double FrameSkipper::GetCurrentSegmentTimeInMillis(int originalPosition, double originalFrameRate) const {
         int segmentPos = OriginalToSegmentFramePosition(originalPosition);
@@ -82,10 +84,9 @@ namespace MPF { namespace COMPONENT {
     }
 
 
-
     int FrameSkipper::MillisToSegmentFramePosition(double originalFrameRate, double segmentMilliseconds) const {
         double segmentFps = GetSegmentFrameRate(originalFrameRate);
-        return (int) (segmentFps * segmentMilliseconds / 1000);
+        return static_cast<int>(segmentFps * segmentMilliseconds / 1000);
     }
 
 
@@ -103,7 +104,7 @@ namespace MPF { namespace COMPONENT {
 
 
     int FrameSkipper::RatioToOriginalFramePosition(double ratio) const {
-        int segmentPosition = (int) (GetSegmentFrameCount() * ratio);
+        auto segmentPosition = static_cast<int>(GetSegmentFrameCount() * ratio);
         return SegmentToOriginalFramePosition(segmentPosition);
     }
 
@@ -132,12 +133,7 @@ namespace MPF { namespace COMPONENT {
     }
 
 
-    void FrameSkipper::GetAvailableInitializationFrames(int numberOfRequestedFrames,
-                                                        int &firstInitializationFrame,
-                                                        int &numberOfInitializationFramesAvailable) const {
-
-        numberOfInitializationFramesAvailable = std::min(startFrame_, numberOfRequestedFrames);
-        firstInitializationFrame = startFrame_ - numberOfInitializationFramesAvailable;
-
+    int FrameSkipper::GetAvailableInitializationFrameCount() const {
+        return startFrame_ / frameInterval_;
     }
 }}
