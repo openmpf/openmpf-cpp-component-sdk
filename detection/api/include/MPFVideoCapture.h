@@ -123,15 +123,17 @@ namespace MPF { namespace COMPONENT {
 
         IFrameTransformer::Ptr frameTransformer_;
 
+        int framePosition_;
+
         double GetPropertyInternal(int propId) const;
 
         bool SetPropertyInternal(int propId, double value);
 
+        bool SetSegmentPositionInternal(int frameIdx);
+
+        void IncrementPosition();
 
         IFrameTransformer::Ptr GetFrameTransformer(bool frameTransformersEnabled, const MPFJob &job) const;
-
-        bool ReadAndTransform(cv::Mat &frame);
-
 
         static int GetFrameCount(const MPFVideoJob &job, const cv::VideoCapture &cvVideoCapture);
 
