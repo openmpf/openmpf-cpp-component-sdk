@@ -231,32 +231,35 @@ TEST(FrameSkipTest, CanCalculateMillisToSegmentFramePosition) {
 }
 
 
-void assertAvailableInitializationFrames(int startFrame, int numberOfRequestedFrames, int expectedFirstInitFrame,
-                                         int expectedNumAvailable) {
-    FrameSkipper skipper(startFrame, startFrame * 10, 5);
-    int actualFirstInitFrame;
-    int actualNumAvailable;
-    skipper.GetAvailableInitializationFrames(numberOfRequestedFrames, actualFirstInitFrame, actualNumAvailable);
-    ASSERT_EQ(expectedFirstInitFrame, actualFirstInitFrame);
-    ASSERT_EQ(expectedNumAvailable, actualNumAvailable);
+void assertAvailableInitializationFrames(int startFrame, int frameInterval, int expectedNumAvailable) {
 
+    FrameSkipper skipper(startFrame, startFrame + 10, frameInterval);
+    int actualNumAvailable = skipper.GetAvailableInitializationFrameCount();
+    ASSERT_EQ(expectedNumAvailable, actualNumAvailable);
 }
 
+
 TEST(FrameSkipTest, CanDetermineAvailableInitializationFrames) {
-    assertAvailableInitializationFrames(0, 100, 0, 0);
-    assertAvailableInitializationFrames(1, 100, 0, 1);
-    assertAvailableInitializationFrames(2, 100, 0, 2);
+    assertAvailableInitializationFrames(0, 1, 0);
+    assertAvailableInitializationFrames(1, 1, 1);
+    assertAvailableInitializationFrames(2, 1, 2);
+    assertAvailableInitializationFrames(10, 1, 10);
 
-    assertAvailableInitializationFrames(10, 1, 9, 1);
-    assertAvailableInitializationFrames(10, 3, 7, 3);
-    assertAvailableInitializationFrames(10, 10, 0, 10);
+    assertAvailableInitializationFrames(0, 2, 0);
+    assertAvailableInitializationFrames(10, 2, 5);
+    assertAvailableInitializationFrames(11, 2, 5);
 
+    assertAvailableInitializationFrames(2, 3, 0);
+    assertAvailableInitializationFrames(5, 3, 1);
+    assertAvailableInitializationFrames(10, 3, 3);
+
+    assertAvailableInitializationFrames(10, 12, 0);
 }
 
 
 int GetFrameNumber(const cv::Mat &frame)  {
     cv::Scalar_<uchar> color = frame.at<cv::Scalar_<uchar>>(0, 0);
-    return (int) color.val[0];
+    return static_cast<int>(color.val[0]);
 }
 
 
@@ -416,9 +419,9 @@ TEST(FrameSkipTest, CanFixFramePosInReverseTransform) {
 
 
 
-void assertInitializationFrameIds(int startFrame, int numberRequested,
+void assertInitializationFrameIds(int startFrame, int frameInterval, int numberRequested,
                                   const std::vector<int> &expectedInitFrames) {
-    auto cap = CreateVideoCapture(startFrame, 29, 4);
+    auto cap = CreateVideoCapture(startFrame, 29, frameInterval);
 
     const std::vector<cv::Mat> &initFrames = cap.GetInitializationFramesIfAvailable(numberRequested);
 
@@ -433,14 +436,51 @@ void assertInitializationFrameIds(int startFrame, int numberRequested,
 
 
 TEST(FrameSkipTest, CanGetInitializationFrames) {
-    assertInitializationFrameIds(0, 100, {});
-    assertInitializationFrameIds(1, 100, {0});
-    assertInitializationFrameIds(2, 100, {0, 1});
-    assertInitializationFrameIds(3, 100, {0, 1, 2});
+    assertInitializationFrameIds(0, 1, 100, {});
+    assertInitializationFrameIds(1, 1, 100, {0});
+    assertInitializationFrameIds(2, 1, 100, {0, 1});
+    assertInitializationFrameIds(3, 1, 100, {0, 1, 2});
 
-    assertInitializationFrameIds(10, 1, {9});
-    assertInitializationFrameIds(10, 2, {8, 9});
-    assertInitializationFrameIds(10, 5, {5, 6, 7, 8, 9});
+    assertInitializationFrameIds(10, 1, 1, {9});
+    assertInitializationFrameIds(10, 1, 2, {8, 9});
+    assertInitializationFrameIds(10, 1, 5, {5, 6, 7, 8, 9});
+
+
+    assertInitializationFrameIds(0, 4, 100, {});
+    assertInitializationFrameIds(3, 4, 100, {});
+    assertInitializationFrameIds(4, 4, 100, {0});
+    assertInitializationFrameIds(7, 4, 100, {3});
+    assertInitializationFrameIds(8, 4, 100, {0, 4});
+    assertInitializationFrameIds(9, 4, 100, {1, 5});
+
+    assertInitializationFrameIds(10, 3, 1, {7});
+    assertInitializationFrameIds(10, 3, 2, {4, 7});
+    assertInitializationFrameIds(10, 3, 3, {1, 4, 7});
+    assertInitializationFrameIds(10, 3, 4, {1, 4, 7});
+    assertInitializationFrameIds(10, 3, 5, {1, 4, 7});
+    assertInitializationFrameIds(10, 3, 100, {1, 4, 7});
+}
+
+
+TEST(FrameSkipTest, VerifyInitializationFramesIndependentOfCurrentPosition) {
+
+    auto cap = CreateVideoCapture(10, 29, 5);
+    cap.SetFramePosition(2);
+
+    cv::Mat frame;
+    cap.Read(frame);
+    ASSERT_EQ(20, GetFrameNumber(frame));
+    ASSERT_EQ(3, cap.GetCurrentFramePosition());
+
+    const auto &initFrames = cap.GetInitializationFramesIfAvailable(2);
+
+    ASSERT_EQ(2, initFrames.size());
+    ASSERT_EQ(0, GetFrameNumber(initFrames[0]));
+    ASSERT_EQ(5, GetFrameNumber(initFrames[1]));
+
+    ASSERT_EQ(3, cap.GetCurrentFramePosition());
+    cap.Read(frame);
+    ASSERT_EQ(25, GetFrameNumber(frame));
 }
 
 
