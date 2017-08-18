@@ -118,7 +118,7 @@ namespace MPF { namespace COMPONENT {
 
 
     int FrameSkipper::GetStopFrame(const MPFVideoJob &job, int originalFrameCount) {
-        if (job.stop_frame < originalFrameCount) {
+        if (job.stop_frame > 0 && job.stop_frame < originalFrameCount) {
             return job.stop_frame;
         }
 

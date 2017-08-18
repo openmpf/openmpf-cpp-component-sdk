@@ -35,6 +35,7 @@
 #include "MPFDetectionComponent.h"
 #include "frame_transformers/IFrameTransformer.h"
 #include "FrameSkipper.h"
+#include "SeekStrategy.h"
 
 
 namespace MPF { namespace COMPONENT {
@@ -120,7 +121,15 @@ namespace MPF { namespace COMPONENT {
 
         IFrameTransformer::Ptr frameTransformer_;
 
+        /**
+         * MPFVideoCapture keeps track of the frame position instead of depending on
+         * cv::VideoCapture::get(cv::VideoCaptureProperties::CAP_PROP_POS_FRAMES)
+         * because for certain videos it does not correctly report the frame position.
+         */
         int framePosition_ = 0;
+
+        SeekStrategy::CPtr seekStrategy_ = SeekStrategy::CPtr(new SetFramePositionSeek);
+
 
         double GetPropertyInternal(int propId) const;
 
@@ -129,6 +138,10 @@ namespace MPF { namespace COMPONENT {
         IFrameTransformer::Ptr GetFrameTransformer(bool frameTransformersEnabled, const MPFJob &job) const;
 
         bool ReadAndTransform(cv::Mat &frame);
+
+        void MoveToNextFrameInSegment();
+
+        void SeekFallback();
 
         bool UpdateOriginalFramePosition(int newOriginalFramePosition);
 

@@ -83,6 +83,9 @@ set(SOURCE_FILES
 
         include/FrameSkipper.h
         src/FrameSkipper.cpp
+
+        include/SeekStrategy.h
+        src/SeekStrategy.cpp
     )
 
 add_library(mpfDetectionComponentApi SHARED ${SOURCE_FILES})
