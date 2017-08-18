@@ -31,10 +31,12 @@
 
 namespace MPF { namespace COMPONENT {
 
+
     FrameSkipper::FrameSkipper(const MPFVideoJob &job, int originalFrameCount)
             : FrameSkipper(job.start_frame, GetStopFrame(job, originalFrameCount), GetFrameInterval(job)) {
 
     }
+
 
     FrameSkipper::FrameSkipper(int startFrame, int stopFrame, int frameInterval)
             : startFrame_(startFrame)
@@ -48,10 +50,6 @@ namespace MPF { namespace COMPONENT {
         return frameInterval_ * segmentPosition + startFrame_;
     }
 
-
-    int FrameSkipper::OriginalToSegmentFramePosition(int originalPosition) const {
-        return (originalPosition - startFrame_) / frameInterval_;
-    }
 
 
     int FrameSkipper::GetSegmentFrameCount() const {
@@ -76,10 +74,9 @@ namespace MPF { namespace COMPONENT {
     }
 
 
-    double FrameSkipper::GetCurrentSegmentTimeInMillis(int originalPosition, double originalFrameRate) const {
-        int segmentPos = OriginalToSegmentFramePosition(originalPosition);
+    double FrameSkipper::GetCurrentSegmentTimeInMillis(int segmentPosition, double originalFrameRate) const {
         double framesPerSecond = GetSegmentFrameRate(originalFrameRate);
-        double timeInSeconds = segmentPos / framesPerSecond;
+        double timeInSeconds = segmentPosition / framesPerSecond;
         return timeInSeconds * 1000;
     }
 
@@ -87,25 +84,6 @@ namespace MPF { namespace COMPONENT {
     int FrameSkipper::MillisToSegmentFramePosition(double originalFrameRate, double segmentMilliseconds) const {
         double segmentFps = GetSegmentFrameRate(originalFrameRate);
         return static_cast<int>(segmentFps * segmentMilliseconds / 1000);
-    }
-
-
-    bool FrameSkipper::IsPastEndOfSegment(int originalPosition) const {
-        int lastSegmentPos = GetSegmentFrameCount() - 1;
-        int lastOriginalPos = SegmentToOriginalFramePosition(lastSegmentPos);
-        return originalPosition > lastOriginalPos;
-    }
-
-
-    double FrameSkipper::GetSegmentFramePositionRatio(int originalPosition) const {
-        double segmentPosition = OriginalToSegmentFramePosition(originalPosition);
-        return segmentPosition / GetSegmentFrameCount();
-    }
-
-
-    int FrameSkipper::RatioToOriginalFramePosition(double ratio) const {
-        auto segmentPosition = static_cast<int>(GetSegmentFrameCount() * ratio);
-        return SegmentToOriginalFramePosition(segmentPosition);
     }
 
 

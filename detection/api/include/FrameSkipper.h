@@ -58,17 +58,6 @@ namespace MPF { namespace COMPONENT {
 
 
         /**
-         * Map a frame position in the original video, to a position in the segment
-         * @param originalPosition  A frame position in the original video
-         * @return The matching frame position in the segment
-         */
-        int OriginalToSegmentFramePosition(int originalPosition) const;
-
-
-        bool IsPastEndOfSegment(int originalPosition) const;
-
-
-        /**
          * @return The number of frames in the segment
          */
         int GetSegmentFrameCount() const;
@@ -92,14 +81,13 @@ namespace MPF { namespace COMPONENT {
          */
         double GetSegmentFrameRate(double originalFrameRate) const;
 
-
         /**
          * Gets the time in milliseconds between the segment start frame and the current position.
-         * @param originalPosition Frame position in original video
+         * @param segmentPosition A frame position within the segment
          * @param originalFrameRate Frame rate of original video
          * @return Time in milliseconds since the segment started
          */
-        double GetCurrentSegmentTimeInMillis(int originalPosition, double originalFrameRate) const;
+        double GetCurrentSegmentTimeInMillis(int segmentPosition, double originalFrameRate) const;
 
 
         /**
@@ -110,22 +98,6 @@ namespace MPF { namespace COMPONENT {
          */
         int MillisToSegmentFramePosition(double originalFrameRate, double segmentMilliseconds) const;
 
-
-        /**
-         * Returns a number between 0 (start of video) and 1 (end of video) that indicates the current position
-         * in the video
-         * @param originalPosition Frame position in original video
-         * @return Number between 0 and 1 indicating current position in video
-         */
-        double GetSegmentFramePositionRatio(int originalPosition) const;
-
-
-        /**
-         * Returns the position in the original video for the given ratio
-         * @param ratio Number between 0 and 1 that indicates position in video
-         * @return Position in the original video
-         */
-        int RatioToOriginalFramePosition(double ratio) const;
 
 
         /**

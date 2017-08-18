@@ -39,12 +39,37 @@ using std::vector;
 
 
 
+int GetFrameNumber(const cv::Mat &frame)  {
+    cv::Scalar_<uchar> color = frame.at<cv::Scalar_<uchar>>(0, 0);
+    return static_cast<int>(color.val[0]);
+}
+
+
+
+MPFVideoCapture CreateVideoCapture(int startFrame, int stopFrame) {
+    MPFVideoJob job("Test", "test/test_vids/frame_skip_test.avi", startFrame, stopFrame, {}, {} );
+    return MPFVideoCapture(job, true, true);
+}
+
+
+MPFVideoJob CreateVideoJob(int startFrame, int stopFrame, int frameInterval) {
+    return {"Test", "test/test_vids/frame_skip_test.avi", startFrame, stopFrame,
+            {{"FRAME_INTERVAL", std::to_string(frameInterval)}}, {}};
+
+}
+
+MPFVideoCapture CreateVideoCapture(int startFrame, int stopFrame, int frameInterval) {
+    return MPFVideoCapture(CreateVideoJob(startFrame, stopFrame, frameInterval), true, true);
+}
+
+
+
 void assertSegmentFrameCount(FrameSkipper frameSkipper, int expected) {
     ASSERT_EQ(expected, frameSkipper.GetSegmentFrameCount());
 }
 
-TEST(FrameSkipTest, CanCalculateSegmentFrameCount) {
 
+TEST(FrameSkipTest, CanCalculateSegmentFrameCount) {
     assertSegmentFrameCount({ 0, 20, 4 }, 6);
     assertSegmentFrameCount({ 0, 20, 3 }, 7);
     assertSegmentFrameCount({ 4, 10, 1 }, 7);
@@ -62,7 +87,6 @@ TEST(FrameSkipTest, CanCalculateSegmentFrameCount) {
 
 void assertSegmentToOriginalFramePosition(FrameSkipper skipper, int segmentPosition, int expectedOriginalPosition) {
     ASSERT_EQ(expectedOriginalPosition, skipper.SegmentToOriginalFramePosition(segmentPosition));
-
 }
 
 
@@ -81,29 +105,11 @@ TEST(FrameSkipTest, CanMapSegmentToOriginalFramePosition) {
 }
 
 
-void assertOriginalToSegmentFramePosition(FrameSkipper skipper, int originalPosition, int expectedSegmentPosition) {
-    ASSERT_EQ(expectedSegmentPosition, skipper.OriginalToSegmentFramePosition(originalPosition));
-}
-
-
-TEST(FrameSkipTest, CanMapOriginalToSegmentIndices) {
-    assertOriginalToSegmentFramePosition({ 0, 10, 1 }, 0, 0);
-    assertOriginalToSegmentFramePosition({ 0, 10, 1 }, 1, 1);
-
-    assertOriginalToSegmentFramePosition({ 4, 10, 1 }, 4, 0);
-    assertOriginalToSegmentFramePosition({ 4, 10, 1 }, 6, 2);
-
-    assertOriginalToSegmentFramePosition({ 0, 20, 3 }, 0, 0);
-    assertOriginalToSegmentFramePosition({ 0, 20, 3 }, 3, 1);
-
-    assertOriginalToSegmentFramePosition({ 2, 20, 3 }, 2, 0);
-    assertOriginalToSegmentFramePosition({ 2, 20, 3 }, 14, 4);
-}
-
 
 void assertSegmentDuration(FrameSkipper skipper, double originalFrameRate, double expectedDuration) {
     ASSERT_DOUBLE_EQ(expectedDuration, skipper.GetSegmentDuration(originalFrameRate));
 }
+
 
 TEST(FrameSkipTest, CanGetSegmentDuration) {
     assertSegmentDuration({ 0, 9, 100 }, 10, 1);
@@ -116,6 +122,7 @@ TEST(FrameSkipTest, CanGetSegmentDuration) {
     assertSegmentDuration({ 7, 206, 100 }, 10, 20);
     assertSegmentDuration({ 7, 156, 100 }, 10, 15);
 }
+
 
 
 void assertSegmentFrameRate(FrameSkipper skipper, double originalFrameRate, double expectedFrameRate) {
@@ -136,75 +143,92 @@ TEST(FrameSkipTest, CanCalculateSegmentFrameRate) {
 }
 
 
-void assertCurrentSegmentTime(FrameSkipper skipper, int originalPosition, double originalFrameRate,
+
+void assertCurrentSegmentTime(FrameSkipper skipper, int segmentPosition, double originalFrameRate,
                               double expectedTimeInMillis) {
-    ASSERT_DOUBLE_EQ(expectedTimeInMillis, skipper.GetCurrentSegmentTimeInMillis(originalPosition, originalFrameRate));
+    ASSERT_DOUBLE_EQ(expectedTimeInMillis, skipper.GetCurrentSegmentTimeInMillis(segmentPosition, originalFrameRate));
 }
+
 
 TEST(FrameSkipTest, CanGetCurrentSegmentTimeInMillis) {
     assertCurrentSegmentTime({ 0, 9, 1 }, 0, 30, 0);
     assertCurrentSegmentTime({ 0, 9, 2 }, 0, 30, 0);
-    assertCurrentSegmentTime({ 1, 10, 2 }, 1, 30, 0);
+    assertCurrentSegmentTime({ 1, 10, 2 }, 0, 30, 0);
 
     assertCurrentSegmentTime({ 0, 9, 1 }, 1, 30, 100.0 / 3);
-    assertCurrentSegmentTime({ 1, 10, 1 }, 2, 30, 100.0 / 3);
+    assertCurrentSegmentTime({ 1, 10, 1 }, 1, 30, 100.0 / 3);
 
     assertCurrentSegmentTime({ 0, 9, 1 }, 2, 30, 200.0 / 3);
-    assertCurrentSegmentTime({ 0, 9, 2 }, 2, 30, 200.0 / 3);
-    assertCurrentSegmentTime({ 1, 10, 2 }, 3, 30, 200.0 / 3);
+    assertCurrentSegmentTime({ 0, 9, 2 }, 1, 30, 200.0 / 3);
+    assertCurrentSegmentTime({ 1, 10, 2 }, 1, 30, 200.0 / 3);
 
     assertCurrentSegmentTime({ 0, 9, 1 }, 8, 30, 800.0 / 3);
-    assertCurrentSegmentTime({ 0, 9, 2 }, 8, 30, 800.0 / 3);
-    assertCurrentSegmentTime({ 1, 10, 2 }, 9, 30, 800.0 / 3);
+    assertCurrentSegmentTime({ 0, 9, 2 }, 4, 30, 800.0 / 3);
+    assertCurrentSegmentTime({ 1, 10, 2 }, 4, 30, 800.0 / 3);
 
     assertCurrentSegmentTime({ 0, 9, 1 }, 9, 30, 300);
-    assertCurrentSegmentTime({ 1, 10, 1 }, 10, 30, 300);
+    assertCurrentSegmentTime({ 1, 10, 1 }, 9, 30, 300);
 
 
-    assertCurrentSegmentTime({ 2, 12, 1 }, 6, 30, 400.0 / 3);
-    assertCurrentSegmentTime({ 2, 12, 2 }, 6, 30, 1100.0 / 9);
+    assertCurrentSegmentTime({ 2, 12, 1 }, 4, 30, 400.0 / 3);
+    assertCurrentSegmentTime({ 2, 12, 2 }, 2, 30, 1100.0 / 9);
 }
 
 
 
-void assertSegmentFramePositionRatio(FrameSkipper skipper, int originalPosition, double expectedRatio) {
-    ASSERT_DOUBLE_EQ(expectedRatio, skipper.GetSegmentFramePositionRatio(originalPosition));
+void assertSegmentFramePositionRatio(MPFVideoCapture &cap, int segmentPosition, double expectedRatio) {
+    bool wasSet = cap.SetFramePosition(segmentPosition);
+    ASSERT_TRUE(wasSet);
+    ASSERT_DOUBLE_EQ(expectedRatio, cap.GetFramePositionRatio());
 }
 
 
 TEST(FrameSkipTest, CanCalculateSegmentFramePositionRatio) {
-    assertSegmentFramePositionRatio({ 0, 9, 1 }, 0, 0);
-    assertSegmentFramePositionRatio({ 0, 9, 1 }, 2, 0.2);
-    assertSegmentFramePositionRatio({ 0, 9, 1 }, 10, 1);
+    auto cap1 = CreateVideoCapture(0, 9);
+    assertSegmentFramePositionRatio(cap1, 0, 0);
+    assertSegmentFramePositionRatio(cap1, 2, 0.2);
+    assertSegmentFramePositionRatio(cap1, 10, 1);
 
-    assertSegmentFramePositionRatio({ 10, 29, 1 }, 10, 0);
-    assertSegmentFramePositionRatio({ 10, 29, 1 }, 14, 0.2);
-    assertSegmentFramePositionRatio({ 10, 29, 1 }, 30, 1);
+    auto cap2 = CreateVideoCapture(10, 29);
+    assertSegmentFramePositionRatio(cap2, 0, 0);
+    assertSegmentFramePositionRatio(cap2, 4, 0.2);
+    assertSegmentFramePositionRatio(cap2, 19, 0.95);
 
-    assertSegmentFramePositionRatio({ 10, 29, 2 }, 10, 0);
-    assertSegmentFramePositionRatio({ 10, 29, 2 }, 14, 0.2);
-    assertSegmentFramePositionRatio({ 10, 29, 2 }, 30, 1);
+    auto cap3 = CreateVideoCapture(10, 29, 2);
+    assertSegmentFramePositionRatio(cap3, 0, 0);
+    assertSegmentFramePositionRatio(cap3, 2, 0.2);
+    assertSegmentFramePositionRatio(cap3, 9, 0.9);
 
-    assertSegmentFramePositionRatio({ 1, 11, 2 }, 1, 0);
-    assertSegmentFramePositionRatio({ 1, 11, 2 }, 3, 1.0 / 6);
-    assertSegmentFramePositionRatio({ 1, 11, 2 }, 5, 1.0 / 3);
+    auto cap4 = CreateVideoCapture(1, 11, 2);
+    assertSegmentFramePositionRatio(cap4, 0, 0);
+    assertSegmentFramePositionRatio(cap4, 1, 1.0 / 6);
+    assertSegmentFramePositionRatio(cap4, 2, 1.0 / 3);
 }
 
 
-void assertRatioToOriginalFramePosition(FrameSkipper skipper, double ratio, int expectedFramePosition) {
-    ASSERT_EQ(expectedFramePosition, skipper.RatioToOriginalFramePosition(ratio));
-
+void assertRatioToOriginalFramePosition(MPFVideoCapture &cap, double ratio, int expectedFramePosition) {
+    cap.SetFramePositionRatio(ratio);
+    cv::Mat frame;
+    bool wasRead = cap.Read(frame);
+    ASSERT_TRUE(wasRead);
+    ASSERT_EQ(expectedFramePosition, GetFrameNumber(frame));
 }
+
 
 TEST(FrameSkipTest, CanCalculateRatioToOriginalFramePosition) {
-    assertRatioToOriginalFramePosition({ 0, 4, 1 }, 0.5, 2);
-    assertRatioToOriginalFramePosition({ 0, 5, 1 }, 0.5, 3);
+    auto cap1 = CreateVideoCapture(0, 4, 1);
+    assertRatioToOriginalFramePosition(cap1, 0.5, 2);
+    assertRatioToOriginalFramePosition(cap1, 1.0 / 3, 1);
 
-    assertRatioToOriginalFramePosition({ 0, 4, 1 }, 1.0 / 3, 1);
-    assertRatioToOriginalFramePosition({ 0, 5, 1 }, 1.0 / 3, 2);
+    auto cap2 = CreateVideoCapture(0, 5, 1);
+    assertRatioToOriginalFramePosition(cap2, 0.5, 3);
+    assertRatioToOriginalFramePosition(cap2, 1.0 / 3, 2);
 
-    assertRatioToOriginalFramePosition({ 3, 14, 2 }, 0.5, 9);
-    assertRatioToOriginalFramePosition({ 3, 15, 2 }, 0.5, 9);
+    auto cap3 = CreateVideoCapture(3, 14, 2);
+    assertRatioToOriginalFramePosition(cap3, 0.5, 9);
+
+    auto cap4 = CreateVideoCapture(3, 15, 2);
+    assertRatioToOriginalFramePosition(cap4, 0.5, 9);
 }
 
 
@@ -229,6 +253,7 @@ TEST(FrameSkipTest, CanCalculateMillisToSegmentFramePosition) {
     assertMillisToSegmentFramePosition({ 5, 260, 2 }, 10, 600, 3);
     assertMillisToSegmentFramePosition({ 5, 260, 3 }, 10, 600, 2);
 }
+
 
 
 void assertAvailableInitializationFrames(int startFrame, int frameInterval, int expectedNumAvailable) {
@@ -257,29 +282,6 @@ TEST(FrameSkipTest, CanDetermineAvailableInitializationFrames) {
 }
 
 
-int GetFrameNumber(const cv::Mat &frame)  {
-    cv::Scalar_<uchar> color = frame.at<cv::Scalar_<uchar>>(0, 0);
-    return static_cast<int>(color.val[0]);
-}
-
-
-
-MPFVideoCapture CreateVideoCapture(int startFrame, int stopFrame) {
-    MPFVideoJob job("Test", "test/test_vids/frame_skip_test.avi", startFrame, stopFrame, {}, {} );
-    return MPFVideoCapture(job, true, true);
-}
-
-
-MPFVideoJob CreateVideoJob(int startFrame, int stopFrame, int frameInterval) {
-    return {"Test", "test/test_vids/frame_skip_test.avi", startFrame, stopFrame,
-            {{"FRAME_INTERVAL", std::to_string(frameInterval)}}, {}};
-
-}
-
-MPFVideoCapture CreateVideoCapture(int startFrame, int stopFrame, int frameInterval) {
-    return MPFVideoCapture(CreateVideoJob(startFrame, stopFrame, frameInterval), true, true);
-}
-
 
 void assertReadFails(MPFVideoCapture &cap) {
     cv::Mat invalidFrame;
@@ -287,8 +289,6 @@ void assertReadFails(MPFVideoCapture &cap) {
     ASSERT_FALSE(wasRead);
     ASSERT_TRUE(invalidFrame.empty());
 }
-
-
 
 
 TEST(FrameSkipTest, NoFramesSkippedWhenSkipParametersProvidedButFrameSkippingDisabled) {

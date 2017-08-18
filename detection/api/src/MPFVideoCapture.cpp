@@ -40,7 +40,8 @@ namespace MPF { namespace COMPONENT {
                                      bool enableFrameSkipper)
         : cvVideoCapture_(videoJob.data_uri)
         , frameSkipper_(GetFrameSkipper(enableFrameSkipper, videoJob, cvVideoCapture_))
-        , frameTransformer_(GetFrameTransformer(enableFrameTransformers, videoJob)){
+        , frameTransformer_(GetFrameTransformer(enableFrameTransformers, videoJob))
+        , framePosition_(0) {
 
         SetFramePosition(0);
     }
@@ -49,7 +50,8 @@ namespace MPF { namespace COMPONENT {
     MPFVideoCapture::MPFVideoCapture(const MPFImageJob &imageJob,  bool enableFrameTransformers)
             : cvVideoCapture_(imageJob.data_uri)
             , frameSkipper_(0, 1, 1)
-            , frameTransformer_(GetFrameTransformer(enableFrameTransformers, imageJob)) {
+            , frameTransformer_(GetFrameTransformer(enableFrameTransformers, imageJob))
+            , framePosition_(0) {
     }
 
 
@@ -99,49 +101,52 @@ namespace MPF { namespace COMPONENT {
         if (frameIdx < 0 || frameIdx > frameSkipper_.GetSegmentFrameCount()) {
             return false;
         }
+        return SetSegmentPositionInternal(frameIdx);
+    }
 
+
+    bool MPFVideoCapture::SetSegmentPositionInternal(int frameIdx) {
         int originalPos = frameSkipper_.SegmentToOriginalFramePosition(frameIdx);
-        return SetPropertyInternal(cv::CAP_PROP_POS_FRAMES, originalPos);
+        if (SetPropertyInternal(cv::CAP_PROP_POS_FRAMES, originalPos)) {
+            framePosition_ = frameIdx;
+            return true;
+        }
+        return false;
     }
 
 
     int MPFVideoCapture::GetCurrentFramePosition() const {
-        int originalFramePosition = GetOriginalFramePosition();
-        return frameSkipper_.OriginalToSegmentFramePosition(originalFramePosition);
+        return framePosition_;
     }
 
     int MPFVideoCapture::GetOriginalFramePosition() const {
-        return static_cast<int>(GetPropertyInternal(cv::CAP_PROP_POS_FRAMES));
+        return frameSkipper_.SegmentToOriginalFramePosition(framePosition_);
     }
 
 
     bool MPFVideoCapture::Read(cv::Mat &frame) {
-        int originalPosBeforeRead = GetOriginalFramePosition();
-        if (frameSkipper_.IsPastEndOfSegment(originalPosBeforeRead)) {
+        if (framePosition_ >= GetFrameCount()) {
             frame.release();
             return false;
         }
 
-        bool wasRead = ReadAndTransform(frame);
+        bool wasRead = cvVideoCapture_.read(frame);
         if (wasRead) {
-            int segPosBeforeRead = frameSkipper_.OriginalToSegmentFramePosition(originalPosBeforeRead);
-            int nextOriginalFrame = frameSkipper_.SegmentToOriginalFramePosition(segPosBeforeRead + 1);
-            if (nextOriginalFrame != originalPosBeforeRead + 1) {
-                // Only set property if we skipped one or more frames
-                SetPropertyInternal(cv::CAP_PROP_POS_FRAMES, nextOriginalFrame);
-            }
+            IncrementPosition();
+            frameTransformer_->TransformFrame(frame);
         }
         return wasRead;
     }
 
 
-
-    bool MPFVideoCapture::ReadAndTransform(cv::Mat &frame) {
-        bool wasRead = cvVideoCapture_.read(frame);
-        if (wasRead) {
-            frameTransformer_->TransformFrame(frame);
+    void MPFVideoCapture::IncrementPosition() {
+        int originalPosBeforeRead = frameSkipper_.SegmentToOriginalFramePosition(framePosition_);
+        framePosition_++;
+        int nextOriginalFrame = frameSkipper_.SegmentToOriginalFramePosition(framePosition_);
+        if (nextOriginalFrame != originalPosBeforeRead + 1) {
+            // Only set property if we skipped one or more frames
+            SetPropertyInternal(cv::CAP_PROP_POS_FRAMES, nextOriginalFrame);
         }
-        return wasRead;
     }
 
 
@@ -172,7 +177,7 @@ namespace MPF { namespace COMPONENT {
 
 
     double MPFVideoCapture::GetFramePositionRatio() const {
-        return frameSkipper_.GetSegmentFramePositionRatio(GetOriginalFramePosition());
+        return static_cast<double>(framePosition_) / GetFrameCount();
     }
 
 
@@ -180,14 +185,14 @@ namespace MPF { namespace COMPONENT {
         if (positionRatio < 0 || positionRatio > 1) {
             return false;
         }
-        int framePos = frameSkipper_.RatioToOriginalFramePosition(positionRatio);
-        return SetPropertyInternal(cv::CAP_PROP_POS_FRAMES, framePos);
+        auto newPos = static_cast<int>(GetFrameCount() * positionRatio);
+        return SetFramePosition(newPos);
     }
 
 
     double MPFVideoCapture::GetCurrentTimeInMillis() const {
         double originalFrameRate = GetPropertyInternal(cv::CAP_PROP_FPS);
-        return frameSkipper_.GetCurrentSegmentTimeInMillis(GetOriginalFramePosition(), originalFrameRate);
+        return frameSkipper_.GetCurrentSegmentTimeInMillis(framePosition_, originalFrameRate);
     }
 
 
@@ -273,10 +278,8 @@ namespace MPF { namespace COMPONENT {
         }
 
 
-        auto initialFramePos = static_cast<int>(GetPropertyInternal(cv::CAP_PROP_POS_FRAMES));
-
-        int segmentPos = frameSkipper_.SegmentToOriginalFramePosition(-1 * numFramesToGet);
-        SetPropertyInternal(cv::CAP_PROP_POS_FRAMES, segmentPos);
+        int initialSegmentPos = framePosition_;
+        SetSegmentPositionInternal(-1 * numFramesToGet);
 
         std::vector<cv::Mat> initializationFrames;
         for (int i = 0; i < numFramesToGet; i++) {
@@ -286,7 +289,7 @@ namespace MPF { namespace COMPONENT {
             }
         }
 
-        SetPropertyInternal(cv::CAP_PROP_POS_FRAMES, initialFramePos);
+        SetFramePosition(initialSegmentPos);
 
         return initializationFrames;
     }
