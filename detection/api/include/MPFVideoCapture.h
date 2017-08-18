@@ -75,10 +75,7 @@ namespace MPF { namespace COMPONENT {
 
         bool SetFramePosition(int frameIdx);
 
-
         int GetCurrentFramePosition() const;
-
-        int GetOriginalFramePosition() const;
 
         void Release();
 
@@ -123,15 +120,17 @@ namespace MPF { namespace COMPONENT {
 
         IFrameTransformer::Ptr frameTransformer_;
 
+        int framePosition_ = 0;
+
         double GetPropertyInternal(int propId) const;
 
         bool SetPropertyInternal(int propId, double value);
-
 
         IFrameTransformer::Ptr GetFrameTransformer(bool frameTransformersEnabled, const MPFJob &job) const;
 
         bool ReadAndTransform(cv::Mat &frame);
 
+        bool UpdateOriginalFramePosition(int newOriginalFramePosition);
 
         static int GetFrameCount(const MPFVideoJob &job, const cv::VideoCapture &cvVideoCapture);
 
