@@ -123,23 +123,24 @@ namespace MPF { namespace COMPONENT {
     }
 
 
-    void MPFVideoCapture::SeekFallback() {
+    bool MPFVideoCapture::SeekFallback() {
         if (!seekStrategy_) {
-            return;
+            return false;
         }
 
         seekStrategy_ = seekStrategy_->fallback();
         if (!seekStrategy_) {
-            return;
+            return false;
         }
 
         bool wasSet = SetPropertyInternal(VideoCaptureProperties::CAP_PROP_POS_FRAMES, 0);
         if (wasSet) {
             framePosition_ = 0;
+            return true;
         }
-        else {
-            seekStrategy_ = nullptr;
-        }
+
+        seekStrategy_ = nullptr;
+        return false;
     }
 
 
@@ -161,8 +162,7 @@ namespace MPF { namespace COMPONENT {
             return true;
         }
 
-        SeekFallback();
-        if (UpdateOriginalFramePosition(originalPosBeforeRead)) {
+        if (SeekFallback() && UpdateOriginalFramePosition(originalPosBeforeRead)) {
             return Read(frame);
         }
         return false;

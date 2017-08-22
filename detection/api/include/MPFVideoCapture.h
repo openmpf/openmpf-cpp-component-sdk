@@ -141,7 +141,7 @@ namespace MPF { namespace COMPONENT {
 
         void MoveToNextFrameInSegment();
 
-        void SeekFallback();
+        bool SeekFallback();
 
         bool UpdateOriginalFramePosition(int newOriginalFramePosition);
 
