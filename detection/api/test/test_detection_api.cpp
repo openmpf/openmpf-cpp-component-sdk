@@ -598,7 +598,6 @@ void assertCanChangeFramePosition(const SeekStrategy& seekStrategy) {
     ASSERT_EQ(framePosition, 20) << "Failed to seek forward after backward seek";
     ASSERT_TRUE(cap.read(frame)) << "Failed to read frame when seeking forward after backward seek";
     ASSERT_EQ(GetFrameNumber(frame), 20) << "Incorrect frame read when seeking forward after backward seek";
-    framePosition++;
 }
 
 
