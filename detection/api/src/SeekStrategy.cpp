@@ -53,16 +53,19 @@ namespace MPF { namespace COMPONENT {
             start = currentPosition;
         }
         else {
+            // The current position is past the requested position. We need to start reading from the very
+            // beginning of the video. If it were possible to set the frame position to a frame in the middle
+            // of the video, then SetFramePositionSeek would not have failed.
             if (!cap.set(cv::VideoCaptureProperties::CAP_PROP_POS_FRAMES, 0)) {
                 return currentPosition;
             }
             start = 0;
         }
 
-        int numGrabs = requestedPosition - start;
+        int numFramesToDiscard = requestedPosition - start;
 
         int numSuccess = 0;
-        for (int i = 0; i < numGrabs; i++) {
+        for (int i = 0; i < numFramesToDiscard; i++) {
             if (Advance(cap)) {
                 numSuccess++;
             }

@@ -143,6 +143,14 @@ namespace MPF { namespace COMPONENT {
 
         bool SeekFallback();
 
+        /**
+         * Attempts to update the frame position using seekStrategy_. If the current seekStrategy_ fails,
+         * it will attempt to fall back to the next SeekStrategy until it tries all the strategies.
+         * If this method fails that means it will have attempted to use ReadSeek. If ReadSeek fails,
+         * then it is not possible to read the video any further.
+         * @param newOriginalFramePosition
+         * @return true if the frame position was successfully set to newOriginalFramePosition
+         */
         bool UpdateOriginalFramePosition(int newOriginalFramePosition);
 
         static int GetFrameCount(const MPFVideoJob &job, const cv::VideoCapture &cvVideoCapture);

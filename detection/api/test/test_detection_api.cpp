@@ -617,6 +617,10 @@ TEST(FrameSkipTest, TestReadSeek) {
     assertCanChangeFramePosition(ReadSeek());
 }
 
+
+/**
+ * Creates the frame_skip_test.avi video.
+ */
 //TEST(FrameSkipTest, CreateTestVideo) {
 //
 //    cv::VideoCapture cap("/home/mpf/sample-data/sample.mp4");

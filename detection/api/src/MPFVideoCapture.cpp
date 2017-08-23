@@ -104,22 +104,21 @@ namespace MPF { namespace COMPONENT {
     }
 
 
-
     bool MPFVideoCapture::UpdateOriginalFramePosition(int requestedOriginalPosition) {
         if (framePosition_ == requestedOriginalPosition) {
             return true;
         }
 
-        while (seekStrategy_) {
-
-            framePosition_ = seekStrategy_->ChangePosition(cvVideoCapture_, framePosition_, requestedOriginalPosition);
-            if (framePosition_ == requestedOriginalPosition) {
-                return true;
-            }
-
-            SeekFallback();
+        if (!seekStrategy_) {
+            return false;
         }
-        return false;
+
+        framePosition_ = seekStrategy_->ChangePosition(cvVideoCapture_, framePosition_, requestedOriginalPosition);
+        if (framePosition_ == requestedOriginalPosition) {
+            return true;
+        }
+
+        return SeekFallback() && UpdateOriginalFramePosition(requestedOriginalPosition);
     }
 
 
@@ -133,6 +132,8 @@ namespace MPF { namespace COMPONENT {
             return false;
         }
 
+        // In order to fallback to a different seek strategy, cvVideoCapture_ must be capable of setting the
+        // frame position to 0.
         bool wasSet = SetPropertyInternal(VideoCaptureProperties::CAP_PROP_POS_FRAMES, 0);
         if (wasSet) {
             framePosition_ = 0;
@@ -184,6 +185,9 @@ namespace MPF { namespace COMPONENT {
         if (!frameSkipper_.IsPastEndOfSegment(framePosition_)) {
             int segPosBeforeRead = frameSkipper_.OriginalToSegmentFramePosition(framePosition_ - 1);
             int nextOriginalFrame = frameSkipper_.SegmentToOriginalFramePosition(segPosBeforeRead + 1);
+            // At this point a frame was successfully read. If UpdateOriginalFramePosition does not
+            // succeed that means it is not possible to read any more frames from the video, so all future
+            // reads will fail.
             UpdateOriginalFramePosition(nextOriginalFrame);
         }
     }
@@ -334,6 +338,9 @@ namespace MPF { namespace COMPONENT {
             }
         }
 
+        // If UpdateOriginalFramePosition does not succeed that means it is not possible to read any more frames
+        // from the video, so all future reads will fail. If any initialization frames were read, they
+        // will be returned.
         UpdateOriginalFramePosition(initialFramePos);
 
         return initializationFrames;
