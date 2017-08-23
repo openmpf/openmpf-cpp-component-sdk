@@ -5,11 +5,11 @@
  * under contract, and is subject to the Rights in Data-General Clause        *
  * 52.227-14, Alt. IV (DEC 2007).                                             *
  *                                                                            *
- * Copyright 2016 The MITRE Corporation. All Rights Reserved.                 *
+ * Copyright 2017 The MITRE Corporation. All Rights Reserved.                 *
  ******************************************************************************/
 
 /******************************************************************************
- * Copyright 2016 The MITRE Corporation                                       *
+ * Copyright 2017 The MITRE Corporation                                       *
  *                                                                            *
  * Licensed under the Apache License, Version 2.0 (the "License");            *
  * you may not use this file except in compliance with the License.           *
@@ -166,6 +166,8 @@ namespace MPF { namespace COMPONENT {
     struct MPFVideoJob : MPFJob {
         const int start_frame;
         const int stop_frame;
+        bool has_feed_forward_track = false;
+        MPFVideoTrack feed_forward_track;
 
         MPFVideoJob(const std::string &job_name,
                     const std::string &data_uri,
@@ -175,17 +177,45 @@ namespace MPF { namespace COMPONENT {
                     const Properties &media_properties)
                 : MPFJob(job_name, data_uri, job_properties, media_properties)
                 , start_frame(start_frame)
-                , stop_frame(stop_frame) {
+                , stop_frame(stop_frame)
+                , has_feed_forward_track(false) {
+        }
+
+        MPFVideoJob(const std::string &job_name,
+                    const std::string &data_uri,
+                    int start_frame,
+                    int stop_frame,
+                    const MPFVideoTrack &track,
+                    const Properties &job_properties,
+                    const Properties &media_properties)
+                : MPFJob(job_name, data_uri, job_properties, media_properties)
+                , start_frame(start_frame)
+                , stop_frame(stop_frame)
+                , has_feed_forward_track(true)
+                , feed_forward_track(track) {
         }
     };
 
 
     struct MPFImageJob : MPFJob {
+        bool has_feed_forward_location = false;
+        MPFImageLocation feed_forward_location;
         MPFImageJob(const std::string &job_name,
                     const std::string &data_uri,
                     const Properties &job_properties,
                     const Properties &media_properties)
-                : MPFJob(job_name, data_uri, job_properties, media_properties) {
+                : MPFJob(job_name, data_uri, job_properties, media_properties)
+                , has_feed_forward_location(false) {
+        }
+
+        MPFImageJob(const std::string &job_name,
+                    const std::string &data_uri,
+                    const MPFImageLocation &location,
+                    const Properties &job_properties,
+                    const Properties &media_properties)
+                : MPFJob(job_name, data_uri, job_properties, media_properties)
+                , has_feed_forward_location(true)
+                , feed_forward_location(location) {
         }
     };
 
@@ -193,6 +223,8 @@ namespace MPF { namespace COMPONENT {
     struct MPFAudioJob : MPFJob {
         const int start_time;
         const int stop_time;
+        bool has_feed_forward_track = false;
+        MPFAudioTrack feed_forward_track;
 
         MPFAudioJob(const std::string &job_name,
                     const std::string &data_uri,
@@ -202,7 +234,22 @@ namespace MPF { namespace COMPONENT {
                     const Properties &media_properties)
                 : MPFJob(job_name, data_uri, job_properties, media_properties)
                 , start_time(start_time)
-                , stop_time(stop_time) {
+                , stop_time(stop_time)
+                , has_feed_forward_track(false) {
+        }
+
+        MPFAudioJob(const std::string &job_name,
+                    const std::string &data_uri,
+                    int start_time,
+                    int stop_time,
+                    const MPFAudioTrack &track,
+                    const Properties &job_properties,
+                    const Properties &media_properties)
+                : MPFJob(job_name, data_uri, job_properties, media_properties)
+                , start_time(start_time)
+                , stop_time(stop_time)
+                , has_feed_forward_track(true)
+                , feed_forward_track(track) {
         }
     };
 

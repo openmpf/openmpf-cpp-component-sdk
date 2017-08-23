@@ -1,7 +1,7 @@
 {
   "componentName" : "HelloWorldComponent",
-  "componentVersion" : "0.8.0",
-  "middlewareVersion" :  "0.8.0",
+  "componentVersion" : "0.10.0",
+  "middlewareVersion" :  "0.10.0",
   "sourceLanguage" : "c++",
   "pathName" : "amq_detection_component",
   "launchArgs" : ["${MPF_HOME}/plugins/HelloWorldComponent/lib/libmpfHelloWorld.so"],
@@ -13,6 +13,7 @@
     "name" : "HelloWorld",
     "description" : "This is a dummy detection component.",
     "actionType" : "DETECTION",
+    "supportsBatchProcessing": true,
     "requiresCollection" : {
       "states" : []
     },
