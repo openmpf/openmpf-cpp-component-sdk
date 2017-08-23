@@ -33,14 +33,14 @@
 
 
 namespace MPF { namespace COMPONENT {
-
+    using cv::VideoCaptureProperties;
 
 
     MPFVideoCapture::MPFVideoCapture(const MPFVideoJob &videoJob, bool enableFrameTransformers,
                                      bool enableFrameSkipper)
         : cvVideoCapture_(videoJob.data_uri)
         , frameSkipper_(GetFrameSkipper(enableFrameSkipper, videoJob, cvVideoCapture_))
-        , frameTransformer_(GetFrameTransformer(enableFrameTransformers, videoJob)){
+        , frameTransformer_(GetFrameTransformer(enableFrameTransformers, videoJob)) {
 
         SetFramePosition(0);
     }
@@ -80,9 +80,8 @@ namespace MPF { namespace COMPONENT {
             return frameCount;
         }
 
-        return static_cast<int>(cvVideoCapture.get(cv::CAP_PROP_FRAME_COUNT));
+        return static_cast<int>(cvVideoCapture.get(VideoCaptureProperties::CAP_PROP_FRAME_COUNT));
     }
-
 
 
 
@@ -96,27 +95,63 @@ namespace MPF { namespace COMPONENT {
 
 
     bool MPFVideoCapture::SetFramePosition(int frameIdx) {
-        if (frameIdx < 0 || frameIdx > frameSkipper_.GetSegmentFrameCount()) {
+        if (frameIdx < 0 || frameIdx >= frameSkipper_.GetSegmentFrameCount()) {
             return false;
         }
 
         int originalPos = frameSkipper_.SegmentToOriginalFramePosition(frameIdx);
-        return SetPropertyInternal(cv::CAP_PROP_POS_FRAMES, originalPos);
+        return UpdateOriginalFramePosition(originalPos);
+    }
+
+
+    bool MPFVideoCapture::UpdateOriginalFramePosition(int requestedOriginalPosition) {
+        if (framePosition_ == requestedOriginalPosition) {
+            return true;
+        }
+
+        if (!seekStrategy_) {
+            return false;
+        }
+
+        framePosition_ = seekStrategy_->ChangePosition(cvVideoCapture_, framePosition_, requestedOriginalPosition);
+        if (framePosition_ == requestedOriginalPosition) {
+            return true;
+        }
+
+        return SeekFallback() && UpdateOriginalFramePosition(requestedOriginalPosition);
+    }
+
+
+    bool MPFVideoCapture::SeekFallback() {
+        if (!seekStrategy_) {
+            return false;
+        }
+
+        seekStrategy_ = seekStrategy_->fallback();
+        if (!seekStrategy_) {
+            return false;
+        }
+
+        // In order to fallback to a different seek strategy, cvVideoCapture_ must be capable of setting the
+        // frame position to 0.
+        bool wasSet = SetPropertyInternal(VideoCaptureProperties::CAP_PROP_POS_FRAMES, 0);
+        if (wasSet) {
+            framePosition_ = 0;
+            return true;
+        }
+
+        seekStrategy_ = nullptr;
+        return false;
     }
 
 
     int MPFVideoCapture::GetCurrentFramePosition() const {
-        int originalFramePosition = GetOriginalFramePosition();
-        return frameSkipper_.OriginalToSegmentFramePosition(originalFramePosition);
-    }
-
-    int MPFVideoCapture::GetOriginalFramePosition() const {
-        return static_cast<int>(GetPropertyInternal(cv::CAP_PROP_POS_FRAMES));
+        return frameSkipper_.OriginalToSegmentFramePosition(framePosition_);
     }
 
 
     bool MPFVideoCapture::Read(cv::Mat &frame) {
-        int originalPosBeforeRead = GetOriginalFramePosition();
+        int originalPosBeforeRead = framePosition_;
         if (frameSkipper_.IsPastEndOfSegment(originalPosBeforeRead)) {
             frame.release();
             return false;
@@ -124,25 +159,39 @@ namespace MPF { namespace COMPONENT {
 
         bool wasRead = ReadAndTransform(frame);
         if (wasRead) {
-            int segPosBeforeRead = frameSkipper_.OriginalToSegmentFramePosition(originalPosBeforeRead);
-            int nextOriginalFrame = frameSkipper_.SegmentToOriginalFramePosition(segPosBeforeRead + 1);
-            if (nextOriginalFrame != originalPosBeforeRead + 1) {
-                // Only set property if we skipped one or more frames
-                SetPropertyInternal(cv::CAP_PROP_POS_FRAMES, nextOriginalFrame);
-            }
+            MoveToNextFrameInSegment();
+            return true;
         }
-        return wasRead;
-    }
 
+        if (SeekFallback() && UpdateOriginalFramePosition(originalPosBeforeRead)) {
+            return Read(frame);
+        }
+        return false;
+    }
 
 
     bool MPFVideoCapture::ReadAndTransform(cv::Mat &frame) {
         bool wasRead = cvVideoCapture_.read(frame);
         if (wasRead) {
+            framePosition_++;
             frameTransformer_->TransformFrame(frame);
         }
         return wasRead;
     }
+
+
+
+    void MPFVideoCapture::MoveToNextFrameInSegment() {
+        if (!frameSkipper_.IsPastEndOfSegment(framePosition_)) {
+            int segPosBeforeRead = frameSkipper_.OriginalToSegmentFramePosition(framePosition_ - 1);
+            int nextOriginalFrame = frameSkipper_.SegmentToOriginalFramePosition(segPosBeforeRead + 1);
+            // At this point a frame was successfully read. If UpdateOriginalFramePosition does not
+            // succeed that means it is not possible to read any more frames from the video, so all future
+            // reads will fail.
+            UpdateOriginalFramePosition(nextOriginalFrame);
+        }
+    }
+
 
 
     MPFVideoCapture &MPFVideoCapture::operator>>(cv::Mat &frame) {
@@ -155,7 +204,7 @@ namespace MPF { namespace COMPONENT {
     }
 
     double MPFVideoCapture::GetFrameRate() const {
-        double originalFrameRate = GetPropertyInternal(cv::CAP_PROP_FPS);
+        double originalFrameRate = GetPropertyInternal(VideoCaptureProperties::CAP_PROP_FPS);
         return frameSkipper_.GetSegmentFrameRate(originalFrameRate);
     }
 
@@ -165,14 +214,14 @@ namespace MPF { namespace COMPONENT {
     }
 
     cv::Size MPFVideoCapture::GetOriginalFrameSize() const {
-        auto width = static_cast<int>(GetPropertyInternal(cv::CAP_PROP_FRAME_WIDTH));
-        auto height = static_cast<int>(GetPropertyInternal(cv::CAP_PROP_FRAME_HEIGHT));
+        auto width = static_cast<int>(GetPropertyInternal(VideoCaptureProperties::CAP_PROP_FRAME_WIDTH));
+        auto height = static_cast<int>(GetPropertyInternal(VideoCaptureProperties::CAP_PROP_FRAME_HEIGHT));
         return {width, height};
     }
 
 
     double MPFVideoCapture::GetFramePositionRatio() const {
-        return frameSkipper_.GetSegmentFramePositionRatio(GetOriginalFramePosition());
+        return frameSkipper_.GetSegmentFramePositionRatio(framePosition_);
     }
 
 
@@ -181,35 +230,36 @@ namespace MPF { namespace COMPONENT {
             return false;
         }
         int framePos = frameSkipper_.RatioToOriginalFramePosition(positionRatio);
-        return SetPropertyInternal(cv::CAP_PROP_POS_FRAMES, framePos);
+        return UpdateOriginalFramePosition(framePos);
     }
 
 
+
     double MPFVideoCapture::GetCurrentTimeInMillis() const {
-        double originalFrameRate = GetPropertyInternal(cv::CAP_PROP_FPS);
-        return frameSkipper_.GetCurrentSegmentTimeInMillis(GetOriginalFramePosition(), originalFrameRate);
+        double originalFrameRate = GetPropertyInternal(VideoCaptureProperties::CAP_PROP_FPS);
+        return frameSkipper_.GetCurrentSegmentTimeInMillis(framePosition_, originalFrameRate);
     }
 
 
     bool MPFVideoCapture::SetFramePositionInMillis(double milliseconds) {
-        double originalFrameRate = GetPropertyInternal(cv::CAP_PROP_FPS);
+        double originalFrameRate = GetPropertyInternal(VideoCaptureProperties::CAP_PROP_FPS);
         return SetFramePosition(frameSkipper_.MillisToSegmentFramePosition(originalFrameRate, milliseconds));
     }
 
 
     double MPFVideoCapture::GetProperty(int propId) const {
         switch (propId) {
-            case cv::CAP_PROP_FRAME_WIDTH:
+            case VideoCaptureProperties::CAP_PROP_FRAME_WIDTH:
                 return GetFrameSize().width;
-            case cv::CAP_PROP_FRAME_HEIGHT:
+            case VideoCaptureProperties::CAP_PROP_FRAME_HEIGHT:
                 return GetFrameSize().height;
-            case cv::CAP_PROP_FPS:
+            case VideoCaptureProperties::CAP_PROP_FPS:
                 return GetFrameRate();
-            case cv::CAP_PROP_POS_FRAMES:
+            case VideoCaptureProperties::CAP_PROP_POS_FRAMES:
                 return GetCurrentFramePosition();
-            case cv::CAP_PROP_POS_AVI_RATIO:
+            case VideoCaptureProperties::CAP_PROP_POS_AVI_RATIO:
                 return GetFramePositionRatio();
-            case cv::CAP_PROP_POS_MSEC:
+            case VideoCaptureProperties::CAP_PROP_POS_MSEC:
                 return GetCurrentTimeInMillis();
             default:
                 return GetPropertyInternal(propId);
@@ -218,15 +268,15 @@ namespace MPF { namespace COMPONENT {
 
     bool MPFVideoCapture::SetProperty(int propId, double value) {
         switch (propId) {
-            case cv::CAP_PROP_FRAME_WIDTH:
-            case cv::CAP_PROP_FRAME_HEIGHT:
-            case cv::CAP_PROP_FPS:
+            case VideoCaptureProperties::CAP_PROP_FRAME_WIDTH:
+            case VideoCaptureProperties::CAP_PROP_FRAME_HEIGHT:
+            case VideoCaptureProperties::CAP_PROP_FPS:
                 return false;
-            case cv::CAP_PROP_POS_FRAMES:
+            case VideoCaptureProperties::CAP_PROP_POS_FRAMES:
                 return SetFramePosition(static_cast<int>(value));
-            case cv::CAP_PROP_POS_AVI_RATIO:
+            case VideoCaptureProperties::CAP_PROP_POS_AVI_RATIO:
                 return SetFramePositionRatio(value);
-            case cv::CAP_PROP_POS_MSEC:
+            case VideoCaptureProperties::CAP_PROP_POS_MSEC:
                 return SetFramePositionInMillis(value);
             default:
                 return SetPropertyInternal(propId, value);
@@ -244,7 +294,7 @@ namespace MPF { namespace COMPONENT {
 
 
     int MPFVideoCapture::GetFourCharCodecCode() const {
-        return static_cast<int>(GetPropertyInternal(cv::CAP_PROP_FOURCC));
+        return static_cast<int>(GetPropertyInternal(VideoCaptureProperties::CAP_PROP_FOURCC));
     }
 
 
@@ -273,10 +323,12 @@ namespace MPF { namespace COMPONENT {
         }
 
 
-        auto initialFramePos = static_cast<int>(GetPropertyInternal(cv::CAP_PROP_POS_FRAMES));
+        int initialFramePos = framePosition_;
 
-        int segmentPos = frameSkipper_.SegmentToOriginalFramePosition(-1 * numFramesToGet);
-        SetPropertyInternal(cv::CAP_PROP_POS_FRAMES, segmentPos);
+        int firstInitFrameIdx = frameSkipper_.SegmentToOriginalFramePosition(-1 * numFramesToGet);
+        if (!UpdateOriginalFramePosition(firstInitFrameIdx)) {
+            return {} ;
+        }
 
         std::vector<cv::Mat> initializationFrames;
         for (int i = 0; i < numFramesToGet; i++) {
@@ -286,7 +338,10 @@ namespace MPF { namespace COMPONENT {
             }
         }
 
-        SetPropertyInternal(cv::CAP_PROP_POS_FRAMES, initialFramePos);
+        // If UpdateOriginalFramePosition does not succeed that means it is not possible to read any more frames
+        // from the video, so all future reads will fail. If any initialization frames were read, they
+        // will be returned.
+        UpdateOriginalFramePosition(initialFramePos);
 
         return initializationFrames;
     }

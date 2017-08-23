@@ -35,6 +35,7 @@
 #include "MPFDetectionComponent.h"
 #include "frame_transformers/IFrameTransformer.h"
 #include "FrameSkipper.h"
+#include "SeekStrategy.h"
 
 
 namespace MPF { namespace COMPONENT {
@@ -75,10 +76,7 @@ namespace MPF { namespace COMPONENT {
 
         bool SetFramePosition(int frameIdx);
 
-
         int GetCurrentFramePosition() const;
-
-        int GetOriginalFramePosition() const;
 
         void Release();
 
@@ -123,15 +121,37 @@ namespace MPF { namespace COMPONENT {
 
         IFrameTransformer::Ptr frameTransformer_;
 
+        /**
+         * MPFVideoCapture keeps track of the frame position instead of depending on
+         * cv::VideoCapture::get(cv::VideoCaptureProperties::CAP_PROP_POS_FRAMES)
+         * because for certain videos it does not correctly report the frame position.
+         */
+        int framePosition_ = 0;
+
+        SeekStrategy::CPtr seekStrategy_ = SeekStrategy::CPtr(new SetFramePositionSeek);
+
+
         double GetPropertyInternal(int propId) const;
 
         bool SetPropertyInternal(int propId, double value);
-
 
         IFrameTransformer::Ptr GetFrameTransformer(bool frameTransformersEnabled, const MPFJob &job) const;
 
         bool ReadAndTransform(cv::Mat &frame);
 
+        void MoveToNextFrameInSegment();
+
+        bool SeekFallback();
+
+        /**
+         * Attempts to update the frame position using seekStrategy_. If the current seekStrategy_ fails,
+         * it will attempt to fall back to the next SeekStrategy until it tries all the strategies.
+         * If this method fails that means it will have attempted to use ReadSeek. If ReadSeek fails,
+         * then it is not possible to read the video any further.
+         * @param newOriginalFramePosition
+         * @return true if the frame position was successfully set to newOriginalFramePosition
+         */
+        bool UpdateOriginalFramePosition(int newOriginalFramePosition);
 
         static int GetFrameCount(const MPFVideoJob &job, const cv::VideoCapture &cvVideoCapture);
 

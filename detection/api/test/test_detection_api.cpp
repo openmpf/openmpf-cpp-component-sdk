@@ -5,11 +5,11 @@
  * under contract, and is subject to the Rights in Data-General Clause        *
  * 52.227-14, Alt. IV (DEC 2007).                                             *
  *                                                                            *
- * Copyright 2016 The MITRE Corporation. All Rights Reserved.                 *
+ * Copyright 2017 The MITRE Corporation. All Rights Reserved.                 *
  ******************************************************************************/
 
 /******************************************************************************
- * Copyright 2016 The MITRE Corporation                                       *
+ * Copyright 2017 The MITRE Corporation                                       *
  *                                                                            *
  * Licensed under the Apache License, Version 2.0 (the "License");            *
  * you may not use this file except in compliance with the License.           *
@@ -33,10 +33,12 @@
 #include "FrameSkipper.h"
 
 using namespace MPF::COMPONENT;
-using std::map;
-using std::vector;
+using namespace std;
 
 
+const char frameSkipTestVideo[] = "test/test_vids/frame_skip_test.avi";
+
+const char videoWithFramePositionIssues[] = "test/test_vids/vid-with-set-position-issues.mov";
 
 
 void assertSegmentFrameCount(FrameSkipper frameSkipper, int expected) {
@@ -265,13 +267,13 @@ int GetFrameNumber(const cv::Mat &frame)  {
 
 
 MPFVideoCapture CreateVideoCapture(int startFrame, int stopFrame) {
-    MPFVideoJob job("Test", "test/test_vids/frame_skip_test.avi", startFrame, stopFrame, {}, {} );
+    MPFVideoJob job("Test", frameSkipTestVideo, startFrame, stopFrame, {}, {} );
     return MPFVideoCapture(job, true, true);
 }
 
 
 MPFVideoJob CreateVideoJob(int startFrame, int stopFrame, int frameInterval) {
-    return {"Test", "test/test_vids/frame_skip_test.avi", startFrame, stopFrame,
+    return {"Test", frameSkipTestVideo, startFrame, stopFrame,
             {{"FRAME_INTERVAL", std::to_string(frameInterval)}}, {}};
 
 }
@@ -322,7 +324,7 @@ TEST(FrameSkipTest, NoFramesSkippedWhenDefaultValues) {
 
 
 void assertExpectedFramesShown(int startFrame, int stopFrame, int frameInterval,
-                               const std::vector<int> &expectedFrames) {
+                               const vector<int> &expectedFrames) {
 
     auto cap = CreateVideoCapture(startFrame, stopFrame, frameInterval);
 
@@ -389,8 +391,20 @@ TEST(FrameSkipTest, CanNotSetPositionBeyondSegment) {
     ASSERT_FALSE(cap.SetFramePosition(-1));
     ASSERT_EQ(4, cap.GetCurrentFramePosition());
 
-    ASSERT_TRUE(cap.SetFramePosition(6));
-    ASSERT_EQ(6, cap.GetCurrentFramePosition());
+    // cv::VideoCapture does not allow you to set the frame position to the number of frames in the video.
+    // However, after you read the last frame in the video, cv::VideoCapture's frame position will equal the number
+    // of frames in the video.
+    ASSERT_FALSE(cap.SetFramePosition(cap.GetFrameCount()));
+    ASSERT_EQ(4, cap.GetCurrentFramePosition());
+
+    ASSERT_TRUE(cap.SetFramePosition(5));
+    ASSERT_EQ(5, cap.GetCurrentFramePosition());
+
+    cv::Mat frame;
+    ASSERT_TRUE(cap.Read(frame));
+    ASSERT_EQ(15, GetFrameNumber(frame));
+
+    ASSERT_EQ(cap.GetFrameCount(), cap.GetCurrentFramePosition());
 
     // At end of segment so there shouldn't be any frames left to process.
     assertReadFails(cap);
@@ -420,10 +434,10 @@ TEST(FrameSkipTest, CanFixFramePosInReverseTransform) {
 
 
 void assertInitializationFrameIds(int startFrame, int frameInterval, int numberRequested,
-                                  const std::vector<int> &expectedInitFrames) {
+                                  const vector<int> &expectedInitFrames) {
     auto cap = CreateVideoCapture(startFrame, 29, frameInterval);
 
-    const std::vector<cv::Mat> &initFrames = cap.GetInitializationFramesIfAvailable(numberRequested);
+    const vector<cv::Mat> &initFrames = cap.GetInitializationFramesIfAvailable(numberRequested);
 
     ASSERT_EQ(expectedInitFrames.size(), initFrames.size());
 
@@ -484,6 +498,128 @@ TEST(FrameSkipTest, VerifyInitializationFramesIndependentOfCurrentPosition) {
 }
 
 
+TEST(FrameSkipTest, VerifyCvVideoCaptureGetFramePositionIssue) {
+    // This test demonstrates the issue that led us to keep track of frame position in MPFVideoCapture instead of
+    // depending on cv::VideoCapture.
+    // This test may fail in a future version of OpenCV. If this test fails, then MPFVideoCapture no longer needs to
+    // handle frame position.
+    // The VerifyMpfVideoCaptureDoesNotHaveGetFramePositionIssue shows that MPFVideoCapture does not have the
+    // same issue demonstrated here.
+    cv::VideoCapture cap(videoWithFramePositionIssues);
+
+    cv::Mat frame;
+    cap.read(frame);
+
+    cap.set(cv::CAP_PROP_POS_FRAMES, 10);
+    cap.read(frame);
+
+    auto framePosition = static_cast<int>(cap.get(cv::CAP_PROP_POS_FRAMES));
+
+    ASSERT_NE(framePosition, 11) << "If this test fails, then a bug with OpenCV has been fixed. See test for details";
+}
+
+
+TEST(FrameSkipTest, VerifyMpfVideoCaptureDoesNotHaveGetFramePositionIssue) {
+    // This test verifies that MPFVideoCapture does not have the same issue demonstrated in the
+    // VerifyCvVideoCaptureGetFramePositionIssue test
+
+    MPFVideoJob job("Test", videoWithFramePositionIssues, 0, 1000, {}, {});
+    MPFVideoCapture cap(job, false, false);
+
+    cv::Mat frame;
+    cap.Read(frame);
+
+    cap.SetFramePosition(10);
+    cap.Read(frame);
+
+    auto framePosition = cap.GetCurrentFramePosition();
+
+    ASSERT_EQ(framePosition, 11);
+}
+
+
+
+TEST(FrameSkipTest, VerifyCvVideoCaptureSetFramePositionIssue) {
+    // This test demonstrates the issue that led us to implement SeekStrategy with fall-backs instead of just
+    // using cv::VideoCapture.set(cv::CAP_PROP_POS_FRAMES, int).
+    // This test may fail in a future version of OpenCV. If this test fails, then MPFVideoCapture no longer needs
+    // use the SeekStrategy classes.
+    // The VerifyMPfVideoCaptureDoesNotHaveSetFramePositionIssue shows that MPFVideoCapture does not have the
+    // same issue demonstrated here.
+
+    cv::VideoCapture cap(videoWithFramePositionIssues);
+
+    auto frameCount = static_cast<int>(cap.get(cv::CAP_PROP_FRAME_COUNT));
+
+    cap.set(cv::CAP_PROP_POS_FRAMES, frameCount - 5);
+
+    cv::Mat frame;
+    bool wasRead = cap.read(frame);
+    ASSERT_FALSE(wasRead) << "If this test fails, then a bug with OpenCV has been fixed. See test for details";
+}
+
+
+TEST(FrameSkipTest, VerifyMPfVideoCaptureDoesNotHaveSetFramePositionIssue) {
+    // This test verifies that MPFVideoCapture does not have the same issue demonstrated in the
+    // VerifyCvVideoCaptureSetFramePositionIssue test
+    MPFVideoJob job("Test", videoWithFramePositionIssues, 0, 1000, {}, {});
+    MPFVideoCapture cap(job, false, false);
+
+    auto frameCount = cap.GetFrameCount();
+
+    cap.SetFramePosition(frameCount - 5);
+
+    cv::Mat frame;
+    bool wasRead = cap.Read(frame);
+    ASSERT_TRUE(wasRead);
+}
+
+
+void assertCanChangeFramePosition(const SeekStrategy& seekStrategy) {
+    cv::VideoCapture cap(frameSkipTestVideo);
+    int framePosition = 0;
+
+    framePosition = seekStrategy.ChangePosition(cap, framePosition, 28);
+    ASSERT_EQ(framePosition, 28) << "Failed to seek forward";
+    cv::Mat frame;
+    ASSERT_TRUE(cap.read(frame)) << "Failed to read frame after forward seek";
+    ASSERT_EQ(GetFrameNumber(frame), 28) << "Incorrect frame read after forward seek";
+    framePosition++;
+
+
+    framePosition = seekStrategy.ChangePosition(cap, framePosition, 5);
+    ASSERT_EQ(framePosition, 5) << "Failed to seek backward";
+    ASSERT_TRUE(cap.read(frame)) << "Failed to read frame after backward seek";
+    ASSERT_EQ(GetFrameNumber(frame), 5) << "Incorrect frame read after backward seek";
+    framePosition++;
+
+
+    framePosition = seekStrategy.ChangePosition(cap, framePosition, 20);
+    ASSERT_EQ(framePosition, 20) << "Failed to seek forward after backward seek";
+    ASSERT_TRUE(cap.read(frame)) << "Failed to read frame when seeking forward after backward seek";
+    ASSERT_EQ(GetFrameNumber(frame), 20) << "Incorrect frame read when seeking forward after backward seek";
+}
+
+
+
+TEST(FrameSkipTest, TestSetFramePositionSeek) {
+    assertCanChangeFramePosition(SetFramePositionSeek());
+}
+
+
+TEST(FrameSkipTest, TestGrabSeek) {
+    assertCanChangeFramePosition(GrabSeek());
+}
+
+
+TEST(FrameSkipTest, TestReadSeek) {
+    assertCanChangeFramePosition(ReadSeek());
+}
+
+
+/**
+ * Creates the frame_skip_test.avi video.
+ */
 //TEST(FrameSkipTest, CreateTestVideo) {
 //
 //    cv::VideoCapture cap("/home/mpf/sample-data/sample.mp4");
