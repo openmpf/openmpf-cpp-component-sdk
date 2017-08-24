@@ -54,7 +54,7 @@ namespace MPF { namespace COMPONENT {
          * @throws std::invalid_argument videoJob contains invalid property
          */
         explicit MPFVideoCapture(const MPFVideoJob &videoJob, bool enableFrameTransformers=true,
-                                 bool enableFrameSkipper=false);
+                                 bool enableFrameSkipper=true);
 
         /**
          * Initializes a new MPFVideoCapture instance, using the frame
