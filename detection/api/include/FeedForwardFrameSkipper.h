@@ -38,7 +38,7 @@ namespace MPF { namespace COMPONENT {
 
     class FeedForwardFrameSkipper : public FrameSkipper {
     public:
-        explicit FeedForwardFrameSkipper(const MPFVideoTrack &feed_forward_track);
+        explicit FeedForwardFrameSkipper(const MPFVideoTrack &feedForwardTrack);
 
         int SegmentToOriginalFramePosition(int segmentPosition) const override;
 

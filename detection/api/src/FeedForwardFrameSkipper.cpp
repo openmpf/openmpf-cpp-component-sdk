@@ -32,8 +32,8 @@
 
 namespace MPF { namespace COMPONENT {
 
-    FeedForwardFrameSkipper::FeedForwardFrameSkipper(const MPFVideoTrack &feed_forward_track)
-            : framesInTrack_(GetFramesInTrack(feed_forward_track)) {
+    FeedForwardFrameSkipper::FeedForwardFrameSkipper(const MPFVideoTrack &feedForwardTrack)
+            : framesInTrack_(GetFramesInTrack(feedForwardTrack)) {
     }
 
 

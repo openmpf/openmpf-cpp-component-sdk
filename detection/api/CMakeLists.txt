@@ -81,17 +81,19 @@ set(SOURCE_FILES
         include/adapters/MPFVideoDetectionComponentAdapter.h
         include/adapters/MPFVideoFrameDataDetectionAdapter.h
 
-        include/IntervalFrameSkipper.h
-        src/IntervalFrameSkipper.cpp
-
         include/SeekStrategy.h
         src/SeekStrategy.cpp
 
-        include/FeedForwardFrameSkipper.h
-        src/FeedForwardFrameSkipper.cpp
 
         include/FrameSkipper.h
         src/FrameSkipper.cpp
+
+        include/IntervalFrameSkipper.h
+        src/IntervalFrameSkipper.cpp
+
+
+        include/FeedForwardFrameSkipper.h
+        src/FeedForwardFrameSkipper.cpp
     )
 
 add_library(mpfDetectionComponentApi SHARED ${SOURCE_FILES})
