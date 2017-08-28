@@ -25,49 +25,16 @@
  ******************************************************************************/
 
 
+#include "IntervalFrameSkipper.h"
 #include "FrameSkipper.h"
-#include "detectionComponentUtils.h"
-#include <stdexcept>
+
 
 namespace MPF { namespace COMPONENT {
 
-    FrameSkipper::FrameSkipper(const MPFVideoJob &job, int originalFrameCount)
-            : FrameSkipper(job.start_frame, GetStopFrame(job, originalFrameCount), GetFrameInterval(job)) {
-
-    }
-
-    FrameSkipper::FrameSkipper(int startFrame, int stopFrame, int frameInterval)
-            : startFrame_(startFrame)
-            , stopFrame_(stopFrame)
-            , frameInterval_(frameInterval) {
-
-    }
-
-
-    int FrameSkipper::SegmentToOriginalFramePosition(int segmentPosition) const {
-        return frameInterval_ * segmentPosition + startFrame_;
-    }
-
-
-    int FrameSkipper::OriginalToSegmentFramePosition(int originalPosition) const {
-        return (originalPosition - startFrame_) / frameInterval_;
-    }
-
-
-    int FrameSkipper::GetSegmentFrameCount() const {
-        int range = stopFrame_ - startFrame_ + 1;
-        int fullSegments = range / frameInterval_;
-        bool hasRemainder = range % frameInterval_ != 0;
-        if (hasRemainder) {
-            return fullSegments + 1;
-        }
-        return fullSegments;
-    }
-
-
-    double FrameSkipper::GetSegmentDuration(double originalFrameRate) const {
-        int range = stopFrame_ - startFrame_ + 1;
-        return range / originalFrameRate;
+    bool FrameSkipper::IsPastEndOfSegment(int originalPosition) const {
+        int lastSegmentPos = GetSegmentFrameCount() - 1;
+        int lastOriginalPos = SegmentToOriginalFramePosition(lastSegmentPos);
+        return originalPosition > lastOriginalPos;
     }
 
 
@@ -89,51 +56,18 @@ namespace MPF { namespace COMPONENT {
         return static_cast<int>(segmentFps * segmentMilliseconds / 1000);
     }
 
-
-    bool FrameSkipper::IsPastEndOfSegment(int originalPosition) const {
-        int lastSegmentPos = GetSegmentFrameCount() - 1;
-        int lastOriginalPos = SegmentToOriginalFramePosition(lastSegmentPos);
-        return originalPosition > lastOriginalPos;
-    }
-
-
     double FrameSkipper::GetSegmentFramePositionRatio(int originalPosition) const {
         double segmentPosition = OriginalToSegmentFramePosition(originalPosition);
         return segmentPosition / GetSegmentFrameCount();
     }
-
 
     int FrameSkipper::RatioToOriginalFramePosition(double ratio) const {
         auto segmentPosition = static_cast<int>(GetSegmentFrameCount() * ratio);
         return SegmentToOriginalFramePosition(segmentPosition);
     }
 
-
-    int FrameSkipper::GetFrameInterval(const MPFJob &job) {
-        int interval = DetectionComponentUtils::GetProperty(job.job_properties, "FRAME_INTERVAL", 1);
-        return interval > 0
-               ? interval
-               : 1;
+    FrameSkipper::CPtr FrameSkipper::GetNoOpSkipper(int frameCount) {
+        return CPtr(new IntervalFrameSkipper(0, frameCount - 1, 1));
     }
 
-
-    int FrameSkipper::GetStopFrame(const MPFVideoJob &job, int originalFrameCount) {
-        if (job.stop_frame > 0 && job.stop_frame < originalFrameCount) {
-            return job.stop_frame;
-        }
-
-        int stopFrame  = originalFrameCount - 1;
-        if (stopFrame < job.start_frame) {
-            std::stringstream ss;
-            ss << "Unable to handle segment: " << job.start_frame << " - " << job.stop_frame
-               << " because original media only has " << originalFrameCount << " frames";
-            throw std::range_error(ss.str());
-        }
-        return stopFrame;
-    }
-
-
-    int FrameSkipper::GetAvailableInitializationFrameCount() const {
-        return startFrame_ / frameInterval_;
-    }
 }}

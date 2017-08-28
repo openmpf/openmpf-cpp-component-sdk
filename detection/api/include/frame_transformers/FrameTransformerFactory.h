@@ -37,7 +37,9 @@
 
 namespace MPF { namespace COMPONENT { namespace FrameTransformerFactory {
 
-    IFrameTransformer::Ptr GetTransformer(const MPFJob &job, const cv::Size &inputVideoSize);
+    IFrameTransformer::Ptr GetTransformer(const MPFVideoJob &job, const cv::Size &inputVideoSize);
+
+    IFrameTransformer::Ptr GetTransformer(const MPFImageJob &job, const cv::Size &inputVideoSize);
 
 }}}
 

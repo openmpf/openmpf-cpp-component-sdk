@@ -25,34 +25,53 @@
  ******************************************************************************/
 
 
-#ifndef OPENMPF_CPP_COMPONENT_SDK_MPFIMAGEREADER_H
-#define OPENMPF_CPP_COMPONENT_SDK_MPFIMAGEREADER_H
+#ifndef OPENMPF_CPP_COMPONENT_SDK_INTERVAL_FRAMESKIPPER_H
+#define OPENMPF_CPP_COMPONENT_SDK_INTERVAL_FRAMESKIPPER_H
 
-
-#include <opencv2/core.hpp>
 
 #include "MPFDetectionComponent.h"
-#include "frame_transformers/IFrameTransformer.h"
-
+#include "FrameSkipper.h"
 
 namespace MPF { namespace COMPONENT {
 
-    class MPFImageReader {
+    /**
+     * If a video file is long enough, the Workflow Manager will create multiple jobs, each with different start
+     * and stop frames. Additionally many components support a FRAME_INTERVAL property.
+     * These values tell components to only process certain frames in the video. Instead of having components
+     * figure out which frames process and which frames to skip, this class performs the calculations necessary
+     * to filter out frames that shouldn't be processed. From the component's point of view, it is processing
+     * the entire video, but it is really only processing a particular segment of the video.
+     */
+    class IntervalFrameSkipper : public FrameSkipper {
 
     public:
-        explicit MPFImageReader(const MPFImageJob &job);
+        IntervalFrameSkipper(int startFrame, int stopFrame, int frameInterval);
 
-        cv::Mat GetImage() const;
+        IntervalFrameSkipper(const MPFVideoJob &job, int originalFrameCount);
 
-        void ReverseTransform(MPFImageLocation &imageLocation) const;
+
+        int SegmentToOriginalFramePosition(int segmentPosition) const override;
+
+        int OriginalToSegmentFramePosition(int originalPosition) const override;
+
+        int GetSegmentFrameCount() const override;
+
+        double GetSegmentDuration(double originalFrameRate) const override;
+
+        int GetAvailableInitializationFrameCount() const override;
+
+
 
     private:
-        cv::Mat image_;
-        IFrameTransformer::Ptr frameTransformer_;
+        const int startFrame_;
+        const int stopFrame_;
+        const int frameInterval_;
 
-        static IFrameTransformer::Ptr GetFrameTransformer(const MPFImageJob &job, const cv::Mat &image);
+        static int GetFrameInterval(const MPFJob &job);
+        static int GetStopFrame(const MPFVideoJob &job, int originalFrameCount);
     };
 
 }}
 
-#endif //OPENMPF_CPP_COMPONENT_SDK_MPFIMAGEREADER_H
+
+#endif //OPENMPF_CPP_COMPONENT_SDK_INTERVAL_FRAMESKIPPER_H

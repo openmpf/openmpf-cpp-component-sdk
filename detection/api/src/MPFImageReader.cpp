@@ -50,7 +50,7 @@ namespace MPF { namespace COMPONENT {
     }
 
 
-    IFrameTransformer::Ptr MPFImageReader::GetFrameTransformer(const MPFJob &job, const cv::Mat &image) {
+    IFrameTransformer::Ptr MPFImageReader::GetFrameTransformer(const MPFImageJob &job, const cv::Mat &image) {
         return FrameTransformerFactory::GetTransformer(job, cv::Size(image.cols, image.rows));
     }
 }}

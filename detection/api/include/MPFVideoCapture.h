@@ -34,7 +34,7 @@
 
 #include "MPFDetectionComponent.h"
 #include "frame_transformers/IFrameTransformer.h"
-#include "FrameSkipper.h"
+#include "IntervalFrameSkipper.h"
 #include "SeekStrategy.h"
 
 
@@ -117,7 +117,7 @@ namespace MPF { namespace COMPONENT {
     private:
         cv::VideoCapture cvVideoCapture_;
 
-        const FrameSkipper frameSkipper_;
+        FrameSkipper::CPtr frameSkipper_;
 
         IFrameTransformer::Ptr frameTransformer_;
 
@@ -135,7 +135,7 @@ namespace MPF { namespace COMPONENT {
 
         bool SetPropertyInternal(int propId, double value);
 
-        IFrameTransformer::Ptr GetFrameTransformer(bool frameTransformersEnabled, const MPFJob &job) const;
+        IFrameTransformer::Ptr GetFrameTransformer(bool frameTransformersEnabled, const MPFVideoJob &job) const;
 
         bool ReadAndTransform(cv::Mat &frame);
 
@@ -155,8 +155,8 @@ namespace MPF { namespace COMPONENT {
 
         static int GetFrameCount(const MPFVideoJob &job, const cv::VideoCapture &cvVideoCapture);
 
-        static FrameSkipper GetFrameSkipper(bool frameSkippingEnabled, const MPFVideoJob &job,
-                                            const cv::VideoCapture &cvVideoCapture);
+        static FrameSkipper::CPtr GetFrameSkipper(bool frameSkippingEnabled, const MPFVideoJob &job,
+                                                  const cv::VideoCapture &cvVideoCapture);
 
     };
 }}

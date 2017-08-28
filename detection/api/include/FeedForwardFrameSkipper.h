@@ -25,34 +25,38 @@
  ******************************************************************************/
 
 
-#ifndef OPENMPF_CPP_COMPONENT_SDK_MPFIMAGEREADER_H
-#define OPENMPF_CPP_COMPONENT_SDK_MPFIMAGEREADER_H
+#ifndef OPENMPF_CPP_COMPONENT_SDK_FEEDFORWARDFRAMESKIPPER_H
+#define OPENMPF_CPP_COMPONENT_SDK_FEEDFORWARDFRAMESKIPPER_H
 
 
-#include <opencv2/core.hpp>
+#include <vector>
 
 #include "MPFDetectionComponent.h"
-#include "frame_transformers/IFrameTransformer.h"
-
+#include "FrameSkipper.h"
 
 namespace MPF { namespace COMPONENT {
 
-    class MPFImageReader {
-
+    class FeedForwardFrameSkipper : public FrameSkipper {
     public:
-        explicit MPFImageReader(const MPFImageJob &job);
+        explicit FeedForwardFrameSkipper(const MPFVideoTrack &feed_forward_track);
 
-        cv::Mat GetImage() const;
+        int SegmentToOriginalFramePosition(int segmentPosition) const override;
 
-        void ReverseTransform(MPFImageLocation &imageLocation) const;
+        int OriginalToSegmentFramePosition(int originalPosition) const override;
+
+        int GetSegmentFrameCount() const override;
+
+        double GetSegmentDuration(double originalFrameRate) const override;
+
+        int GetAvailableInitializationFrameCount() const override;
 
     private:
-        cv::Mat image_;
-        IFrameTransformer::Ptr frameTransformer_;
+        const std::vector<int> framesInTrack_;
 
-        static IFrameTransformer::Ptr GetFrameTransformer(const MPFImageJob &job, const cv::Mat &image);
+        static std::vector<int> GetFramesInTrack(const MPFVideoTrack &track);
     };
 
 }}
 
-#endif //OPENMPF_CPP_COMPONENT_SDK_MPFIMAGEREADER_H
+
+#endif //OPENMPF_CPP_COMPONENT_SDK_FEEDFORWARDFRAMESKIPPER_H
