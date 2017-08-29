@@ -24,6 +24,7 @@
  * limitations under the License.                                             *
  ******************************************************************************/
 
+#include <iostream>
 #include <string>
 #include <utility>
 
@@ -81,17 +82,22 @@ namespace MPF { namespace COMPONENT { namespace FrameTransformerFactory {
         }
 
 
-        cv::Rect GetFeedForwardRegion(const std::map<int, MPFImageLocation> &trackLocations) {
-            if (trackLocations.empty()) {
+        /**
+         *
+         * @param feedForwardTrackLocations
+         * @return The minimum area rectangle that contains all detections listed in feedForwardTrackLocations
+         */
+        cv::Rect GetFeedForwardRegion(const std::map<int, MPFImageLocation> &feedForwardTrackLocations) {
+            if (feedForwardTrackLocations.empty()) {
                 throw std::length_error(
                         "FEED_FORWARD_TYPE: SUPERSET_REGION is enabled, but feed forward track was empty.");
             }
 
-            auto it = trackLocations.begin();
+            auto it = feedForwardTrackLocations.begin();
             cv::Rect region = toRect(it->second);
             it++;
 
-            for (; it != trackLocations.end(); it++) {
+            for (; it != feedForwardTrackLocations.end(); it++) {
                 region |= toRect(it->second);
             }
             return region;
@@ -150,15 +156,22 @@ namespace MPF { namespace COMPONENT { namespace FrameTransformerFactory {
                                 const std::map<int, MPFImageLocation> &trackLocations,
                                 IFrameTransformer::Ptr &currentTransformer) {
 
-            cv::Rect regionOfInterest;
-            if (FeedForwardCroppingIsEnabled(job.job_properties)) {
-                regionOfInterest = GetFeedForwardRegion(trackLocations);
+            bool feedForwardCroppingEnabled = FeedForwardCroppingIsEnabled(job.job_properties);
+            bool searchRegionCroppingEnabled = SearchRegionCroppingIsEnabled(job.job_properties);
+            if (!feedForwardCroppingEnabled && !searchRegionCroppingEnabled) {
+                return;
             }
-            else if (SearchRegionCroppingIsEnabled(job.job_properties)) {
-                regionOfInterest = GetSearchRegion(job.job_properties, inputVideoSize);
+
+            cv::Rect regionOfInterest;
+            if (feedForwardCroppingEnabled) {
+                regionOfInterest = GetFeedForwardRegion(trackLocations);
+                if (searchRegionCroppingEnabled) {
+                    std::cerr << "Both feed forward cropping and search region cropping properties were provided. "
+                              << "Only feed forward cropping will occur." << std::endl;
+                }
             }
             else {
-                return;
+                regionOfInterest = GetSearchRegion(job.job_properties, inputVideoSize);
             }
 
             bool regionOfInterestIsEntireFrame = cv::Rect({0, 0}, inputVideoSize) == regionOfInterest;

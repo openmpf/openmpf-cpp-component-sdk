@@ -29,8 +29,8 @@
 #define OPENMPF_CPP_COMPONENT_SDK_INTERVAL_FRAMESKIPPER_H
 
 
-#include "MPFDetectionComponent.h"
 #include "FrameSkipper.h"
+#include "MPFDetectionComponent.h"
 
 namespace MPF { namespace COMPONENT {
 
@@ -38,7 +38,7 @@ namespace MPF { namespace COMPONENT {
      * If a video file is long enough, the Workflow Manager will create multiple jobs, each with different start
      * and stop frames. Additionally many components support a FRAME_INTERVAL property.
      * These values tell components to only process certain frames in the video. Instead of having components
-     * figure out which frames process and which frames to skip, this class performs the calculations necessary
+     * figure out which frames to process and which frames to skip, this class performs the calculations necessary
      * to filter out frames that shouldn't be processed. From the component's point of view, it is processing
      * the entire video, but it is really only processing a particular segment of the video.
      */

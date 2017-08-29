@@ -24,10 +24,15 @@
  * limitations under the License.                                             *
  ******************************************************************************/
 
+#include <algorithm>
+#include <map>
+#include <utility>
+
+#include "detectionComponentUtils.h"
 #include "FeedForwardFrameSkipper.h"
 #include "frame_transformers/FrameTransformerFactory.h"
 #include "frame_transformers/NoOpFrameTransformer.h"
-#include "detectionComponentUtils.h"
+#include "IntervalFrameSkipper.h"
 
 #include "MPFVideoCapture.h"
 

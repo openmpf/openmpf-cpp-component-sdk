@@ -28,13 +28,14 @@
 #ifndef OPENMPF_CPP_COMPONENT_SDK_MPFVIDEOCAPTURE_H
 #define OPENMPF_CPP_COMPONENT_SDK_MPFVIDEOCAPTURE_H
 
+#include <vector>
 
 #include <opencv2/videoio.hpp>
 #include <opencv2/core.hpp>
 
-#include "MPFDetectionComponent.h"
 #include "frame_transformers/IFrameTransformer.h"
-#include "IntervalFrameSkipper.h"
+#include "FrameSkipper.h"
+#include "MPFDetectionComponent.h"
 #include "SeekStrategy.h"
 
 
@@ -56,15 +57,6 @@ namespace MPF { namespace COMPONENT {
         explicit MPFVideoCapture(const MPFVideoJob &videoJob, bool enableFrameTransformers=true,
                                  bool enableFrameSkipper=true);
 
-        /**
-         * Initializes a new MPFVideoCapture instance, using the frame
-         * transformers specified in jobProperties, to be used for image
-         * processing jobs.
-         * @param imageJob
-         * @param enableFrameTransformers Automatically transform frames based on job properties
-         * @throws std::invalid_argument imageJob contains invalid property
-         */
-        explicit MPFVideoCapture(const MPFImageJob &imageJob,  bool enableFrameTransformers=true);
 
         bool Read(cv::Mat &frame);
 

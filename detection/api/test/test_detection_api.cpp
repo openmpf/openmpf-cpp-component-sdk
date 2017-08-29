@@ -626,6 +626,34 @@ TEST(FrameSkipTest, CanHandleFeedForwardTrack) {
 
 
 
+TEST(FrameSkipTest, CanUseSearchRegionWithFeedForwardFrameType) {
+    MPFVideoTrack feedForwardTrack(0, 15);
+    feedForwardTrack.frame_locations = {
+        { 1, { 5, 5, 5, 5 } }
+    };
+    Properties jobProperties {
+        { "FEED_FORWARD_TYPE", "FRAME" },
+        { "SEARCH_REGION_ENABLE_DETECTION", "true" },
+        { "SEARCH_REGION_TOP_LEFT_X_DETECTION", "3" },
+        { "SEARCH_REGION_TOP_LEFT_Y_DETECTION", "3" },
+        { "SEARCH_REGION_BOTTOM_RIGHT_X_DETECTION", "6" },
+        { "SEARCH_REGION_BOTTOM_RIGHT_Y_DETECTION", "8" },
+    };
+
+    MPFVideoJob job("Test", frameSkipTestVideo, 0, -1, feedForwardTrack, jobProperties, {});
+    MPFVideoCapture cap(job);
+
+    cv::Size expectedSize(3, 5);
+    ASSERT_EQ(cap.GetFrameSize(), expectedSize);
+
+    cv::Mat frame;
+    cap.Read(frame);
+    ASSERT_EQ(frame.cols, expectedSize.width);
+    ASSERT_EQ(frame.rows, expectedSize.height);
+
+
+}
+
 
 TEST(FrameSkipTest, VerifyCvVideoCaptureGetFramePositionIssue) {
     // This test demonstrates the issue that led us to keep track of frame position in MPFVideoCapture instead of
