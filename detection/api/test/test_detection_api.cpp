@@ -592,7 +592,13 @@ TEST(FrameSkipTest, CanHandleFeedForwardTrack) {
     ASSERT_EQ(cap.GetFrameCount(), 7);
     ASSERT_TRUE(cap.GetInitializationFramesIfAvailable(100).empty());
 
-    cv::Size expectedSize(9, 11);
+    int minX = feedForwardTrack.frame_locations[3].x_left_upper;
+    int maxX = feedForwardTrack.frame_locations[7].x_left_upper + feedForwardTrack.frame_locations[7].width;
+
+    int minY = feedForwardTrack.frame_locations[3].y_left_upper;
+    int maxY = feedForwardTrack.frame_locations[1].y_left_upper + feedForwardTrack.frame_locations[1].height;
+
+    cv::Size expectedSize(maxX - minX, maxY - minY);
     ASSERT_EQ(cap.GetFrameSize(), expectedSize);
 
 
@@ -609,19 +615,19 @@ TEST(FrameSkipTest, CanHandleFeedForwardTrack) {
     assertReadFails(cap);
 
 
-    MPFVideoTrack detection(0, 6);
-    detection.frame_locations = {
+    MPFVideoTrack track(0, 6);
+    track.frame_locations = {
         { 1, {} },
         { 2, {} },
         { 4, {} },
         { 5, {} },
     };
 
-    cap.ReverseTransform(detection);
+    cap.ReverseTransform(track);
 
-    ASSERT_EQ(detection.start_frame, 1);
-    ASSERT_EQ(detection.stop_frame, 25);
-    assertMapContainsKeys(detection.frame_locations, {3, 7, 12, 20});
+    ASSERT_EQ(track.start_frame, 1);
+    ASSERT_EQ(track.stop_frame, 25);
+    assertMapContainsKeys(track.frame_locations, {3, 7, 12, 20});
 }
 
 
@@ -650,8 +656,6 @@ TEST(FrameSkipTest, CanUseSearchRegionWithFeedForwardFrameType) {
     cap.Read(frame);
     ASSERT_EQ(frame.cols, expectedSize.width);
     ASSERT_EQ(frame.rows, expectedSize.height);
-
-
 }
 
 
@@ -808,3 +812,64 @@ TEST(FrameSkipTest, TestReadSeek) {
 //        log("frameNumber", frameNumber);
 //    }
 //}
+
+MPFVideoTrack createTestTrack() {
+    MPFVideoTrack track(5, 10);
+    MPFImageLocation location(20, 30, 15, 5);
+    track.frame_locations = {
+            { 5, location },
+            { 7, location },
+            {10, location }
+    };
+    return track;
+}
+
+
+
+TEST(ReverseTransformTest, NoFeedForwardNoSearchRegion) {
+    MPFVideoJob job("Test", frameSkipTestVideo, 0, 30, {}, {});
+    MPFVideoCapture cap(job);
+
+    auto track = createTestTrack();
+    cap.ReverseTransform(track);
+
+    ASSERT_EQ(track.start_frame, 5);
+    ASSERT_EQ(track.stop_frame, 10);
+
+    assertMapContainsKeys(track.frame_locations, {5, 7, 10});
+
+    const auto &location = track.frame_locations.begin()->second;
+    ASSERT_EQ(location.x_left_upper, 20);
+    ASSERT_EQ(location.y_left_upper, 30);
+    ASSERT_EQ(location.width, 15);
+    ASSERT_EQ(location.height, 5);
+}
+
+
+
+TEST(ReverseTransformTest, NoFeedForwardWithSearchRegion) {
+    MPFVideoJob job("Test", frameSkipTestVideo, 0, 30, {
+            { "SEARCH_REGION_ENABLE_DETECTION", "true" },
+            { "SEARCH_REGION_TOP_LEFT_X_DETECTION", "3"},
+            { "SEARCH_REGION_TOP_LEFT_Y_DETECTION", "4"},
+            { "SEARCH_REGION_BOTTOM_RIGHT_X_DETECTION", "40" },
+            { "SEARCH_REGION_BOTTOM_RIGHT_Y_DETECTION", "50" },
+    }, {});
+    MPFVideoCapture cap(job);
+
+    ASSERT_EQ(cap.GetFrameSize(), cv::Size(37, 46));
+
+    auto track = createTestTrack();
+    cap.ReverseTransform(track);
+
+    ASSERT_EQ(track.start_frame, 5);
+    ASSERT_EQ(track.stop_frame, 10);
+
+    assertMapContainsKeys(track.frame_locations, {5, 7, 10});
+
+    const auto &location = track.frame_locations.begin()->second;
+    ASSERT_EQ(location.x_left_upper, 23);
+    ASSERT_EQ(location.y_left_upper, 34);
+    ASSERT_EQ(location.width, 15);
+    ASSERT_EQ(location.height, 5);
+}
