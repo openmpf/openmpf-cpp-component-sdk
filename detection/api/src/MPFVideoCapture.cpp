@@ -25,7 +25,9 @@
  ******************************************************************************/
 
 #include <algorithm>
+#include <iostream>
 #include <map>
+#include <stdexcept>
 #include <utility>
 
 #include "detectionComponentUtils.h"
@@ -68,10 +70,28 @@ namespace MPF { namespace COMPONENT {
         if (!enableFrameSkipper) {
             return FrameSkipper::GetNoOpSkipper(frameCount);
         }
-        if (job.has_feed_forward_track) {
-            return FrameSkipper::CPtr(new FeedForwardFrameSkipper(job.feed_forward_track));
+        if (!job.has_feed_forward_track) {
+            return FrameSkipper::CPtr(new IntervalFrameSkipper(job, frameCount));
         }
-        return FrameSkipper::CPtr(new IntervalFrameSkipper(job, frameCount));
+
+        if (job.feed_forward_track.frame_locations.empty()) {
+            throw std::length_error(
+                    "MPFVideoJob::has_feed_forward_track is true for Job: "
+                    + job.job_name + ", but the feed forward track is empty.");
+        }
+
+        int firstTrackFrame = job.feed_forward_track.frame_locations.begin()->first;
+        int lastTrackFrame = job.feed_forward_track.frame_locations.rbegin()->first;
+        if (firstTrackFrame != job.start_frame || lastTrackFrame != job.stop_frame) {
+            std::cerr << "The feed forward track for Job: " << job.job_name
+                << " starts at frame " << firstTrackFrame << " and ends at frame " << lastTrackFrame
+                << ", but MPFVideoJob::start_frame = " << job.start_frame
+                << " and MPFVideoJob::stop_frame = " << job.stop_frame
+                << ". MPFVideoJob::has_feed_forward_track is true so the entire feed forward track will be used."
+                << std::endl;
+        }
+
+        return FrameSkipper::CPtr(new FeedForwardFrameSkipper(job.feed_forward_track));
     }
 
 
