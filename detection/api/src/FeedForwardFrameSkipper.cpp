@@ -25,34 +25,60 @@
  ******************************************************************************/
 
 
-#ifndef OPENMPF_CPP_COMPONENT_SDK_MPFIMAGEREADER_H
-#define OPENMPF_CPP_COMPONENT_SDK_MPFIMAGEREADER_H
-
-
-#include <opencv2/core.hpp>
-
-#include "MPFDetectionComponent.h"
-#include "frame_transformers/IFrameTransformer.h"
+#include <algorithm>
+#include <iostream>
+#include "FeedForwardFrameSkipper.h"
 
 
 namespace MPF { namespace COMPONENT {
 
-    class MPFImageReader {
+    FeedForwardFrameSkipper::FeedForwardFrameSkipper(const MPFVideoTrack &feedForwardTrack)
+            : framesInTrack_(GetFramesInTrack(feedForwardTrack)) {
+    }
 
-    public:
-        explicit MPFImageReader(const MPFImageJob &job);
 
-        cv::Mat GetImage() const;
+    std::vector<int> FeedForwardFrameSkipper::GetFramesInTrack(const MPFVideoTrack &track) {
+        std::vector<int> framesInTrack;
+        framesInTrack.reserve(track.frame_locations.size());
 
-        void ReverseTransform(MPFImageLocation &imageLocation) const;
+        for (const auto &frameLocPair : track.frame_locations) {
+            framesInTrack.push_back(frameLocPair.first);
+        }
 
-    private:
-        cv::Mat image_;
-        IFrameTransformer::Ptr frameTransformer_;
+        framesInTrack.shrink_to_fit();
+        return framesInTrack;
+    }
 
-        static IFrameTransformer::Ptr GetFrameTransformer(const MPFImageJob &job, const cv::Mat &image);
-    };
+
+    int FeedForwardFrameSkipper::SegmentToOriginalFramePosition(int segmentPosition) const {
+        return framesInTrack_.at(static_cast<size_t>(segmentPosition));
+    }
+
+
+    int FeedForwardFrameSkipper::OriginalToSegmentFramePosition(int originalPosition) const {
+        // Use binary search to get index of original position
+        auto iter = std::lower_bound(framesInTrack_.begin(), framesInTrack_.end(), originalPosition);
+        if (iter == framesInTrack_.end()) {
+            return GetSegmentFrameCount();
+        }
+        return static_cast<int>(iter - framesInTrack_.begin());
+    }
+
+
+    int FeedForwardFrameSkipper::GetSegmentFrameCount() const {
+        return static_cast<int>(framesInTrack_.size());
+    }
+
+
+    double FeedForwardFrameSkipper::GetSegmentDuration(double originalFrameRate) const {
+        int range = framesInTrack_.back() - framesInTrack_.front() + 1;
+        return range / originalFrameRate;
+    }
+
+
+    int FeedForwardFrameSkipper::GetAvailableInitializationFrameCount() const {
+        return 0;
+    }
 
 }}
 
-#endif //OPENMPF_CPP_COMPONENT_SDK_MPFIMAGEREADER_H

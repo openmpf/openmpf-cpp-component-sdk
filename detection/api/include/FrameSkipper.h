@@ -28,25 +28,17 @@
 #ifndef OPENMPF_CPP_COMPONENT_SDK_FRAMESKIPPER_H
 #define OPENMPF_CPP_COMPONENT_SDK_FRAMESKIPPER_H
 
-
-#include "MPFDetectionComponent.h"
+#include <memory>
 
 namespace MPF { namespace COMPONENT {
 
-    /**
-     * If a video file is long enough, the Workflow Manager will create multiple jobs, each with different start
-     * and stop frames. Additionally many components support a FRAME_INTERVAL property.
-     * These values tell components to only process certain frames in the video. Instead of having components
-     * figure out which frames process and which frames to skip, this class performs the calculations necessary
-     * to filter out frames that shouldn't be processed. From the component's point of view, it is processing
-     * the entire video, but it is really only processing a particular segment of the video.
-     */
     class FrameSkipper {
-
     public:
-        FrameSkipper(int startFrame, int stopFrame, int frameInterval);
+        typedef std::unique_ptr<const FrameSkipper> CPtr;
 
-        FrameSkipper(const MPFVideoJob &job, int originalFrameCount);
+        static CPtr GetNoOpSkipper(int frameCount);
+
+        virtual ~FrameSkipper() = default;
 
 
         /**
@@ -54,7 +46,7 @@ namespace MPF { namespace COMPONENT {
          * @param segmentPosition A frame position within the segment
          * @return The matching frame position in the original video.
          */
-        int SegmentToOriginalFramePosition(int segmentPosition) const;
+        virtual int SegmentToOriginalFramePosition(int segmentPosition) const = 0;
 
 
         /**
@@ -62,31 +54,38 @@ namespace MPF { namespace COMPONENT {
          * @param originalPosition  A frame position in the original video
          * @return The matching frame position in the segment
          */
-        int OriginalToSegmentFramePosition(int originalPosition) const;
+        virtual int OriginalToSegmentFramePosition(int originalPosition) const = 0;
+
+
+        /**
+         * Returns the number of frames before the beginning of the segment. Skipped frames are not counted.
+         * @return Number of available initialization frames
+         */
+        virtual int GetAvailableInitializationFrameCount() const = 0;
+
+
+        /**
+         * @return The number of frames in the segment
+         */
+        virtual int GetSegmentFrameCount() const = 0;
+
+
+        /**
+         * Gets the amount of time from the segment start to the segment end. The frame rate is adjusted so that
+         * the time from the start frame to the stop frame is the same as the original video.
+         * @param originalFrameRate Frame rate of original video
+         * @return The duration of the segment in seconds
+         */
+        virtual double GetSegmentDuration(double originalFrameRate) const = 0;
+
 
 
         bool IsPastEndOfSegment(int originalPosition) const;
 
 
         /**
-         * @return The number of frames in the segment
-         */
-        int GetSegmentFrameCount() const;
-
-
-        /**
-         * Gets the amount of time from the segment start to the segment end. The duration of the segment
-         * is not affected by the frame interval, instead the frame rate is adjusted so that the time
-         * from the start frame to the stop frame is the same as the original video.
-         * @param originalFrameRate Frame rate of original video
-         * @return The duration of the segment in seconds
-         */
-        double GetSegmentDuration(double originalFrameRate) const;
-
-
-        /**
-         * Gets the frame rate of the segment. The frame rate is calculated so that regardless of the frame interval,
-         * the duration between the start frame and stop frame is the same as the original video.
+         * Gets the frame rate of the segment. The frame rate is calculated so that the duration between the start
+         * frame and stop frame is the same as the original video.
          * @param originalFrameRate Frame rate of original video
          * @return Frames per second of the video segment
          */
@@ -126,27 +125,7 @@ namespace MPF { namespace COMPONENT {
          * @return Position in the original video
          */
         int RatioToOriginalFramePosition(double ratio) const;
-
-
-        /**
-         * Returns the number of frames before the beginning of the segment.
-         * Frames that are skipped due to the frame interval are not counted.
-         * @return Number of available initialization frames
-         */
-        int GetAvailableInitializationFrameCount() const;
-
-
-
-    private:
-        const int startFrame_;
-        const int stopFrame_;
-        const int frameInterval_;
-
-        static int GetFrameInterval(const MPFJob &job);
-        static int GetStopFrame(const MPFVideoJob &job, int originalFrameCount);
-
     };
-
 }}
 
 
