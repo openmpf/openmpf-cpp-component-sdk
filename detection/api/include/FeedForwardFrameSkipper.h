@@ -25,37 +25,38 @@
  ******************************************************************************/
 
 
-#ifndef OPENMPF_CPP_COMPONENT_SDK_VIDEOSEGMENTTOFRAMESCONVERTER_H
-#define OPENMPF_CPP_COMPONENT_SDK_VIDEOSEGMENTTOFRAMESCONVERTER_H
+#ifndef OPENMPF_CPP_COMPONENT_SDK_FEEDFORWARDFRAMESKIPPER_H
+#define OPENMPF_CPP_COMPONENT_SDK_FEEDFORWARDFRAMESKIPPER_H
 
-#include <cstdint>
-#include <string>
-#include <utility>
+
 #include <vector>
 
 #include "MPFDetectionComponent.h"
-#include "MPFVideoCapture.h"
-
+#include "FrameSkipper.h"
 
 namespace MPF { namespace COMPONENT {
 
-    struct MPFVideoFrameData {
-        int start_frame;
-        int stop_frame;
-        int width;
-        int height;
-        int num_channels;
-        int bytes_per_channel;
-        int frames_in_segment;
-        int fps;
-        std::vector<uint8_t *> data;
+    class FeedForwardFrameSkipper : public FrameSkipper {
+    public:
+        explicit FeedForwardFrameSkipper(const MPFVideoTrack &feedForwardTrack);
+
+        int SegmentToOriginalFramePosition(int segmentPosition) const override;
+
+        int OriginalToSegmentFramePosition(int originalPosition) const override;
+
+        int GetSegmentFrameCount() const override;
+
+        double GetSegmentDuration(double originalFrameRate) const override;
+
+        int GetAvailableInitializationFrameCount() const override;
+
+    private:
+        const std::vector<int> framesInTrack_;
+
+        static std::vector<int> GetFramesInTrack(const MPFVideoTrack &track);
     };
-
-
-    std::pair<MPFDetectionError, std::string> convertSegmentToFrameData(const MPFVideoJob &job,
-                                                                        MPFVideoCapture &cap,
-                                                                        MPFVideoFrameData &output);
 
 }}
 
-#endif //OPENMPF_CPP_COMPONENT_SDK_VIDEOSEGMENTTOFRAMESCONVERTER_H
+
+#endif //OPENMPF_CPP_COMPONENT_SDK_FEEDFORWARDFRAMESKIPPER_H

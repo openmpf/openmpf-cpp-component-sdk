@@ -28,15 +28,19 @@
 #ifndef OPENMPF_CPP_COMPONENT_SDK_MPFVIDEOCAPTURE_H
 #define OPENMPF_CPP_COMPONENT_SDK_MPFVIDEOCAPTURE_H
 
+#include <vector>
 
 #include <opencv2/videoio.hpp>
 #include <opencv2/core.hpp>
 
-#include "MPFDetectionComponent.h"
 #include "frame_transformers/IFrameTransformer.h"
+#include "FrameSkipper.h"
+#include "MPFDetectionComponent.h"
+#include "SeekStrategy.h"
 
 
 namespace MPF { namespace COMPONENT {
+
 
     class MPFVideoCapture {
 
@@ -46,18 +50,13 @@ namespace MPF { namespace COMPONENT {
          * transformers specified in jobProperties, to be used for video
          * processing jobs.
          * @param videoJob
+         * @param enableFrameTransformers Automatically transform frames based on job properties
+         * @param enableFrameSkipper Automatically skip frames based on job start frame, stop frame, and frame interval
          * @throws std::invalid_argument videoJob contains invalid property
          */
-        explicit MPFVideoCapture(const MPFVideoJob &videoJob);
+        explicit MPFVideoCapture(const MPFVideoJob &videoJob, bool enableFrameTransformers=true,
+                                 bool enableFrameSkipper=true);
 
-        /**
-         * Initializes a new MPFVideoCapture instance, using the frame
-         * transformers specified in jobProperties, to be used for image
-         * processing jobs.
-         * @param imageJob
-         * @throws std::invalid_argument imageJob contains invalid property
-         */
-        explicit MPFVideoCapture(const MPFImageJob &imageJob);
 
         bool Read(cv::Mat &frame);
 
@@ -65,38 +64,92 @@ namespace MPF { namespace COMPONENT {
 
         bool IsOpened() const;
 
-        int GetFrameCount();
+        int GetFrameCount() const;
 
-        void SetFramePosition(int frameIdx);
+        bool SetFramePosition(int frameIdx);
 
-        int GetCurrentFramePosition();
+        int GetCurrentFramePosition() const;
 
         void Release();
 
-        double GetFrameRate();
+        double GetFrameRate() const;
 
-        cv::Size GetFrameSize();
+        cv::Size GetFrameSize() const;
 
-        cv::Size GetOriginalFrameSize();
+        cv::Size GetOriginalFrameSize() const;
 
-        double GetProperty(int propId);
+        double GetFramePositionRatio() const;
+
+        bool SetFramePositionRatio(double positionRatio);
+
+        double GetCurrentTimeInMillis() const;
+
+        bool SetFramePositionInMillis(double milliseconds);
+
+        double GetProperty(int propId) const;
 
         bool SetProperty(int propId, double value);
 
-        int GetFourCharCodecCode();
+        int GetFourCharCodecCode() const;
 
-        void ReverseTransform(MPFVideoTrack &videoTrack);
+        void ReverseTransform(MPFVideoTrack &videoTrack) const;
 
-        void ReverseTransform(MPFImageLocation &imageLocation);
+        /**
+         * Gets up to numberOfRequestedFrames frames before beginning of segment, skipping frameInterval frames.
+         * If less than numberOfRequestedFrames are available, returned vector will have as many initialization frames
+         * as are available.
+         * If the job's start frame is less than the frame interval, the returned vector will be empty.
+         * @param numberOfRequestedFrames
+         * @return Vector that contains between 0 and numberOfRequestedFrames frames
+         */
+        std::vector<cv::Mat> GetInitializationFramesIfAvailable(int numberOfRequestedFrames);
+
+
 
     private:
-        int frameCount_;
         cv::VideoCapture cvVideoCapture_;
-        const IFrameTransformer::Ptr frameTransformer_;
 
-        double GetPropertyInternal(int propId);
+        FrameSkipper::CPtr frameSkipper_;
 
-        IFrameTransformer::Ptr GetFrameTransformer(const MPFJob &job);
+        IFrameTransformer::Ptr frameTransformer_;
+
+        /**
+         * MPFVideoCapture keeps track of the frame position instead of depending on
+         * cv::VideoCapture::get(cv::VideoCaptureProperties::CAP_PROP_POS_FRAMES)
+         * because for certain videos it does not correctly report the frame position.
+         */
+        int framePosition_ = 0;
+
+        SeekStrategy::CPtr seekStrategy_ = SeekStrategy::CPtr(new SetFramePositionSeek);
+
+
+        double GetPropertyInternal(int propId) const;
+
+        bool SetPropertyInternal(int propId, double value);
+
+        IFrameTransformer::Ptr GetFrameTransformer(bool frameTransformersEnabled, const MPFVideoJob &job) const;
+
+        bool ReadAndTransform(cv::Mat &frame);
+
+        void MoveToNextFrameInSegment();
+
+        bool SeekFallback();
+
+        /**
+         * Attempts to update the frame position using seekStrategy_. If the current seekStrategy_ fails,
+         * it will attempt to fall back to the next SeekStrategy until it tries all the strategies.
+         * If this method fails that means it will have attempted to use ReadSeek. If ReadSeek fails,
+         * then it is not possible to read the video any further.
+         * @param newOriginalFramePosition
+         * @return true if the frame position was successfully set to newOriginalFramePosition
+         */
+        bool UpdateOriginalFramePosition(int newOriginalFramePosition);
+
+        static int GetFrameCount(const MPFVideoJob &job, const cv::VideoCapture &cvVideoCapture);
+
+        static FrameSkipper::CPtr GetFrameSkipper(bool frameSkippingEnabled, const MPFVideoJob &job,
+                                                  const cv::VideoCapture &cvVideoCapture);
+
     };
 }}
 

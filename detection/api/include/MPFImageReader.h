@@ -50,7 +50,7 @@ namespace MPF { namespace COMPONENT {
         cv::Mat image_;
         IFrameTransformer::Ptr frameTransformer_;
 
-        static IFrameTransformer::Ptr GetFrameTransformer(const MPFJob &job, const cv::Mat &image);
+        static IFrameTransformer::Ptr GetFrameTransformer(const MPFImageJob &job, const cv::Mat &image);
     };
 
 }}

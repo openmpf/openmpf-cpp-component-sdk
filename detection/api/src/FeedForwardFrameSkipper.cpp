@@ -25,37 +25,60 @@
  ******************************************************************************/
 
 
-#ifndef OPENMPF_CPP_COMPONENT_SDK_VIDEOSEGMENTTOFRAMESCONVERTER_H
-#define OPENMPF_CPP_COMPONENT_SDK_VIDEOSEGMENTTOFRAMESCONVERTER_H
-
-#include <cstdint>
-#include <string>
-#include <utility>
-#include <vector>
-
-#include "MPFDetectionComponent.h"
-#include "MPFVideoCapture.h"
+#include <algorithm>
+#include <iostream>
+#include "FeedForwardFrameSkipper.h"
 
 
 namespace MPF { namespace COMPONENT {
 
-    struct MPFVideoFrameData {
-        int start_frame;
-        int stop_frame;
-        int width;
-        int height;
-        int num_channels;
-        int bytes_per_channel;
-        int frames_in_segment;
-        int fps;
-        std::vector<uint8_t *> data;
-    };
+    FeedForwardFrameSkipper::FeedForwardFrameSkipper(const MPFVideoTrack &feedForwardTrack)
+            : framesInTrack_(GetFramesInTrack(feedForwardTrack)) {
+    }
 
 
-    std::pair<MPFDetectionError, std::string> convertSegmentToFrameData(const MPFVideoJob &job,
-                                                                        MPFVideoCapture &cap,
-                                                                        MPFVideoFrameData &output);
+    std::vector<int> FeedForwardFrameSkipper::GetFramesInTrack(const MPFVideoTrack &track) {
+        std::vector<int> framesInTrack;
+        framesInTrack.reserve(track.frame_locations.size());
+
+        for (const auto &frameLocPair : track.frame_locations) {
+            framesInTrack.push_back(frameLocPair.first);
+        }
+
+        framesInTrack.shrink_to_fit();
+        return framesInTrack;
+    }
+
+
+    int FeedForwardFrameSkipper::SegmentToOriginalFramePosition(int segmentPosition) const {
+        return framesInTrack_.at(static_cast<size_t>(segmentPosition));
+    }
+
+
+    int FeedForwardFrameSkipper::OriginalToSegmentFramePosition(int originalPosition) const {
+        // Use binary search to get index of original position
+        auto iter = std::lower_bound(framesInTrack_.begin(), framesInTrack_.end(), originalPosition);
+        if (iter == framesInTrack_.end()) {
+            return GetSegmentFrameCount();
+        }
+        return static_cast<int>(iter - framesInTrack_.begin());
+    }
+
+
+    int FeedForwardFrameSkipper::GetSegmentFrameCount() const {
+        return static_cast<int>(framesInTrack_.size());
+    }
+
+
+    double FeedForwardFrameSkipper::GetSegmentDuration(double originalFrameRate) const {
+        int range = framesInTrack_.back() - framesInTrack_.front() + 1;
+        return range / originalFrameRate;
+    }
+
+
+    int FeedForwardFrameSkipper::GetAvailableInitializationFrameCount() const {
+        return 0;
+    }
 
 }}
 
-#endif //OPENMPF_CPP_COMPONENT_SDK_VIDEOSEGMENTTOFRAMESCONVERTER_H

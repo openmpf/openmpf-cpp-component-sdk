@@ -79,7 +79,22 @@ set(SOURCE_FILES
         include/adapters/MPFImageAndVideoDetectionComponentAdapter.h
         include/adapters/MPFImageDetectionComponentAdapter.h
         include/adapters/MPFVideoDetectionComponentAdapter.h
-        include/adapters/MPFVideoFrameDataDetectionAdapter.h)
+        include/adapters/MPFVideoFrameDataDetectionAdapter.h
+
+        include/SeekStrategy.h
+        src/SeekStrategy.cpp
+
+
+        include/FrameSkipper.h
+        src/FrameSkipper.cpp
+
+        include/IntervalFrameSkipper.h
+        src/IntervalFrameSkipper.cpp
+
+
+        include/FeedForwardFrameSkipper.h
+        src/FeedForwardFrameSkipper.cpp
+    )
 
 add_library(mpfDetectionComponentApi SHARED ${SOURCE_FILES})
 target_link_libraries(mpfDetectionComponentApi mpfComponentInterface ${OpenCV_LIBS})
@@ -87,3 +102,7 @@ target_link_libraries(mpfDetectionComponentApi mpfComponentInterface ${OpenCV_LI
 
 
 export_mpf_lib(mpfDetectionComponentApi)
+
+
+add_subdirectory(test)
+

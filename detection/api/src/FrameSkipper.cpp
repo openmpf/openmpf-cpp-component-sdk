@@ -25,37 +25,49 @@
  ******************************************************************************/
 
 
-#ifndef OPENMPF_CPP_COMPONENT_SDK_VIDEOSEGMENTTOFRAMESCONVERTER_H
-#define OPENMPF_CPP_COMPONENT_SDK_VIDEOSEGMENTTOFRAMESCONVERTER_H
-
-#include <cstdint>
-#include <string>
-#include <utility>
-#include <vector>
-
-#include "MPFDetectionComponent.h"
-#include "MPFVideoCapture.h"
+#include "IntervalFrameSkipper.h"
+#include "FrameSkipper.h"
 
 
 namespace MPF { namespace COMPONENT {
 
-    struct MPFVideoFrameData {
-        int start_frame;
-        int stop_frame;
-        int width;
-        int height;
-        int num_channels;
-        int bytes_per_channel;
-        int frames_in_segment;
-        int fps;
-        std::vector<uint8_t *> data;
-    };
+    bool FrameSkipper::IsPastEndOfSegment(int originalPosition) const {
+        int lastSegmentPos = GetSegmentFrameCount() - 1;
+        int lastOriginalPos = SegmentToOriginalFramePosition(lastSegmentPos);
+        return originalPosition > lastOriginalPos;
+    }
 
 
-    std::pair<MPFDetectionError, std::string> convertSegmentToFrameData(const MPFVideoJob &job,
-                                                                        MPFVideoCapture &cap,
-                                                                        MPFVideoFrameData &output);
+    double FrameSkipper::GetSegmentFrameRate(double originalFrameRate) const {
+        return GetSegmentFrameCount() / GetSegmentDuration(originalFrameRate);
+    }
+
+
+    double FrameSkipper::GetCurrentSegmentTimeInMillis(int originalPosition, double originalFrameRate) const {
+        int segmentPos = OriginalToSegmentFramePosition(originalPosition);
+        double framesPerSecond = GetSegmentFrameRate(originalFrameRate);
+        double timeInSeconds = segmentPos / framesPerSecond;
+        return timeInSeconds * 1000;
+    }
+
+
+    int FrameSkipper::MillisToSegmentFramePosition(double originalFrameRate, double segmentMilliseconds) const {
+        double segmentFps = GetSegmentFrameRate(originalFrameRate);
+        return static_cast<int>(segmentFps * segmentMilliseconds / 1000);
+    }
+
+    double FrameSkipper::GetSegmentFramePositionRatio(int originalPosition) const {
+        double segmentPosition = OriginalToSegmentFramePosition(originalPosition);
+        return segmentPosition / GetSegmentFrameCount();
+    }
+
+    int FrameSkipper::RatioToOriginalFramePosition(double ratio) const {
+        auto segmentPosition = static_cast<int>(GetSegmentFrameCount() * ratio);
+        return SegmentToOriginalFramePosition(segmentPosition);
+    }
+
+    FrameSkipper::CPtr FrameSkipper::GetNoOpSkipper(int frameCount) {
+        return CPtr(new IntervalFrameSkipper(0, frameCount - 1, 1));
+    }
 
 }}
-
-#endif //OPENMPF_CPP_COMPONENT_SDK_VIDEOSEGMENTTOFRAMESCONVERTER_H
