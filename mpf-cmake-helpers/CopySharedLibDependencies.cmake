@@ -94,7 +94,7 @@ set(linux_std_libs
     libsane
     libxml2
     libxslt
-    libjvm.so
+    libjvm
 )
 
 
