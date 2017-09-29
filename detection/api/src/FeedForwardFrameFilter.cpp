@@ -25,49 +25,60 @@
  ******************************************************************************/
 
 
-#include "IntervalFrameSkipper.h"
-#include "FrameSkipper.h"
+#include <algorithm>
+#include <iostream>
+#include "FeedForwardFrameFilter.h"
 
 
 namespace MPF { namespace COMPONENT {
 
-    bool FrameSkipper::IsPastEndOfSegment(int originalPosition) const {
-        int lastSegmentPos = GetSegmentFrameCount() - 1;
-        int lastOriginalPos = SegmentToOriginalFramePosition(lastSegmentPos);
-        return originalPosition > lastOriginalPos;
+    FeedForwardFrameFilter::FeedForwardFrameFilter(const MPFVideoTrack &feedForwardTrack)
+            : framesInTrack_(GetFramesInTrack(feedForwardTrack)) {
     }
 
 
-    double FrameSkipper::GetSegmentFrameRate(double originalFrameRate) const {
-        return GetSegmentFrameCount() / GetSegmentDuration(originalFrameRate);
+    std::vector<int> FeedForwardFrameFilter::GetFramesInTrack(const MPFVideoTrack &track) {
+        std::vector<int> framesInTrack;
+        framesInTrack.reserve(track.frame_locations.size());
+
+        for (const auto &frameLocPair : track.frame_locations) {
+            framesInTrack.push_back(frameLocPair.first);
+        }
+
+        framesInTrack.shrink_to_fit();
+        return framesInTrack;
     }
 
 
-    double FrameSkipper::GetCurrentSegmentTimeInMillis(int originalPosition, double originalFrameRate) const {
-        int segmentPos = OriginalToSegmentFramePosition(originalPosition);
-        double framesPerSecond = GetSegmentFrameRate(originalFrameRate);
-        double timeInSeconds = segmentPos / framesPerSecond;
-        return timeInSeconds * 1000;
+    int FeedForwardFrameFilter::SegmentToOriginalFramePosition(int segmentPosition) const {
+        return framesInTrack_.at(static_cast<size_t>(segmentPosition));
     }
 
 
-    int FrameSkipper::MillisToSegmentFramePosition(double originalFrameRate, double segmentMilliseconds) const {
-        double segmentFps = GetSegmentFrameRate(originalFrameRate);
-        return static_cast<int>(segmentFps * segmentMilliseconds / 1000);
+    int FeedForwardFrameFilter::OriginalToSegmentFramePosition(int originalPosition) const {
+        // Use binary search to get index of original position
+        auto iter = std::lower_bound(framesInTrack_.begin(), framesInTrack_.end(), originalPosition);
+        if (iter == framesInTrack_.end()) {
+            return GetSegmentFrameCount();
+        }
+        return static_cast<int>(iter - framesInTrack_.begin());
     }
 
-    double FrameSkipper::GetSegmentFramePositionRatio(int originalPosition) const {
-        double segmentPosition = OriginalToSegmentFramePosition(originalPosition);
-        return segmentPosition / GetSegmentFrameCount();
+
+    int FeedForwardFrameFilter::GetSegmentFrameCount() const {
+        return static_cast<int>(framesInTrack_.size());
     }
 
-    int FrameSkipper::RatioToOriginalFramePosition(double ratio) const {
-        auto segmentPosition = static_cast<int>(GetSegmentFrameCount() * ratio);
-        return SegmentToOriginalFramePosition(segmentPosition);
+
+    double FeedForwardFrameFilter::GetSegmentDuration(double originalFrameRate) const {
+        int range = framesInTrack_.back() - framesInTrack_.front() + 1;
+        return range / originalFrameRate;
     }
 
-    FrameSkipper::CPtr FrameSkipper::GetNoOpSkipper(int frameCount) {
-        return CPtr(new IntervalFrameSkipper(0, frameCount - 1, 1));
+
+    int FeedForwardFrameFilter::GetAvailableInitializationFrameCount() const {
+        return 0;
     }
 
 }}
+

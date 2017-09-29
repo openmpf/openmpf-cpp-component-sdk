@@ -25,11 +25,11 @@
  ******************************************************************************/
 
 
-#ifndef OPENMPF_CPP_COMPONENT_SDK_INTERVAL_FRAMESKIPPER_H
-#define OPENMPF_CPP_COMPONENT_SDK_INTERVAL_FRAMESKIPPER_H
+#ifndef OPENMPF_CPP_COMPONENT_SDK_INTERVAL_FRAMEFILTER_H
+#define OPENMPF_CPP_COMPONENT_SDK_INTERVAL_FRAMEFILTER_H
 
 
-#include "FrameSkipper.h"
+#include "FrameFilter.h"
 #include "MPFDetectionComponent.h"
 
 namespace MPF { namespace COMPONENT {
@@ -42,12 +42,12 @@ namespace MPF { namespace COMPONENT {
      * to filter out frames that shouldn't be processed. From the component's point of view, it is processing
      * the entire video, but it is really only processing a particular segment of the video.
      */
-    class IntervalFrameSkipper : public FrameSkipper {
+    class IntervalFrameFilter : public FrameFilter {
 
     public:
-        IntervalFrameSkipper(int startFrame, int stopFrame, int frameInterval);
+        IntervalFrameFilter(int startFrame, int stopFrame, int frameInterval);
 
-        IntervalFrameSkipper(const MPFVideoJob &job, int originalFrameCount);
+        IntervalFrameFilter(const MPFVideoJob &job, int originalFrameCount);
 
 
         int SegmentToOriginalFramePosition(int segmentPosition) const override;
@@ -74,4 +74,4 @@ namespace MPF { namespace COMPONENT {
 }}
 
 
-#endif //OPENMPF_CPP_COMPONENT_SDK_INTERVAL_FRAMESKIPPER_H
+#endif //OPENMPF_CPP_COMPONENT_SDK_INTERVAL_FRAMEFILTER_H

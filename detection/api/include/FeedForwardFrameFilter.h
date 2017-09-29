@@ -25,60 +25,38 @@
  ******************************************************************************/
 
 
-#include <algorithm>
-#include <iostream>
-#include "FeedForwardFrameSkipper.h"
+#ifndef OPENMPF_CPP_COMPONENT_SDK_FEEDFORWARDFRAMEFILTER_H
+#define OPENMPF_CPP_COMPONENT_SDK_FEEDFORWARDFRAMEFILTER_H
 
+
+#include <vector>
+
+#include "MPFDetectionComponent.h"
+#include "FrameFilter.h"
 
 namespace MPF { namespace COMPONENT {
 
-    FeedForwardFrameSkipper::FeedForwardFrameSkipper(const MPFVideoTrack &feedForwardTrack)
-            : framesInTrack_(GetFramesInTrack(feedForwardTrack)) {
-    }
+    class FeedForwardFrameFilter : public FrameFilter {
+    public:
+        explicit FeedForwardFrameFilter(const MPFVideoTrack &feedForwardTrack);
 
+        int SegmentToOriginalFramePosition(int segmentPosition) const override;
 
-    std::vector<int> FeedForwardFrameSkipper::GetFramesInTrack(const MPFVideoTrack &track) {
-        std::vector<int> framesInTrack;
-        framesInTrack.reserve(track.frame_locations.size());
+        int OriginalToSegmentFramePosition(int originalPosition) const override;
 
-        for (const auto &frameLocPair : track.frame_locations) {
-            framesInTrack.push_back(frameLocPair.first);
-        }
+        int GetSegmentFrameCount() const override;
 
-        framesInTrack.shrink_to_fit();
-        return framesInTrack;
-    }
+        double GetSegmentDuration(double originalFrameRate) const override;
 
+        int GetAvailableInitializationFrameCount() const override;
 
-    int FeedForwardFrameSkipper::SegmentToOriginalFramePosition(int segmentPosition) const {
-        return framesInTrack_.at(static_cast<size_t>(segmentPosition));
-    }
+    private:
+        const std::vector<int> framesInTrack_;
 
-
-    int FeedForwardFrameSkipper::OriginalToSegmentFramePosition(int originalPosition) const {
-        // Use binary search to get index of original position
-        auto iter = std::lower_bound(framesInTrack_.begin(), framesInTrack_.end(), originalPosition);
-        if (iter == framesInTrack_.end()) {
-            return GetSegmentFrameCount();
-        }
-        return static_cast<int>(iter - framesInTrack_.begin());
-    }
-
-
-    int FeedForwardFrameSkipper::GetSegmentFrameCount() const {
-        return static_cast<int>(framesInTrack_.size());
-    }
-
-
-    double FeedForwardFrameSkipper::GetSegmentDuration(double originalFrameRate) const {
-        int range = framesInTrack_.back() - framesInTrack_.front() + 1;
-        return range / originalFrameRate;
-    }
-
-
-    int FeedForwardFrameSkipper::GetAvailableInitializationFrameCount() const {
-        return 0;
-    }
+        static std::vector<int> GetFramesInTrack(const MPFVideoTrack &track);
+    };
 
 }}
 
+
+#endif //OPENMPF_CPP_COMPONENT_SDK_FEEDFORWARDFRAMEFILTER_H

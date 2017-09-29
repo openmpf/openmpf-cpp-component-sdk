@@ -31,10 +31,10 @@
 #include <utility>
 
 #include "detectionComponentUtils.h"
-#include "FeedForwardFrameSkipper.h"
+#include "FeedForwardFrameFilter.h"
 #include "frame_transformers/FrameTransformerFactory.h"
 #include "frame_transformers/NoOpFrameTransformer.h"
-#include "IntervalFrameSkipper.h"
+#include "IntervalFrameFilter.h"
 
 #include "MPFVideoCapture.h"
 
@@ -45,9 +45,9 @@ namespace MPF { namespace COMPONENT {
 
 
     MPFVideoCapture::MPFVideoCapture(const MPFVideoJob &videoJob, bool enableFrameTransformers,
-                                     bool enableFrameSkipper)
+                                     bool enableFrameFiltering)
         : cvVideoCapture_(videoJob.data_uri)
-        , frameSkipper_(GetFrameSkipper(enableFrameSkipper, videoJob, cvVideoCapture_))
+        , frameFilter_(GetFrameFilter(enableFrameFiltering, videoJob, cvVideoCapture_))
         , frameTransformer_(GetFrameTransformer(enableFrameTransformers, videoJob)) {
 
         SetFramePosition(0);
@@ -63,15 +63,15 @@ namespace MPF { namespace COMPONENT {
     }
 
 
-    FrameSkipper::CPtr MPFVideoCapture::GetFrameSkipper(bool enableFrameSkipper, const MPFVideoJob &job,
-                                                        const cv::VideoCapture &cvVideoCapture) {
+    FrameFilter::CPtr MPFVideoCapture::GetFrameFilter(bool frameFilteringEnabled, const MPFVideoJob &job,
+                                                      const cv::VideoCapture &cvVideoCapture) {
 
         int frameCount = GetFrameCount(job, cvVideoCapture);
-        if (!enableFrameSkipper) {
-            return FrameSkipper::GetNoOpSkipper(frameCount);
+        if (!frameFilteringEnabled) {
+            return FrameFilter::GetNoOpFilter(frameCount);
         }
         if (!job.has_feed_forward_track) {
-            return FrameSkipper::CPtr(new IntervalFrameSkipper(job, frameCount));
+            return FrameFilter::CPtr(new IntervalFrameFilter(job, frameCount));
         }
 
         if (job.feed_forward_track.frame_locations.empty()) {
@@ -91,7 +91,7 @@ namespace MPF { namespace COMPONENT {
                 << std::endl;
         }
 
-        return FrameSkipper::CPtr(new FeedForwardFrameSkipper(job.feed_forward_track));
+        return FrameFilter::CPtr(new FeedForwardFrameFilter(job.feed_forward_track));
     }
 
 
@@ -112,16 +112,16 @@ namespace MPF { namespace COMPONENT {
     }
 
     int MPFVideoCapture::GetFrameCount() const {
-        return frameSkipper_->GetSegmentFrameCount();
+        return frameFilter_->GetSegmentFrameCount();
     }
 
 
     bool MPFVideoCapture::SetFramePosition(int frameIdx) {
-        if (frameIdx < 0 || frameIdx >= frameSkipper_->GetSegmentFrameCount()) {
+        if (frameIdx < 0 || frameIdx >= frameFilter_->GetSegmentFrameCount()) {
             return false;
         }
 
-        int originalPos = frameSkipper_->SegmentToOriginalFramePosition(frameIdx);
+        int originalPos = frameFilter_->SegmentToOriginalFramePosition(frameIdx);
         return UpdateOriginalFramePosition(originalPos);
     }
 
@@ -168,13 +168,13 @@ namespace MPF { namespace COMPONENT {
 
 
     int MPFVideoCapture::GetCurrentFramePosition() const {
-        return frameSkipper_->OriginalToSegmentFramePosition(framePosition_);
+        return frameFilter_->OriginalToSegmentFramePosition(framePosition_);
     }
 
 
     bool MPFVideoCapture::Read(cv::Mat &frame) {
         int originalPosBeforeRead = framePosition_;
-        if (frameSkipper_->IsPastEndOfSegment(originalPosBeforeRead)) {
+        if (frameFilter_->IsPastEndOfSegment(originalPosBeforeRead)) {
             frame.release();
             return false;
         }
@@ -204,9 +204,9 @@ namespace MPF { namespace COMPONENT {
 
 
     void MPFVideoCapture::MoveToNextFrameInSegment() {
-        if (!frameSkipper_->IsPastEndOfSegment(framePosition_)) {
-            int segPosBeforeRead = frameSkipper_->OriginalToSegmentFramePosition(framePosition_ - 1);
-            int nextOriginalFrame = frameSkipper_->SegmentToOriginalFramePosition(segPosBeforeRead + 1);
+        if (!frameFilter_->IsPastEndOfSegment(framePosition_)) {
+            int segPosBeforeRead = frameFilter_->OriginalToSegmentFramePosition(framePosition_ - 1);
+            int nextOriginalFrame = frameFilter_->SegmentToOriginalFramePosition(segPosBeforeRead + 1);
             // At this point a frame was successfully read. If UpdateOriginalFramePosition does not
             // succeed that means it is not possible to read any more frames from the video, so all future
             // reads will fail.
@@ -227,7 +227,7 @@ namespace MPF { namespace COMPONENT {
 
     double MPFVideoCapture::GetFrameRate() const {
         double originalFrameRate = GetPropertyInternal(VideoCaptureProperties::CAP_PROP_FPS);
-        return frameSkipper_->GetSegmentFrameRate(originalFrameRate);
+        return frameFilter_->GetSegmentFrameRate(originalFrameRate);
     }
 
 
@@ -243,7 +243,7 @@ namespace MPF { namespace COMPONENT {
 
 
     double MPFVideoCapture::GetFramePositionRatio() const {
-        return frameSkipper_->GetSegmentFramePositionRatio(framePosition_);
+        return frameFilter_->GetSegmentFramePositionRatio(framePosition_);
     }
 
 
@@ -251,7 +251,7 @@ namespace MPF { namespace COMPONENT {
         if (positionRatio < 0 || positionRatio > 1) {
             return false;
         }
-        int framePos = frameSkipper_->RatioToOriginalFramePosition(positionRatio);
+        int framePos = frameFilter_->RatioToOriginalFramePosition(positionRatio);
         return UpdateOriginalFramePosition(framePos);
     }
 
@@ -259,13 +259,13 @@ namespace MPF { namespace COMPONENT {
 
     double MPFVideoCapture::GetCurrentTimeInMillis() const {
         double originalFrameRate = GetPropertyInternal(VideoCaptureProperties::CAP_PROP_FPS);
-        return frameSkipper_->GetCurrentSegmentTimeInMillis(framePosition_, originalFrameRate);
+        return frameFilter_->GetCurrentSegmentTimeInMillis(framePosition_, originalFrameRate);
     }
 
 
     bool MPFVideoCapture::SetFramePositionInMillis(double milliseconds) {
         double originalFrameRate = GetPropertyInternal(VideoCaptureProperties::CAP_PROP_FPS);
-        return SetFramePosition(frameSkipper_->MillisToSegmentFramePosition(originalFrameRate, milliseconds));
+        return SetFramePosition(frameFilter_->MillisToSegmentFramePosition(originalFrameRate, milliseconds));
     }
 
 
@@ -321,14 +321,14 @@ namespace MPF { namespace COMPONENT {
 
 
     void MPFVideoCapture::ReverseTransform(MPFVideoTrack &videoTrack) const {
-        videoTrack.start_frame = frameSkipper_->SegmentToOriginalFramePosition(videoTrack.start_frame);
-        videoTrack.stop_frame = frameSkipper_->SegmentToOriginalFramePosition(videoTrack.stop_frame);
+        videoTrack.start_frame = frameFilter_->SegmentToOriginalFramePosition(videoTrack.start_frame);
+        videoTrack.stop_frame = frameFilter_->SegmentToOriginalFramePosition(videoTrack.stop_frame);
 
         std::map<int, MPFImageLocation> newFrameLocations;
         for (auto &frameLocationPair : videoTrack.frame_locations) {
             frameTransformer_->ReverseTransform(frameLocationPair.second);
 
-            int fixedFrameIndex = frameSkipper_->SegmentToOriginalFramePosition(frameLocationPair.first);
+            int fixedFrameIndex = frameFilter_->SegmentToOriginalFramePosition(frameLocationPair.first);
             newFrameLocations[fixedFrameIndex] = frameLocationPair.second;
         }
 
@@ -338,7 +338,7 @@ namespace MPF { namespace COMPONENT {
 
 
     std::vector<cv::Mat> MPFVideoCapture::GetInitializationFramesIfAvailable(int numberOfRequestedFrames) {
-        int initFramesAvailable = frameSkipper_->GetAvailableInitializationFrameCount();
+        int initFramesAvailable = frameFilter_->GetAvailableInitializationFrameCount();
         int numFramesToGet = std::min(initFramesAvailable, numberOfRequestedFrames);
         if (numFramesToGet < 1) {
             return {};
@@ -347,7 +347,7 @@ namespace MPF { namespace COMPONENT {
 
         int initialFramePos = framePosition_;
 
-        int firstInitFrameIdx = frameSkipper_->SegmentToOriginalFramePosition(-1 * numFramesToGet);
+        int firstInitFrameIdx = frameFilter_->SegmentToOriginalFramePosition(-1 * numFramesToGet);
         if (!UpdateOriginalFramePosition(firstInitFrameIdx)) {
             return {} ;
         }

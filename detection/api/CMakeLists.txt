@@ -85,15 +85,15 @@ set(SOURCE_FILES
         src/SeekStrategy.cpp
 
 
-        include/FrameSkipper.h
-        src/FrameSkipper.cpp
+    include/FrameFilter.h
+    src/FrameFilter.cpp
 
-        include/IntervalFrameSkipper.h
-        src/IntervalFrameSkipper.cpp
+    include/IntervalFrameFilter.h
+    src/IntervalFrameFilter.cpp
 
 
-        include/FeedForwardFrameSkipper.h
-        src/FeedForwardFrameSkipper.cpp
+    include/FeedForwardFrameFilter.h
+    src/FeedForwardFrameFilter.cpp
     )
 
 add_library(mpfDetectionComponentApi SHARED ${SOURCE_FILES})

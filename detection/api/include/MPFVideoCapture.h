@@ -34,7 +34,7 @@
 #include <opencv2/core.hpp>
 
 #include "frame_transformers/IFrameTransformer.h"
-#include "FrameSkipper.h"
+#include "FrameFilter.h"
 #include "MPFDetectionComponent.h"
 #include "SeekStrategy.h"
 
@@ -51,11 +51,11 @@ namespace MPF { namespace COMPONENT {
          * processing jobs.
          * @param videoJob
          * @param enableFrameTransformers Automatically transform frames based on job properties
-         * @param enableFrameSkipper Automatically skip frames based on job start frame, stop frame, and frame interval
+         * @param enableFrameFiltering Automatically skip frames based on job properties
          * @throws std::invalid_argument videoJob contains invalid property
          */
         explicit MPFVideoCapture(const MPFVideoJob &videoJob, bool enableFrameTransformers=true,
-                                 bool enableFrameSkipper=true);
+                                 bool enableFrameFiltering=true);
 
 
         bool Read(cv::Mat &frame);
@@ -109,7 +109,7 @@ namespace MPF { namespace COMPONENT {
     private:
         cv::VideoCapture cvVideoCapture_;
 
-        FrameSkipper::CPtr frameSkipper_;
+        FrameFilter::CPtr frameFilter_;
 
         IFrameTransformer::Ptr frameTransformer_;
 
@@ -147,8 +147,8 @@ namespace MPF { namespace COMPONENT {
 
         static int GetFrameCount(const MPFVideoJob &job, const cv::VideoCapture &cvVideoCapture);
 
-        static FrameSkipper::CPtr GetFrameSkipper(bool frameSkippingEnabled, const MPFVideoJob &job,
-                                                  const cv::VideoCapture &cvVideoCapture);
+        static FrameFilter::CPtr GetFrameFilter(bool frameFilteringEnabled, const MPFVideoJob &job,
+                                                const cv::VideoCapture &cvVideoCapture);
 
     };
 }}

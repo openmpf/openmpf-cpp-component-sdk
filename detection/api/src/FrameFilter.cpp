@@ -25,38 +25,49 @@
  ******************************************************************************/
 
 
-#ifndef OPENMPF_CPP_COMPONENT_SDK_FEEDFORWARDFRAMESKIPPER_H
-#define OPENMPF_CPP_COMPONENT_SDK_FEEDFORWARDFRAMESKIPPER_H
+#include "IntervalFrameFilter.h"
+#include "FrameFilter.h"
 
-
-#include <vector>
-
-#include "MPFDetectionComponent.h"
-#include "FrameSkipper.h"
 
 namespace MPF { namespace COMPONENT {
 
-    class FeedForwardFrameSkipper : public FrameSkipper {
-    public:
-        explicit FeedForwardFrameSkipper(const MPFVideoTrack &feedForwardTrack);
+    bool FrameFilter::IsPastEndOfSegment(int originalPosition) const {
+        int lastSegmentPos = GetSegmentFrameCount() - 1;
+        int lastOriginalPos = SegmentToOriginalFramePosition(lastSegmentPos);
+        return originalPosition > lastOriginalPos;
+    }
 
-        int SegmentToOriginalFramePosition(int segmentPosition) const override;
 
-        int OriginalToSegmentFramePosition(int originalPosition) const override;
+    double FrameFilter::GetSegmentFrameRate(double originalFrameRate) const {
+        return GetSegmentFrameCount() / GetSegmentDuration(originalFrameRate);
+    }
 
-        int GetSegmentFrameCount() const override;
 
-        double GetSegmentDuration(double originalFrameRate) const override;
+    double FrameFilter::GetCurrentSegmentTimeInMillis(int originalPosition, double originalFrameRate) const {
+        int segmentPos = OriginalToSegmentFramePosition(originalPosition);
+        double framesPerSecond = GetSegmentFrameRate(originalFrameRate);
+        double timeInSeconds = segmentPos / framesPerSecond;
+        return timeInSeconds * 1000;
+    }
 
-        int GetAvailableInitializationFrameCount() const override;
 
-    private:
-        const std::vector<int> framesInTrack_;
+    int FrameFilter::MillisToSegmentFramePosition(double originalFrameRate, double segmentMilliseconds) const {
+        double segmentFps = GetSegmentFrameRate(originalFrameRate);
+        return static_cast<int>(segmentFps * segmentMilliseconds / 1000);
+    }
 
-        static std::vector<int> GetFramesInTrack(const MPFVideoTrack &track);
-    };
+    double FrameFilter::GetSegmentFramePositionRatio(int originalPosition) const {
+        double segmentPosition = OriginalToSegmentFramePosition(originalPosition);
+        return segmentPosition / GetSegmentFrameCount();
+    }
+
+    int FrameFilter::RatioToOriginalFramePosition(double ratio) const {
+        auto segmentPosition = static_cast<int>(GetSegmentFrameCount() * ratio);
+        return SegmentToOriginalFramePosition(segmentPosition);
+    }
+
+    FrameFilter::CPtr FrameFilter::GetNoOpFilter(int frameCount) {
+        return CPtr(new IntervalFrameFilter(0, frameCount - 1, 1));
+    }
 
 }}
-
-
-#endif //OPENMPF_CPP_COMPONENT_SDK_FEEDFORWARDFRAMESKIPPER_H
