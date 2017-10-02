@@ -25,27 +25,43 @@
  ******************************************************************************/
 
 
-#ifndef OPENMPF_CPP_COMPONENT_SDK_FEEDFORWARDFRAMEFILTER_H
-#define OPENMPF_CPP_COMPONENT_SDK_FEEDFORWARDFRAMEFILTER_H
-
-
-#include <vector>
-
-#include "MPFDetectionComponent.h"
+#include <iostream>
 #include "FrameListFilter.h"
 
 namespace MPF { namespace COMPONENT {
 
-    class FeedForwardFrameFilter : public FrameListFilter {
-    public:
-        explicit FeedForwardFrameFilter(const MPFVideoTrack &feedForwardTrack);
+    FrameListFilter::FrameListFilter(std::vector<int> &&framesToShow)
+        : framesToShow_(std::move(framesToShow)) {
+    }
 
 
-    private:
-        static std::vector<int> GetFramesInTrack(const MPFVideoTrack &track);
-    };
+    int FrameListFilter::SegmentToOriginalFramePosition(int segmentPosition) const {
+        return framesToShow_.at(static_cast<size_t>(segmentPosition));
+    }
 
+
+    int FrameListFilter::OriginalToSegmentFramePosition(int originalPosition) const {
+        // Use binary search to get index of original position
+        auto iter = std::lower_bound(framesToShow_.begin(), framesToShow_.end(), originalPosition);
+        if (iter == framesToShow_.end()) {
+            return GetSegmentFrameCount();
+        }
+        return static_cast<int>(iter - framesToShow_.begin());
+    }
+
+
+    int FrameListFilter::GetSegmentFrameCount() const {
+        return static_cast<int>(framesToShow_.size());
+    }
+
+
+    double FrameListFilter::GetSegmentDuration(double originalFrameRate) const {
+        int range = framesToShow_.back() - framesToShow_.front() + 1;
+        return range / originalFrameRate;
+    }
+
+
+    int FrameListFilter::GetAvailableInitializationFrameCount() const {
+        return 0;
+    }
 }}
-
-
-#endif //OPENMPF_CPP_COMPONENT_SDK_FEEDFORWARDFRAMEFILTER_H

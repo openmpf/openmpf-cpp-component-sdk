@@ -23,29 +23,36 @@
  * See the License for the specific language governing permissions and        *
  * limitations under the License.                                             *
  ******************************************************************************/
-
-
-#ifndef OPENMPF_CPP_COMPONENT_SDK_FEEDFORWARDFRAMEFILTER_H
-#define OPENMPF_CPP_COMPONENT_SDK_FEEDFORWARDFRAMEFILTER_H
-
-
 #include <vector>
 
+#ifndef OPENMPF_CPP_COMPONENT_SDK_FRAMELISTFILTER_H
+#define OPENMPF_CPP_COMPONENT_SDK_FRAMELISTFILTER_H
+
 #include "MPFDetectionComponent.h"
-#include "FrameListFilter.h"
+#include "FrameFilter.h"
 
 namespace MPF { namespace COMPONENT {
 
-    class FeedForwardFrameFilter : public FrameListFilter {
+    class FrameListFilter : public FrameFilter {
     public:
-        explicit FeedForwardFrameFilter(const MPFVideoTrack &feedForwardTrack);
+        explicit FrameListFilter(std::vector<int> &&framesToShow);
 
+        int SegmentToOriginalFramePosition(int segmentPosition) const override;
+
+        int OriginalToSegmentFramePosition(int originalPosition) const override;
+
+        int GetSegmentFrameCount() const override;
+
+        double GetSegmentDuration(double originalFrameRate) const override;
+
+        int GetAvailableInitializationFrameCount() const override;
 
     private:
-        static std::vector<int> GetFramesInTrack(const MPFVideoTrack &track);
+        const std::vector<int> framesToShow_;
+
     };
 
 }}
 
 
-#endif //OPENMPF_CPP_COMPONENT_SDK_FEEDFORWARDFRAMEFILTER_H
+#endif //OPENMPF_CPP_COMPONENT_SDK_FRAMELISTFILTER_H

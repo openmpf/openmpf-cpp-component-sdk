@@ -29,6 +29,7 @@
 
 #include <opencv2/video.hpp>
 
+#include "KeyFrameFilter.h"
 #include "FeedForwardFrameFilter.h"
 #include "MPFVideoCapture.h"
 #include "IntervalFrameFilter.h"
@@ -38,7 +39,7 @@ using namespace MPF::COMPONENT;
 using namespace std;
 
 
-const char frameFilterTestVideo[] = "test/test_vids/frame_filter_test.avi";
+const char frameFilterTestVideo[] = "test/test_vids/frame_filter_test.mp4";
 
 const char videoWithFramePositionIssues[] = "test/test_vids/vid-with-set-position-issues.mov";
 
@@ -376,12 +377,7 @@ TEST(FrameFilterTest, NoFramesSkippedWhenDefaultValues) {
 }
 
 
-
-void assertExpectedFramesShown(int startFrame, int stopFrame, int frameInterval,
-                               const vector<int> &expectedFrames) {
-
-    auto cap = CreateVideoCapture(startFrame, stopFrame, frameInterval);
-
+void assertExpectedFramesShown(MPFVideoCapture &cap, const vector<int> &expectedFrames) {
     ASSERT_EQ(expectedFrames.size(), cap.GetFrameCount());
 
     for (int expectedFrame : expectedFrames) {
@@ -391,6 +387,14 @@ void assertExpectedFramesShown(int startFrame, int stopFrame, int frameInterval,
         ASSERT_EQ(expectedFrame, GetFrameNumber(frame));
     }
     assertReadFails(cap);
+}
+
+
+void assertExpectedFramesShown(int startFrame, int stopFrame, int frameInterval,
+                               const vector<int> &expectedFrames) {
+
+    auto cap = CreateVideoCapture(startFrame, stopFrame, frameInterval);
+    assertExpectedFramesShown(cap, expectedFrames);
 }
 
 
@@ -775,6 +779,43 @@ TEST(FrameFilterTest, TestGrabSeek) {
 
 TEST(FrameFilterTest, TestReadSeek) {
     assertCanChangeFramePosition(ReadSeek());
+}
+
+
+TEST(FrameFilterTest, CanFilterOnKeyFrames) {
+    MPFVideoJob job("Test", frameFilterTestVideo, 0, 1000, {{"USE_KEY_FRAMES", "true"}}, {});
+    MPFVideoCapture cap(job);
+    assertExpectedFramesShown(cap, {0, 5, 10, 15, 20, 25});
+}
+
+
+
+TEST(FrameFilterTest, CanFilterOnKeyFramesAndStartStopFrame) {
+    MPFVideoJob job("Test", frameFilterTestVideo, 6, 21, {{"USE_KEY_FRAMES", "true"}}, {});
+    MPFVideoCapture cap(job);
+    assertExpectedFramesShown(cap, {10, 15, 20});
+}
+
+
+TEST(FrameFilterTest, CanFilterOnKeyFramesAndInterval) {
+    MPFVideoJob job("Test", frameFilterTestVideo, 0, 1000,
+                    {{"USE_KEY_FRAMES", "true"}, {"FRAME_INTERVAL", "2"} }, {});
+    MPFVideoCapture cap(job);
+    assertExpectedFramesShown(cap, {0, 10, 20});
+
+    MPFVideoJob job2("Test", frameFilterTestVideo, 0, 1000,
+                    {{"USE_KEY_FRAMES", "true"}, {"FRAME_INTERVAL", "3"} }, {});
+    MPFVideoCapture cap2(job2);
+    assertExpectedFramesShown(cap2, {0, 15});
+}
+
+
+
+TEST(FrameFilterTest, CanFilterOnKeyFramesAndStartStopFrameAndInterval) {
+    MPFVideoJob job("Test", frameFilterTestVideo, 5, 21,
+                    {{"USE_KEY_FRAMES", "true"}, {"FRAME_INTERVAL", "2"}}, {});
+    MPFVideoCapture cap(job);
+    assertExpectedFramesShown(cap, {5, 15});
 }
 
 

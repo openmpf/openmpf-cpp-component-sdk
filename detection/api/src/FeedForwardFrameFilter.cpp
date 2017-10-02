@@ -33,7 +33,7 @@
 namespace MPF { namespace COMPONENT {
 
     FeedForwardFrameFilter::FeedForwardFrameFilter(const MPFVideoTrack &feedForwardTrack)
-            : framesInTrack_(GetFramesInTrack(feedForwardTrack)) {
+            : FrameListFilter(GetFramesInTrack(feedForwardTrack)) {
     }
 
 
@@ -49,36 +49,6 @@ namespace MPF { namespace COMPONENT {
         return framesInTrack;
     }
 
-
-    int FeedForwardFrameFilter::SegmentToOriginalFramePosition(int segmentPosition) const {
-        return framesInTrack_.at(static_cast<size_t>(segmentPosition));
-    }
-
-
-    int FeedForwardFrameFilter::OriginalToSegmentFramePosition(int originalPosition) const {
-        // Use binary search to get index of original position
-        auto iter = std::lower_bound(framesInTrack_.begin(), framesInTrack_.end(), originalPosition);
-        if (iter == framesInTrack_.end()) {
-            return GetSegmentFrameCount();
-        }
-        return static_cast<int>(iter - framesInTrack_.begin());
-    }
-
-
-    int FeedForwardFrameFilter::GetSegmentFrameCount() const {
-        return static_cast<int>(framesInTrack_.size());
-    }
-
-
-    double FeedForwardFrameFilter::GetSegmentDuration(double originalFrameRate) const {
-        int range = framesInTrack_.back() - framesInTrack_.front() + 1;
-        return range / originalFrameRate;
-    }
-
-
-    int FeedForwardFrameFilter::GetAvailableInitializationFrameCount() const {
-        return 0;
-    }
 
 }}
 

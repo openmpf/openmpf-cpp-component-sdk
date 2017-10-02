@@ -25,27 +25,21 @@
  ******************************************************************************/
 
 
-#ifndef OPENMPF_CPP_COMPONENT_SDK_FEEDFORWARDFRAMEFILTER_H
-#define OPENMPF_CPP_COMPONENT_SDK_FEEDFORWARDFRAMEFILTER_H
+#ifndef OPENMPF_CPP_COMPONENT_SDK_KEYFRAMEFILTER_H
+#define OPENMPF_CPP_COMPONENT_SDK_KEYFRAMEFILTER_H
 
-
-#include <vector>
-
-#include "MPFDetectionComponent.h"
 #include "FrameListFilter.h"
 
 namespace MPF { namespace COMPONENT {
 
-    class FeedForwardFrameFilter : public FrameListFilter {
+    class KeyFrameFilter : public FrameListFilter {
     public:
-        explicit FeedForwardFrameFilter(const MPFVideoTrack &feedForwardTrack);
-
+        explicit KeyFrameFilter(const MPFVideoJob &job);
 
     private:
-        static std::vector<int> GetFramesInTrack(const MPFVideoTrack &track);
+        static std::vector<int> GetKeyFrames(const MPFVideoJob &job);
     };
 
 }}
 
-
-#endif //OPENMPF_CPP_COMPONENT_SDK_FEEDFORWARDFRAMEFILTER_H
+#endif //OPENMPF_CPP_COMPONENT_SDK_KEYFRAMEFILTER_H
