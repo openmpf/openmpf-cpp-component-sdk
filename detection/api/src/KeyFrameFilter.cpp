@@ -24,6 +24,7 @@
  * limitations under the License.                                             *
  ******************************************************************************/
 
+#include <thread>
 #include <cstdio>
 
 #include <detectionComponentUtils.h>
@@ -67,8 +68,15 @@ namespace MPF { namespace COMPONENT {
             if (frameNumber < job.start_frame) {
                 continue;
             }
+
             if (frameNumber > job.stop_frame) {
-                break;
+                // pclose waits for the subprocess to exit before returning. If we have already seen all the frames
+                // in the current job's segment there is no need to wait until ffprobe exits.
+                // Running pclose in a separate thread allows us to ensure pclose gets called without having to wait
+                // for it to complete.
+                std::thread(pclose, pipe).detach();
+                keyFrames.shrink_to_fit();
+                return keyFrames;
             }
 
             if (lineStr.find("key_frame=1", linePrefix.size() + endOfFrameNumber + 1) == std::string::npos) {
@@ -80,6 +88,7 @@ namespace MPF { namespace COMPONENT {
             }
             numKeyFramesSeen++;
         }
+
 
         int returnCode = pclose(pipe);
         if (returnCode != 0) {
