@@ -24,6 +24,7 @@
  * limitations under the License.                                             *
  ******************************************************************************/
 
+#include <cstdio>
 
 #include <detectionComponentUtils.h>
 #include "KeyFrameFilter.h"
@@ -46,6 +47,7 @@ namespace MPF { namespace COMPONENT {
         }
 
         std::vector<int> keyFrames;
+        static const std::string linePrefix = "frame.";
         char lineBuf[128];
         int numKeyFramesSeen = 0;
         int frameInterval = std::max(1, DetectionComponentUtils::GetProperty(job.job_properties, "FRAME_INTERVAL", 1));
@@ -54,13 +56,14 @@ namespace MPF { namespace COMPONENT {
             // Expected line format for key frame: frame.209.key_frame=1
             // Expected line format for non-key frame: frame.210.key_frame=0
             std::string lineStr = lineBuf;
-
-            size_t firstDot = lineStr.find('.');
-            if (firstDot == std::string::npos) {
+            if (!std::equal(linePrefix.begin(), linePrefix.end(), lineStr.begin())) {
+                std::cerr << "Expected each line of output from ffprobe to start with \"" << linePrefix
+                          << "\", but the following line was found: \"" << lineStr << "\".";
                 continue;
             }
 
-            int frameNumber = std::stoi(lineStr.substr(firstDot + 1));
+            size_t endOfFrameNumber = 0;
+            int frameNumber = std::stoi(lineStr.substr(linePrefix.size()), &endOfFrameNumber);
             if (frameNumber < job.start_frame) {
                 continue;
             }
@@ -68,7 +71,7 @@ namespace MPF { namespace COMPONENT {
                 break;
             }
 
-            if (lineStr.find("key_frame=1") == std::string::npos) {
+            if (lineStr.find("key_frame=1", linePrefix.size() + endOfFrameNumber + 1) == std::string::npos) {
                 continue;
             }
 
@@ -80,9 +83,23 @@ namespace MPF { namespace COMPONENT {
 
         int returnCode = pclose(pipe);
         if (returnCode != 0) {
-            int ffprobeExitStatus = (returnCode >> 8) & 255; // bits 15-8 contain the subprocess's exit code.
-            throw std::runtime_error("Unable to get key frames because the ffprobe process exited with exit code: "
-                                     + std::to_string(ffprobeExitStatus) + '.');
+            std::stringstream errorMsg;
+            errorMsg << "Unable to get key frames because the ffprobe process ";
+
+            if (WIFEXITED(returnCode)) {
+                int ffprobeExitStatus = WEXITSTATUS(returnCode);
+                errorMsg << "exited with exit code: " << ffprobeExitStatus;
+            }
+            else {
+                errorMsg << "did not exit normally";
+            }
+
+            if (WIFSIGNALED(returnCode)) {
+                errorMsg << " due to signal number: " << WTERMSIG(returnCode);
+            }
+            errorMsg << '.';
+
+            throw std::runtime_error(errorMsg.str());
         }
 
         keyFrames.shrink_to_fit();
