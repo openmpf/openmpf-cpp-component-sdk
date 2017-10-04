@@ -25,18 +25,18 @@
  ******************************************************************************/
 
 
-#include "IntervalFrameSkipper.h"
+#include "IntervalFrameFilter.h"
 #include "detectionComponentUtils.h"
 #include <stdexcept>
 
 namespace MPF { namespace COMPONENT {
 
-    IntervalFrameSkipper::IntervalFrameSkipper(const MPFVideoJob &job, int originalFrameCount)
-            : IntervalFrameSkipper(job.start_frame, GetStopFrame(job, originalFrameCount), GetFrameInterval(job)) {
+    IntervalFrameFilter::IntervalFrameFilter(const MPFVideoJob &job, int originalFrameCount)
+            : IntervalFrameFilter(job.start_frame, GetStopFrame(job, originalFrameCount), GetFrameInterval(job)) {
 
     }
 
-    IntervalFrameSkipper::IntervalFrameSkipper(int startFrame, int stopFrame, int frameInterval)
+    IntervalFrameFilter::IntervalFrameFilter(int startFrame, int stopFrame, int frameInterval)
             : startFrame_(startFrame)
             , stopFrame_(stopFrame)
             , frameInterval_(frameInterval) {
@@ -44,17 +44,17 @@ namespace MPF { namespace COMPONENT {
     }
 
 
-    int IntervalFrameSkipper::SegmentToOriginalFramePosition(int segmentPosition) const {
+    int IntervalFrameFilter::SegmentToOriginalFramePosition(int segmentPosition) const {
         return frameInterval_ * segmentPosition + startFrame_;
     }
 
 
-    int IntervalFrameSkipper::OriginalToSegmentFramePosition(int originalPosition) const {
+    int IntervalFrameFilter::OriginalToSegmentFramePosition(int originalPosition) const {
         return (originalPosition - startFrame_) / frameInterval_;
     }
 
 
-    int IntervalFrameSkipper::GetSegmentFrameCount() const {
+    int IntervalFrameFilter::GetSegmentFrameCount() const {
         int range = stopFrame_ - startFrame_ + 1;
         int fullSegments = range / frameInterval_;
         bool hasRemainder = range % frameInterval_ != 0;
@@ -65,18 +65,18 @@ namespace MPF { namespace COMPONENT {
     }
 
 
-    double IntervalFrameSkipper::GetSegmentDuration(double originalFrameRate) const {
+    double IntervalFrameFilter::GetSegmentDuration(double originalFrameRate) const {
         int range = stopFrame_ - startFrame_ + 1;
         return range / originalFrameRate;
     }
 
 
-    int IntervalFrameSkipper::GetAvailableInitializationFrameCount() const {
+    int IntervalFrameFilter::GetAvailableInitializationFrameCount() const {
         return startFrame_ / frameInterval_;
     }
 
 
-    int IntervalFrameSkipper::GetFrameInterval(const MPFJob &job) {
+    int IntervalFrameFilter::GetFrameInterval(const MPFJob &job) {
         int interval = DetectionComponentUtils::GetProperty(job.job_properties, "FRAME_INTERVAL", 1);
         return interval > 0
                ? interval
@@ -84,7 +84,7 @@ namespace MPF { namespace COMPONENT {
     }
 
 
-    int IntervalFrameSkipper::GetStopFrame(const MPFVideoJob &job, int originalFrameCount) {
+    int IntervalFrameFilter::GetStopFrame(const MPFVideoJob &job, int originalFrameCount) {
         if (job.stop_frame > 0 && job.stop_frame < originalFrameCount) {
             return job.stop_frame;
         }
