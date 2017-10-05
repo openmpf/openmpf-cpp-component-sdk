@@ -25,53 +25,27 @@
  ******************************************************************************/
 
 
-#ifndef OPENMPF_CPP_COMPONENT_SDK_INTERVAL_FRAMESKIPPER_H
-#define OPENMPF_CPP_COMPONENT_SDK_INTERVAL_FRAMESKIPPER_H
+#ifndef OPENMPF_CPP_COMPONENT_SDK_FEEDFORWARDFRAMEFILTER_H
+#define OPENMPF_CPP_COMPONENT_SDK_FEEDFORWARDFRAMEFILTER_H
 
 
-#include "FrameSkipper.h"
+#include <vector>
+
 #include "MPFDetectionComponent.h"
+#include "FrameListFilter.h"
 
 namespace MPF { namespace COMPONENT {
 
-    /**
-     * If a video file is long enough, the Workflow Manager will create multiple jobs, each with different start
-     * and stop frames. Additionally many components support a FRAME_INTERVAL property.
-     * These values tell components to only process certain frames in the video. Instead of having components
-     * figure out which frames to process and which frames to skip, this class performs the calculations necessary
-     * to filter out frames that shouldn't be processed. From the component's point of view, it is processing
-     * the entire video, but it is really only processing a particular segment of the video.
-     */
-    class IntervalFrameSkipper : public FrameSkipper {
-
+    class FeedForwardFrameFilter : public FrameListFilter {
     public:
-        IntervalFrameSkipper(int startFrame, int stopFrame, int frameInterval);
-
-        IntervalFrameSkipper(const MPFVideoJob &job, int originalFrameCount);
-
-
-        int SegmentToOriginalFramePosition(int segmentPosition) const override;
-
-        int OriginalToSegmentFramePosition(int originalPosition) const override;
-
-        int GetSegmentFrameCount() const override;
-
-        double GetSegmentDuration(double originalFrameRate) const override;
-
-        int GetAvailableInitializationFrameCount() const override;
-
+        explicit FeedForwardFrameFilter(const MPFVideoTrack &feedForwardTrack);
 
 
     private:
-        const int startFrame_;
-        const int stopFrame_;
-        const int frameInterval_;
-
-        static int GetFrameInterval(const MPFJob &job);
-        static int GetStopFrame(const MPFVideoJob &job, int originalFrameCount);
+        static std::vector<int> GetFramesInTrack(const MPFVideoTrack &track);
     };
 
 }}
 
 
-#endif //OPENMPF_CPP_COMPONENT_SDK_INTERVAL_FRAMESKIPPER_H
+#endif //OPENMPF_CPP_COMPONENT_SDK_FEEDFORWARDFRAMEFILTER_H

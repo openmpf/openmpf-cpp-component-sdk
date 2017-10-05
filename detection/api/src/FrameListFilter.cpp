@@ -25,38 +25,43 @@
  ******************************************************************************/
 
 
-#ifndef OPENMPF_CPP_COMPONENT_SDK_FEEDFORWARDFRAMESKIPPER_H
-#define OPENMPF_CPP_COMPONENT_SDK_FEEDFORWARDFRAMESKIPPER_H
-
-
-#include <vector>
-
-#include "MPFDetectionComponent.h"
-#include "FrameSkipper.h"
+#include <iostream>
+#include "FrameListFilter.h"
 
 namespace MPF { namespace COMPONENT {
 
-    class FeedForwardFrameSkipper : public FrameSkipper {
-    public:
-        explicit FeedForwardFrameSkipper(const MPFVideoTrack &feedForwardTrack);
+    FrameListFilter::FrameListFilter(std::vector<int> &&framesToShow)
+        : framesToShow_(std::move(framesToShow)) {
+    }
 
-        int SegmentToOriginalFramePosition(int segmentPosition) const override;
 
-        int OriginalToSegmentFramePosition(int originalPosition) const override;
+    int FrameListFilter::SegmentToOriginalFramePosition(int segmentPosition) const {
+        return framesToShow_.at(static_cast<size_t>(segmentPosition));
+    }
 
-        int GetSegmentFrameCount() const override;
 
-        double GetSegmentDuration(double originalFrameRate) const override;
+    int FrameListFilter::OriginalToSegmentFramePosition(int originalPosition) const {
+        // Use binary search to get index of original position
+        auto iter = std::lower_bound(framesToShow_.begin(), framesToShow_.end(), originalPosition);
+        if (iter == framesToShow_.end()) {
+            return GetSegmentFrameCount();
+        }
+        return static_cast<int>(iter - framesToShow_.begin());
+    }
 
-        int GetAvailableInitializationFrameCount() const override;
 
-    private:
-        const std::vector<int> framesInTrack_;
+    int FrameListFilter::GetSegmentFrameCount() const {
+        return static_cast<int>(framesToShow_.size());
+    }
 
-        static std::vector<int> GetFramesInTrack(const MPFVideoTrack &track);
-    };
 
+    double FrameListFilter::GetSegmentDuration(double originalFrameRate) const {
+        int range = framesToShow_.back() - framesToShow_.front() + 1;
+        return range / originalFrameRate;
+    }
+
+
+    int FrameListFilter::GetAvailableInitializationFrameCount() const {
+        return 0;
+    }
 }}
-
-
-#endif //OPENMPF_CPP_COMPONENT_SDK_FEEDFORWARDFRAMESKIPPER_H
