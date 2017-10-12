@@ -23,39 +23,36 @@
  * See the License for the specific language governing permissions and        *
  * limitations under the License.                                             *
  ******************************************************************************/
-
-
-#ifndef OPENMPF_CPP_COMPONENT_SDK_VIDEOSEGMENTTOFRAMESCONVERTER_H
-#define OPENMPF_CPP_COMPONENT_SDK_VIDEOSEGMENTTOFRAMESCONVERTER_H
-
-#include <cstdint>
-#include <string>
-#include <utility>
 #include <vector>
 
-#include "MPFDetectionComponent.h"
-#include "MPFVideoCapture.h"
+#ifndef OPENMPF_CPP_COMPONENT_SDK_FRAMELISTFILTER_H
+#define OPENMPF_CPP_COMPONENT_SDK_FRAMELISTFILTER_H
 
+#include "MPFDetectionComponent.h"
+#include "FrameFilter.h"
 
 namespace MPF { namespace COMPONENT {
 
-    struct MPFVideoFrameData {
-        int start_frame;
-        int stop_frame;
-        int width;
-        int height;
-        int num_channels;
-        int bytes_per_channel;
-        int frames_in_segment;
-        int fps;
-        std::vector<uint8_t *> data;
+    class FrameListFilter : public FrameFilter {
+    public:
+        explicit FrameListFilter(std::vector<int> &&framesToShow);
+
+        int SegmentToOriginalFramePosition(int segmentPosition) const override;
+
+        int OriginalToSegmentFramePosition(int originalPosition) const override;
+
+        int GetSegmentFrameCount() const override;
+
+        double GetSegmentDuration(double originalFrameRate) const override;
+
+        int GetAvailableInitializationFrameCount() const override;
+
+    private:
+        const std::vector<int> framesToShow_;
+
     };
-
-
-    std::pair<MPFDetectionError, std::string> convertSegmentToFrameData(const MPFVideoJob &job,
-                                                                        MPFVideoCapture &cap,
-                                                                        MPFVideoFrameData &output);
 
 }}
 
-#endif //OPENMPF_CPP_COMPONENT_SDK_VIDEOSEGMENTTOFRAMESCONVERTER_H
+
+#endif //OPENMPF_CPP_COMPONENT_SDK_FRAMELISTFILTER_H

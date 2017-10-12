@@ -25,37 +25,71 @@
  ******************************************************************************/
 
 
-#ifndef OPENMPF_CPP_COMPONENT_SDK_VIDEOSEGMENTTOFRAMESCONVERTER_H
-#define OPENMPF_CPP_COMPONENT_SDK_VIDEOSEGMENTTOFRAMESCONVERTER_H
+#ifndef OPENMPF_CPP_COMPONENT_SDK_SEEKSTRATEGY_H
+#define OPENMPF_CPP_COMPONENT_SDK_SEEKSTRATEGY_H
 
-#include <cstdint>
-#include <string>
-#include <utility>
-#include <vector>
 
-#include "MPFDetectionComponent.h"
-#include "MPFVideoCapture.h"
-
+#include <opencv2/videoio.hpp>
+#include <memory>
 
 namespace MPF { namespace COMPONENT {
 
-    struct MPFVideoFrameData {
-        int start_frame;
-        int stop_frame;
-        int width;
-        int height;
-        int num_channels;
-        int bytes_per_channel;
-        int frames_in_segment;
-        int fps;
-        std::vector<uint8_t *> data;
+    /**
+     * For certain videos cv::VideoCapture::set(cv::VideoCaptureProperties::CAP_PROP_POS_FRAMES, int)
+     * does not work properly. If MPFVideoCapture detects that cv::VideoCapture is not setting the frame position
+     * properly it will fallback to different SeekStrategy.
+     */
+    class SeekStrategy {
+    public:
+        typedef std::unique_ptr<const SeekStrategy> CPtr;
+
+        virtual ~SeekStrategy() = default;
+
+        virtual int ChangePosition(cv::VideoCapture &cap, int currentPosition, int requestedPosition) const = 0;
+
+        virtual SeekStrategy::CPtr fallback() const = 0;
     };
 
 
-    std::pair<MPFDetectionError, std::string> convertSegmentToFrameData(const MPFVideoJob &job,
-                                                                        MPFVideoCapture &cap,
-                                                                        MPFVideoFrameData &output);
+
+    class SetFramePositionSeek : public SeekStrategy {
+    public:
+        int ChangePosition(cv::VideoCapture &cap, int currentPosition, int requestedPosition) const override;
+
+        SeekStrategy::CPtr fallback() const override;
+    };
+
+
+
+    class SequentialSeek : public SeekStrategy {
+    public:
+        int ChangePosition(cv::VideoCapture &cap, int currentPosition, int requestedPosition) const final;
+
+    private:
+        virtual bool Advance(cv::VideoCapture &cap) const = 0;
+    };
+
+
+
+    class GrabSeek : public SequentialSeek {
+    public:
+        SeekStrategy::CPtr fallback() const override;
+
+    private:
+        bool Advance(cv::VideoCapture &cap) const override;
+    };
+
+
+    class ReadSeek : public SequentialSeek {
+    public:
+        SeekStrategy::CPtr fallback() const override;
+
+    private:
+        bool Advance(cv::VideoCapture &cap) const override;
+    };
 
 }}
 
-#endif //OPENMPF_CPP_COMPONENT_SDK_VIDEOSEGMENTTOFRAMESCONVERTER_H
+
+
+#endif //OPENMPF_CPP_COMPONENT_SDK_SEEKSTRATEGY_H

@@ -34,7 +34,7 @@ include(../ComponentSetup.cmake)
 
 find_package(mpfComponentInterface REQUIRED)
 find_package(mpfDetectionComponentApi REQUIRED)
-find_package(OpenCV 3.2 EXACT REQUIRED PATHS /opt/opencv-3.2.0 COMPONENTS opencv_core opencv_highgui)
+find_package(OpenCV 3.3 EXACT REQUIRED PATHS /opt/opencv-3.3.0 COMPONENTS opencv_core opencv_highgui)
 
 
 set(VIDEO_CAPTURE_COMPONENT_SOURCES VideoCaptureComponent.h VideoCaptureComponent.cpp)

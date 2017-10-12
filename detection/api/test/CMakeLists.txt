@@ -26,32 +26,19 @@
 
 
 cmake_minimum_required(VERSION 3.6)
-project(openmpf-cpp-component-test-utils)
 
+project(detection-api-tests)
 set(CMAKE_CXX_STANDARD 11)
 
-find_package(OpenCV 3.3 EXACT REQUIRED PATHS /opt/opencv-3.3.0
-    COMPONENTS opencv_core opencv_imgcodecs opencv_imgproc opencv_videoio opencv_highgui)
+find_package(GTest)
+if (${GTEST_FOUND})
+    enable_testing()
+    add_executable(DetectionApiTest test_detection_api.cpp)
+    target_link_libraries(DetectionApiTest GTest::GTest GTest::Main mpfDetectionComponentApi)
 
-include_directories(include)
+    add_test(NAME DetectionApiTest COMMAND DetectionApiTest)
 
-set(SOURCE_FILES
-        include/DetectionComparison.h
-        src/DetectionComparison.cpp
+    file(GLOB TEST_VIDEOS test_vids/*)
+    file(COPY ${TEST_VIDEOS} DESTINATION test/test_vids)
 
-        include/ImageGeneration.h
-        src/ImageGeneration.cpp
-
-        include/ReadDetectionsFromFile.h
-        src/ReadDetectionsFromFile.cpp
-
-        include/WriteDetectionsToFile.h
-        src/WriteDetectionsToFile.cpp
-
-        include/VideoGeneration.h
-        src/VideoGeneration.cpp)
-
-add_library(mpfComponentTestUtils SHARED ${SOURCE_FILES})
-target_link_libraries(mpfComponentTestUtils ${OpenCV_LIBS})
-
-export_mpf_lib(mpfComponentTestUtils)
+endif()
