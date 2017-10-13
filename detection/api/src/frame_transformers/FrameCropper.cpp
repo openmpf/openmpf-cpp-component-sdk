@@ -35,28 +35,28 @@ namespace MPF { namespace COMPONENT {
 
     FrameCropper::FrameCropper(IFrameTransformer::Ptr innerTransform, const cv::Rect &regionOfInterest)
             : BaseDecoratedTransformer(std::move(innerTransform))
-            , regionOfInterest_(GetIntersectingRegion(regionOfInterest)) {
+            , regionOfInterest_(GetIntersectingRegion(regionOfInterest, 0)) {
     }
 
 
-    void FrameCropper::DoFrameTransform(cv::Mat &frame) {
+    void FrameCropper::DoFrameTransform(cv::Mat &frame, int frameIndex) {
         frame = frame(regionOfInterest_);
     }
 
 
-    void FrameCropper::DoReverseTransform(MPFImageLocation &imageLocation) {
+    void FrameCropper::DoReverseTransform(MPFImageLocation &imageLocation, int frameIndex) {
         imageLocation.x_left_upper += regionOfInterest_.x;
         imageLocation.y_left_upper += regionOfInterest_.y;
     }
 
 
-    cv::Size FrameCropper::GetFrameSize() {
+    cv::Size FrameCropper::GetFrameSize(int frameIndex) {
         return regionOfInterest_.size();
     }
 
 
-    cv::Rect FrameCropper::GetIntersectingRegion(const cv::Rect &regionOfInterest) const {
-        cv::Rect frameRect(cv::Point(0, 0), GetInnerFrameSize());
+    cv::Rect FrameCropper::GetIntersectingRegion(const cv::Rect &regionOfInterest, int frameIndex) const {
+        cv::Rect frameRect(cv::Point(0, 0), GetInnerFrameSize(frameIndex));
         return regionOfInterest & frameRect;
     }
 }}

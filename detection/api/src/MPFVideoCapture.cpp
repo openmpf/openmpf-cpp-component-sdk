@@ -207,8 +207,8 @@ namespace MPF { namespace COMPONENT {
     bool MPFVideoCapture::ReadAndTransform(cv::Mat &frame) {
         bool wasRead = cvVideoCapture_.read(frame);
         if (wasRead) {
+            frameTransformer_->TransformFrame(frame, GetCurrentFramePosition());
             framePosition_++;
-            frameTransformer_->TransformFrame(frame);
         }
         return wasRead;
     }
@@ -244,7 +244,7 @@ namespace MPF { namespace COMPONENT {
 
 
     cv::Size MPFVideoCapture::GetFrameSize() const {
-        return frameTransformer_->GetFrameSize();
+        return frameTransformer_->GetFrameSize(std::max(0, GetCurrentFramePosition() - 1));
     }
 
     cv::Size MPFVideoCapture::GetOriginalFrameSize() const {
@@ -338,7 +338,7 @@ namespace MPF { namespace COMPONENT {
 
         std::map<int, MPFImageLocation> newFrameLocations;
         for (auto &frameLocationPair : videoTrack.frame_locations) {
-            frameTransformer_->ReverseTransform(frameLocationPair.second);
+            frameTransformer_->ReverseTransform(frameLocationPair.second, frameLocationPair.first);
 
             int fixedFrameIndex = frameFilter_->SegmentToOriginalFramePosition(frameLocationPair.first);
             newFrameLocations[fixedFrameIndex] = frameLocationPair.second;

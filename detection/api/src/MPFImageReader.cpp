@@ -37,7 +37,7 @@ namespace MPF { namespace COMPONENT {
     MPFImageReader::MPFImageReader(const MPFImageJob &job) {
         image_ = cv::imread(job.data_uri, CV_LOAD_IMAGE_IGNORE_ORIENTATION + CV_LOAD_IMAGE_COLOR);
         frameTransformer_ = GetFrameTransformer(job, image_);
-        frameTransformer_->TransformFrame(image_);
+        frameTransformer_->TransformFrame(image_, 0);
     }
 
     cv::Mat MPFImageReader::GetImage() const {
@@ -46,7 +46,7 @@ namespace MPF { namespace COMPONENT {
 
 
     void MPFImageReader::ReverseTransform(MPFImageLocation &imageLocation) const {
-        frameTransformer_->ReverseTransform(imageLocation);
+        frameTransformer_->ReverseTransform(imageLocation, 0);
     }
 
 

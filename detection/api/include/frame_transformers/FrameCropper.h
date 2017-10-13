@@ -42,19 +42,19 @@ namespace MPF { namespace COMPONENT {
     public:
         FrameCropper(IFrameTransformer::Ptr innerTransform, const cv::Rect &regionOfInterest);
 
-        cv::Size GetFrameSize() override;
+        cv::Size GetFrameSize(int frameIndex) override;
 
 
     protected:
-        void DoFrameTransform(cv::Mat &frame) override;
+        void DoFrameTransform(cv::Mat &frame, int frameIndex) override;
 
-        void DoReverseTransform(MPFImageLocation &imageLocation) override;
+        void DoReverseTransform(MPFImageLocation &imageLocation, int frameIndex) override;
 
 
     private:
         const cv::Rect regionOfInterest_;
 
-        cv::Rect GetIntersectingRegion(const cv::Rect &regionOfInterest) const;
+        cv::Rect GetIntersectingRegion(const cv::Rect &regionOfInterest, int frameIndex) const;
     };
 }}
 
