@@ -32,31 +32,72 @@
 
 namespace MPF { namespace COMPONENT {
 
-
-    FrameCropper::FrameCropper(IFrameTransformer::Ptr innerTransform, const cv::Rect &regionOfInterest)
-            : BaseDecoratedTransformer(std::move(innerTransform))
-            , regionOfInterest_(GetIntersectingRegion(regionOfInterest, 0)) {
+    FrameCropper::FrameCropper(IFrameTransformer::Ptr innerTransform)
+            : BaseDecoratedTransformer(std::move(innerTransform)) {
     }
 
 
     void FrameCropper::DoFrameTransform(cv::Mat &frame, int frameIndex) {
-        frame = frame(regionOfInterest_);
+        frame = frame(GetRegionOfInterest(frameIndex));
     }
 
 
     void FrameCropper::DoReverseTransform(MPFImageLocation &imageLocation, int frameIndex) {
-        imageLocation.x_left_upper += regionOfInterest_.x;
-        imageLocation.y_left_upper += regionOfInterest_.y;
+        const cv::Rect roi = GetRegionOfInterest(frameIndex);
+        imageLocation.x_left_upper += roi.x;
+        imageLocation.y_left_upper += roi.y;
     }
 
 
     cv::Size FrameCropper::GetFrameSize(int frameIndex) {
-        return regionOfInterest_.size();
+        return GetRegionOfInterest(frameIndex).size();
     }
 
 
-    cv::Rect FrameCropper::GetIntersectingRegion(const cv::Rect &regionOfInterest, int frameIndex) const {
+
+
+    SearchRegionFrameCropper::SearchRegionFrameCropper(IFrameTransformer::Ptr innerTransform,
+                                                       const cv::Rect &regionOfInterest)
+        : FrameCropper(std::move(innerTransform))
+        , searchRegion_(GetIntersectingRegion(regionOfInterest, 0)) {
+
+    }
+    cv::Rect SearchRegionFrameCropper::GetIntersectingRegion(const cv::Rect &regionOfInterest, int frameIndex) const {
         cv::Rect frameRect(cv::Point(0, 0), GetInnerFrameSize(frameIndex));
         return regionOfInterest & frameRect;
+    }
+
+    cv::Rect SearchRegionFrameCropper::GetRegionOfInterest(int frameIndex) {
+        return searchRegion_;
+    }
+
+
+
+
+    FeedForwardFrameCropper::FeedForwardFrameCropper(IFrameTransformer::Ptr innerTransform,
+                                                     const std::map<int, MPFImageLocation> &track)
+        : FrameCropper(std::move(innerTransform)) {
+
+        fedForwardDetections_.reserve(track.size());
+
+        for (const auto &frameLocationPair : track) {
+            const auto &frameLocation = frameLocationPair.second;
+            fedForwardDetections_.emplace_back(frameLocation.x_left_upper, frameLocation.y_left_upper,
+                                               frameLocation.width, frameLocation.height);
+        }
+        fedForwardDetections_.shrink_to_fit();
+    }
+
+
+    cv::Rect FeedForwardFrameCropper::GetRegionOfInterest(int frameIndex) {
+        try {
+            return fedForwardDetections_.at(frameIndex);
+        }
+        catch (const std::out_of_range &error) {
+            std::stringstream ss;
+            ss << "Attempted to get feed forward region of interest for frame: " << frameIndex
+               << ", but there are only " << fedForwardDetections_.size() << " entries in the feed forward track.";
+            throw std::out_of_range(ss.str());
+        }
     }
 }}

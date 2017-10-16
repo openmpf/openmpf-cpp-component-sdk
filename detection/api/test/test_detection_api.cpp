@@ -914,3 +914,57 @@ TEST(ReverseTransformTest, NoFeedForwardWithSearchRegion) {
     ASSERT_EQ(location.width, 15);
     ASSERT_EQ(location.height, 5);
 }
+
+
+
+TEST(FeedForwardFrameCropperTest, CanCropToExactRegion) {
+    MPFVideoTrack feedForwardTrack(4, 29, 1, {});
+    feedForwardTrack.frame_locations = {
+            {4, MPFImageLocation(10, 60, 65, 125)},
+            {15, MPFImageLocation(60, 20, 100, 200)},
+            {29, MPFImageLocation(70, 0, 10, 240)}
+    };
+
+    MPFVideoJob job("Test", frameFilterTestVideo, 4, 29, { {"FEED_FORWARD_TYPE", "REGION"} }, {});
+    job.has_feed_forward_track = true;
+    job.feed_forward_track = feedForwardTrack;
+
+    MPFVideoCapture cap(job);
+
+    MPFVideoTrack outputTrack(0, 2, 1, {});
+
+    cv::Mat frame;
+    int framePos = cap.GetCurrentFramePosition();
+    ASSERT_TRUE(cap.Read(frame));
+    ASSERT_EQ(GetFrameNumber(frame), 4);
+    ASSERT_EQ(frame.size(), cv::Size(65, 125));
+    outputTrack.frame_locations[framePos] = MPFImageLocation(0, 0, frame.cols, frame.rows);
+
+    framePos = cap.GetCurrentFramePosition();
+    ASSERT_TRUE(cap.Read(frame));
+    ASSERT_EQ(GetFrameNumber(frame), 15);
+    ASSERT_EQ(frame.size(), cv::Size(100, 200));
+    outputTrack.frame_locations[framePos] = MPFImageLocation(0, 0, frame.cols, frame.rows);
+
+    framePos = cap.GetCurrentFramePosition();
+    ASSERT_TRUE(cap.Read(frame));
+    ASSERT_EQ(GetFrameNumber(frame), 29);
+    ASSERT_EQ(frame.size(), cv::Size(10, 240));
+    outputTrack.frame_locations[framePos] = MPFImageLocation(0, 0, frame.cols, frame.rows);
+
+    assertReadFails(cap);
+
+    cap.ReverseTransform(outputTrack);
+
+    ASSERT_EQ(outputTrack.frame_locations.size(), feedForwardTrack.frame_locations.size());
+
+    for (const auto &outPair : outputTrack.frame_locations) {
+        const auto &outLocation = outPair.second;
+        const auto &ffLocation = feedForwardTrack.frame_locations.at(outPair.first);
+        ASSERT_EQ(outLocation.x_left_upper, ffLocation.x_left_upper);
+        ASSERT_EQ(outLocation.y_left_upper, ffLocation.y_left_upper);
+        ASSERT_EQ(outLocation.width, ffLocation.width);
+        ASSERT_EQ(outLocation.height, ffLocation.height);
+
+    }
+}
