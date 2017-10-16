@@ -25,49 +25,53 @@
  ******************************************************************************/
 
 
-#include "IntervalFrameSkipper.h"
-#include "FrameSkipper.h"
+#ifndef OPENMPF_CPP_COMPONENT_SDK_INTERVAL_FRAMEFILTER_H
+#define OPENMPF_CPP_COMPONENT_SDK_INTERVAL_FRAMEFILTER_H
 
+
+#include "FrameFilter.h"
+#include "MPFDetectionComponent.h"
 
 namespace MPF { namespace COMPONENT {
 
-    bool FrameSkipper::IsPastEndOfSegment(int originalPosition) const {
-        int lastSegmentPos = GetSegmentFrameCount() - 1;
-        int lastOriginalPos = SegmentToOriginalFramePosition(lastSegmentPos);
-        return originalPosition > lastOriginalPos;
-    }
+    /**
+     * If a video file is long enough, the Workflow Manager will create multiple jobs, each with different start
+     * and stop frames. Additionally many components support a FRAME_INTERVAL property.
+     * These values tell components to only process certain frames in the video. Instead of having components
+     * figure out which frames to process and which frames to skip, this class performs the calculations necessary
+     * to filter out frames that shouldn't be processed. From the component's point of view, it is processing
+     * the entire video, but it is really only processing a particular segment of the video.
+     */
+    class IntervalFrameFilter : public FrameFilter {
+
+    public:
+        IntervalFrameFilter(int startFrame, int stopFrame, int frameInterval);
+
+        IntervalFrameFilter(const MPFVideoJob &job, int originalFrameCount);
 
 
-    double FrameSkipper::GetSegmentFrameRate(double originalFrameRate) const {
-        return GetSegmentFrameCount() / GetSegmentDuration(originalFrameRate);
-    }
+        int SegmentToOriginalFramePosition(int segmentPosition) const override;
+
+        int OriginalToSegmentFramePosition(int originalPosition) const override;
+
+        int GetSegmentFrameCount() const override;
+
+        double GetSegmentDuration(double originalFrameRate) const override;
+
+        int GetAvailableInitializationFrameCount() const override;
 
 
-    double FrameSkipper::GetCurrentSegmentTimeInMillis(int originalPosition, double originalFrameRate) const {
-        int segmentPos = OriginalToSegmentFramePosition(originalPosition);
-        double framesPerSecond = GetSegmentFrameRate(originalFrameRate);
-        double timeInSeconds = segmentPos / framesPerSecond;
-        return timeInSeconds * 1000;
-    }
 
+    private:
+        const int startFrame_;
+        const int stopFrame_;
+        const int frameInterval_;
 
-    int FrameSkipper::MillisToSegmentFramePosition(double originalFrameRate, double segmentMilliseconds) const {
-        double segmentFps = GetSegmentFrameRate(originalFrameRate);
-        return static_cast<int>(segmentFps * segmentMilliseconds / 1000);
-    }
-
-    double FrameSkipper::GetSegmentFramePositionRatio(int originalPosition) const {
-        double segmentPosition = OriginalToSegmentFramePosition(originalPosition);
-        return segmentPosition / GetSegmentFrameCount();
-    }
-
-    int FrameSkipper::RatioToOriginalFramePosition(double ratio) const {
-        auto segmentPosition = static_cast<int>(GetSegmentFrameCount() * ratio);
-        return SegmentToOriginalFramePosition(segmentPosition);
-    }
-
-    FrameSkipper::CPtr FrameSkipper::GetNoOpSkipper(int frameCount) {
-        return CPtr(new IntervalFrameSkipper(0, frameCount - 1, 1));
-    }
+        static int GetFrameInterval(const MPFJob &job);
+        static int GetStopFrame(const MPFVideoJob &job, int originalFrameCount);
+    };
 
 }}
+
+
+#endif //OPENMPF_CPP_COMPONENT_SDK_INTERVAL_FRAMEFILTER_H

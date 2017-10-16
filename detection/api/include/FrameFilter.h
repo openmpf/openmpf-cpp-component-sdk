@@ -25,20 +25,20 @@
  ******************************************************************************/
 
 
-#ifndef OPENMPF_CPP_COMPONENT_SDK_FRAMESKIPPER_H
-#define OPENMPF_CPP_COMPONENT_SDK_FRAMESKIPPER_H
+#ifndef OPENMPF_CPP_COMPONENT_SDK_FRAMEFILTER_H
+#define OPENMPF_CPP_COMPONENT_SDK_FRAMEFILTER_H
 
 #include <memory>
 
 namespace MPF { namespace COMPONENT {
 
-    class FrameSkipper {
+    class FrameFilter {
     public:
-        typedef std::unique_ptr<const FrameSkipper> CPtr;
+        typedef std::unique_ptr<const FrameFilter> CPtr;
 
-        static CPtr GetNoOpSkipper(int frameCount);
+        static CPtr GetNoOpFilter(int frameCount);
 
-        virtual ~FrameSkipper() = default;
+        virtual ~FrameFilter() = default;
 
 
         /**
@@ -129,4 +129,4 @@ namespace MPF { namespace COMPONENT {
 }}
 
 
-#endif //OPENMPF_CPP_COMPONENT_SDK_FRAMESKIPPER_H
+#endif //OPENMPF_CPP_COMPONENT_SDK_FRAMEFILTER_H
