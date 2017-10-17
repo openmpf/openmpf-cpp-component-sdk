@@ -87,7 +87,7 @@ namespace MPF { namespace COMPONENT { namespace FrameTransformerFactory {
          * @param feedForwardTrackLocations
          * @return The minimum area rectangle that contains all detections listed in feedForwardTrackLocations
          */
-        cv::Rect GetFeedForwardRegion(const std::map<int, MPFImageLocation> &feedForwardTrackLocations) {
+        cv::Rect GetSupersetRegion(const std::map<int, MPFImageLocation> &feedForwardTrackLocations) {
             if (feedForwardTrackLocations.empty()) {
                 throw std::length_error(
                         "FEED_FORWARD_TYPE: SUPERSET_REGION is enabled, but feed forward track was empty.");
@@ -104,9 +104,14 @@ namespace MPF { namespace COMPONENT { namespace FrameTransformerFactory {
         }
 
 
-        bool FeedForwardCroppingIsEnabled(const Properties &jobProperties) {
+        bool FeedForwardSupersetRegionIsEnabled(const Properties &jobProperties) {
             return "SUPERSET_REGION" ==
                     DetectionComponentUtils::GetProperty(jobProperties, "FEED_FORWARD_TYPE", string());
+        }
+
+
+        bool FeedForwardExactRegionIsEnabled(const Properties &jobProperties) {
+            return "REGION" == DetectionComponentUtils::GetProperty(jobProperties, "FEED_FORWARD_TYPE", string());
         }
 
 
@@ -156,19 +161,30 @@ namespace MPF { namespace COMPONENT { namespace FrameTransformerFactory {
                                 const std::map<int, MPFImageLocation> &trackLocations,
                                 IFrameTransformer::Ptr &currentTransformer) {
 
-            bool feedForwardCroppingEnabled = FeedForwardCroppingIsEnabled(job.job_properties);
+            bool exactRegionCroppingEnabled = FeedForwardExactRegionIsEnabled(job.job_properties);
+            bool supersetRegionCroppingEnabled = FeedForwardSupersetRegionIsEnabled(job.job_properties);
             bool searchRegionCroppingEnabled = SearchRegionCroppingIsEnabled(job.job_properties);
-            if (!feedForwardCroppingEnabled && !searchRegionCroppingEnabled) {
+
+            if (!exactRegionCroppingEnabled && !supersetRegionCroppingEnabled && !searchRegionCroppingEnabled) {
                 return;
             }
 
+            if ((exactRegionCroppingEnabled || supersetRegionCroppingEnabled) && searchRegionCroppingEnabled) {
+                std::cerr << "Both feed forward cropping and search region cropping properties were provided. "
+                          << "Only feed forward cropping will occur." << std::endl;
+            }
+
+
+            if (exactRegionCroppingEnabled) {
+                currentTransformer = IFrameTransformer::Ptr(
+                        new FeedForwardFrameCropper(std::move(currentTransformer), trackLocations));
+                return;
+            }
+
+
             cv::Rect regionOfInterest;
-            if (feedForwardCroppingEnabled) {
-                regionOfInterest = GetFeedForwardRegion(trackLocations);
-                if (searchRegionCroppingEnabled) {
-                    std::cerr << "Both feed forward cropping and search region cropping properties were provided. "
-                              << "Only feed forward cropping will occur." << std::endl;
-                }
+            if (supersetRegionCroppingEnabled) {
+                regionOfInterest = GetSupersetRegion(trackLocations);
             }
             else {
                 regionOfInterest = GetSearchRegion(job.job_properties, inputVideoSize);
@@ -178,7 +194,7 @@ namespace MPF { namespace COMPONENT { namespace FrameTransformerFactory {
 
             if (!regionOfInterestIsEntireFrame) {
                 currentTransformer = IFrameTransformer::Ptr(
-                        new FrameCropper(std::move(currentTransformer), regionOfInterest));
+                        new SearchRegionFrameCropper(std::move(currentTransformer), regionOfInterest));
             }
         }
 
