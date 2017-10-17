@@ -35,19 +35,19 @@ namespace MPF { namespace COMPONENT {
             : innerTransform_(std::move(frameTransformer)) {
     }
 
-    void BaseDecoratedTransformer::TransformFrame(cv::Mat &frame) {
-        innerTransform_->TransformFrame(frame);
-        DoFrameTransform(frame);
+    void BaseDecoratedTransformer::TransformFrame(cv::Mat &frame, int frameIndex) {
+        innerTransform_->TransformFrame(frame, frameIndex);
+        DoFrameTransform(frame, frameIndex);
     }
 
 
-    void BaseDecoratedTransformer::ReverseTransform(MPFImageLocation &imageLocation) {
-        DoReverseTransform(imageLocation);
-        innerTransform_->ReverseTransform(imageLocation);
+    void BaseDecoratedTransformer::ReverseTransform(MPFImageLocation &imageLocation, int frameIndex) {
+        DoReverseTransform(imageLocation, frameIndex);
+        innerTransform_->ReverseTransform(imageLocation, frameIndex);
     }
 
 
-    cv::Size BaseDecoratedTransformer::GetInnerFrameSize() const {
-        return innerTransform_->GetFrameSize();
+    cv::Size BaseDecoratedTransformer::GetInnerFrameSize(int frameIndex) const {
+        return innerTransform_->GetFrameSize(frameIndex);
     }
 }}

@@ -25,37 +25,30 @@
  ******************************************************************************/
 
 
-#ifndef OPENMPF_CPP_COMPONENT_SDK_VIDEOSEGMENTTOFRAMESCONVERTER_H
-#define OPENMPF_CPP_COMPONENT_SDK_VIDEOSEGMENTTOFRAMESCONVERTER_H
-
-#include <cstdint>
-#include <string>
-#include <utility>
-#include <vector>
-
-#include "MPFDetectionComponent.h"
-#include "MPFVideoCapture.h"
+#include <algorithm>
+#include <iostream>
+#include "FeedForwardFrameFilter.h"
 
 
 namespace MPF { namespace COMPONENT {
 
-    struct MPFVideoFrameData {
-        int start_frame;
-        int stop_frame;
-        int width;
-        int height;
-        int num_channels;
-        int bytes_per_channel;
-        int frames_in_segment;
-        int fps;
-        std::vector<uint8_t *> data;
-    };
+    FeedForwardFrameFilter::FeedForwardFrameFilter(const MPFVideoTrack &feedForwardTrack)
+            : FrameListFilter(GetFramesInTrack(feedForwardTrack)) {
+    }
 
 
-    std::pair<MPFDetectionError, std::string> convertSegmentToFrameData(const MPFVideoJob &job,
-                                                                        MPFVideoCapture &cap,
-                                                                        MPFVideoFrameData &output);
+    std::vector<int> FeedForwardFrameFilter::GetFramesInTrack(const MPFVideoTrack &track) {
+        std::vector<int> framesInTrack;
+        framesInTrack.reserve(track.frame_locations.size());
+
+        for (const auto &frameLocPair : track.frame_locations) {
+            framesInTrack.push_back(frameLocPair.first);
+        }
+
+        framesInTrack.shrink_to_fit();
+        return framesInTrack;
+    }
+
 
 }}
 
-#endif //OPENMPF_CPP_COMPONENT_SDK_VIDEOSEGMENTTOFRAMESCONVERTER_H

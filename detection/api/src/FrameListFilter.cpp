@@ -25,37 +25,53 @@
  ******************************************************************************/
 
 
-#ifndef OPENMPF_CPP_COMPONENT_SDK_VIDEOSEGMENTTOFRAMESCONVERTER_H
-#define OPENMPF_CPP_COMPONENT_SDK_VIDEOSEGMENTTOFRAMESCONVERTER_H
+#include <iostream>
+#include <sstream>
 
-#include <cstdint>
-#include <string>
-#include <utility>
-#include <vector>
-
-#include "MPFDetectionComponent.h"
-#include "MPFVideoCapture.h"
-
+#include "FrameListFilter.h"
 
 namespace MPF { namespace COMPONENT {
 
-    struct MPFVideoFrameData {
-        int start_frame;
-        int stop_frame;
-        int width;
-        int height;
-        int num_channels;
-        int bytes_per_channel;
-        int frames_in_segment;
-        int fps;
-        std::vector<uint8_t *> data;
-    };
+    FrameListFilter::FrameListFilter(std::vector<int> &&framesToShow)
+        : framesToShow_(std::move(framesToShow)) {
+    }
 
 
-    std::pair<MPFDetectionError, std::string> convertSegmentToFrameData(const MPFVideoJob &job,
-                                                                        MPFVideoCapture &cap,
-                                                                        MPFVideoFrameData &output);
+    int FrameListFilter::SegmentToOriginalFramePosition(int segmentPosition) const {
+        try {
+            return framesToShow_.at(static_cast<size_t>(segmentPosition));
+        }
+        catch (const std::out_of_range &error) {
+            std::stringstream ss;
+            ss << "Attempted to get the original position for segment position: "
+               << segmentPosition << ", but the maximum segment position is " << GetSegmentFrameCount() - 1;
+            throw std::out_of_range(ss.str());
+        }
+    }
 
+
+    int FrameListFilter::OriginalToSegmentFramePosition(int originalPosition) const {
+        // Use binary search to get index of original position
+        auto iter = std::lower_bound(framesToShow_.begin(), framesToShow_.end(), originalPosition);
+        if (iter == framesToShow_.end()) {
+            return GetSegmentFrameCount();
+        }
+        return static_cast<int>(iter - framesToShow_.begin());
+    }
+
+
+    int FrameListFilter::GetSegmentFrameCount() const {
+        return static_cast<int>(framesToShow_.size());
+    }
+
+
+    double FrameListFilter::GetSegmentDuration(double originalFrameRate) const {
+        int range = framesToShow_.back() - framesToShow_.front() + 1;
+        return range / originalFrameRate;
+    }
+
+
+    int FrameListFilter::GetAvailableInitializationFrameCount() const {
+        return 0;
+    }
 }}
-
-#endif //OPENMPF_CPP_COMPONENT_SDK_VIDEOSEGMENTTOFRAMESCONVERTER_H

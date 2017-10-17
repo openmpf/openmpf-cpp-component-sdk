@@ -42,19 +42,19 @@ namespace MPF { namespace COMPONENT {
     public:
         FrameRotator(IFrameTransformer::Ptr innerTransform, int rotationDegrees);
 
-        cv::Size GetFrameSize() override;
+        cv::Size GetFrameSize(int frameIndex) override;
 
 
     protected:
-        void DoFrameTransform(cv::Mat &frame) override;
+        void DoFrameTransform(cv::Mat &frame, int frameIndex) override;
 
-        void DoReverseTransform(MPFImageLocation &imageLocation) override;
+        void DoReverseTransform(MPFImageLocation &imageLocation, int frameIndex) override;
 
 
     private:
         const int rotationDegrees_;
 
-        cv::Point GetRevertedTopLeftCorner(const MPFImageLocation &imageLocation) const;
+        cv::Point GetRevertedTopLeftCorner(const MPFImageLocation &imageLocation, int frameIndex) const;
     };
 }}
 

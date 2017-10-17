@@ -82,44 +82,23 @@ MPFDetectionError VideoFrameDataComponent::GetDetectionsFromVideoFrameData(
         // Detection processing operates on frame_addr.
     }
 
-    // The MPFVideoFrameData structure also contains the frame
-    // interval. When the video capture converted video frames to byte
-    // data arrays, if the frame interval specified in the job
-    // properties was > 1, it skipped the frames that are not
-    // needed. If frames were skipped, then the frames in which
-    // detections were found for a particular track are not sequential
-    // with respect to the frames in the original video. This
-    // component needs to compute the correct output frame index for
-    // each object location.
+    // The following loop creates the output vector of tracks. In this
+    // example, there is only one track in the output vector.
 
-    int frame_interval = frame_data.frame_interval;
+    MPFVideoTrack track;
 
     // Suppose we have a track that started in the third frame of the
     // segment.  Using indexing starting with 0, then the first
-    // detection in the track was found in data array #2. This must be
-    // converted to the true frame number in the original video.
-    int first_detection_idx = 2;
-    int track_start_frame = frame_data.start_frame + first_detection_idx*frame_interval;
-    // If the start frame, stop frame, and frame interval given as
-    // input to this example do not result in our example track lying
-    // within the segment, then we simply return an empty track
-    // vector.
-    if (track_start_frame > frame_data.stop_frame) {
-        return MPF_DETECTION_SUCCESS;
-    }
-
-    // The following loop converts the frame location of each detection
-    // in the track to its location in the original video, taking into
-    // account the start and stop frames, and the frame interval.
-
-    MPFVideoTrack track;
-    track.start_frame = track_start_frame;
+    // detection in the track was found in data array #2. This would
+    // be the track start frame.
+    int first_detection_frame_index = 2;
+    track.start_frame = frame_data.start_frame + first_detection_frame_index;
     track.confidence = 0.8;
-    track.detection_properties["METADATA"] = "video track metadata";
+    track.detection_properties["METADATA"] = "interesting info about this track";
 
-    int track_stop_frame = track_start_frame;
+    int track_stop_frame = track.start_frame;
     for (int i = 0; i < 4; i++) {
-        int frame_index = track_start_frame + i*frame_interval;
+        int frame_index = track.start_frame + i;
         if (frame_index > frame_data.stop_frame) break;
         track_stop_frame = frame_index;
         MPFImageLocation image(10+i, 10+i, 100, 200, 0.8);

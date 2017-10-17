@@ -25,37 +25,21 @@
  ******************************************************************************/
 
 
-#ifndef OPENMPF_CPP_COMPONENT_SDK_VIDEOSEGMENTTOFRAMESCONVERTER_H
-#define OPENMPF_CPP_COMPONENT_SDK_VIDEOSEGMENTTOFRAMESCONVERTER_H
+#ifndef OPENMPF_CPP_COMPONENT_SDK_KEYFRAMEFILTER_H
+#define OPENMPF_CPP_COMPONENT_SDK_KEYFRAMEFILTER_H
 
-#include <cstdint>
-#include <string>
-#include <utility>
-#include <vector>
-
-#include "MPFDetectionComponent.h"
-#include "MPFVideoCapture.h"
-
+#include "FrameListFilter.h"
 
 namespace MPF { namespace COMPONENT {
 
-    struct MPFVideoFrameData {
-        int start_frame;
-        int stop_frame;
-        int width;
-        int height;
-        int num_channels;
-        int bytes_per_channel;
-        int frames_in_segment;
-        int fps;
-        std::vector<uint8_t *> data;
+    class KeyFrameFilter : public FrameListFilter {
+    public:
+        explicit KeyFrameFilter(const MPFVideoJob &job);
+
+    private:
+        static std::vector<int> GetKeyFrames(const MPFVideoJob &job);
     };
-
-
-    std::pair<MPFDetectionError, std::string> convertSegmentToFrameData(const MPFVideoJob &job,
-                                                                        MPFVideoCapture &cap,
-                                                                        MPFVideoFrameData &output);
 
 }}
 
-#endif //OPENMPF_CPP_COMPONENT_SDK_VIDEOSEGMENTTOFRAMESCONVERTER_H
+#endif //OPENMPF_CPP_COMPONENT_SDK_KEYFRAMEFILTER_H

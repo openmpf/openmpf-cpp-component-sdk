@@ -45,6 +45,11 @@ namespace MPF { namespace COMPONENT { namespace Utils {
 
     MPFDetectionError HandleDetectionException(const MPFAudioJob &job, log4cxx::LoggerPtr logger);
 
+    // This function performs shell-like file name expansion. It
+    // returns an error string. If that string is not empty, then the
+    // filename expansion failed and the exp_filename output should
+    // not be used.
+    std::string expandFileName(const std::string &filename, std::string &exp_filename);
 
     cv::Mat ConvertToGray(const cv::Mat &image);
 
