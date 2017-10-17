@@ -95,10 +95,6 @@ namespace MPF { namespace COMPONENT { namespace Utils {
             return err_string;
         }
         exp_filename = *my_exp.we_wordv;
-        if (exp_filename.at(0) != '/') {
-            err_string = "Error in parsing the spectral hash file name \"" + filename + "\": expanded to \"" + exp_filename + "\"";
-            return err_string;
-        }
 
         return "";
     }
