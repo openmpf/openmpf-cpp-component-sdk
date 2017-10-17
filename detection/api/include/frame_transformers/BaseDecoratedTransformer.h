@@ -53,6 +53,7 @@ namespace MPF { namespace COMPONENT {
         /**
          * Calls in the inner transform before calling the subclass's doFrameTransform method.
          * @param frame[in,out] Frame to transform.
+         * @param frameIndex 0-based index of the frame's position in video or 0 if frame is from image.
          */
         void TransformFrame(cv::Mat &frame, int frameIndex) override;
 
@@ -60,6 +61,7 @@ namespace MPF { namespace COMPONENT {
         /**
          * Calls the subclass's doReverseTransform before calling the inner transformer's reverseTransform.
          * @param imageLocation[in,out]  The image location to do the reverse transform on.
+         * @param frameIndex 0-based index of the frame in which the detection was found or 0 if found in image.
          */
         void ReverseTransform(MPFImageLocation &imageLocation, int frameIndex) override;
 
@@ -70,6 +72,7 @@ namespace MPF { namespace COMPONENT {
         /**
          * Subclasses override this method to implement the frame transformation
          * @param frame[in,out] Frame to transform.
+         * @param frameIndex 0-based index of the frame's position in video or 0 if frame is from image.
          */
         virtual void DoFrameTransform(cv::Mat &frame, int frameIndex) = 0;
 
@@ -77,6 +80,7 @@ namespace MPF { namespace COMPONENT {
         /**
          * Subclasses override this method to implement the reverse transform
          * @param imageLocation[in,out]  The image location to do the reverse transform on.
+         * @param frameIndex 0-based index of the frame's position in video or 0 if frame is from image.
          */
         virtual void DoReverseTransform(MPFImageLocation &imageLocation, int frameIndex) = 0;
 

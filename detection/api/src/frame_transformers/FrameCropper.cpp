@@ -60,12 +60,14 @@ namespace MPF { namespace COMPONENT {
                                                        const cv::Rect &regionOfInterest)
         : FrameCropper(std::move(innerTransform))
         , searchRegion_(GetIntersectingRegion(regionOfInterest, 0)) {
-
     }
+
+
     cv::Rect SearchRegionFrameCropper::GetIntersectingRegion(const cv::Rect &regionOfInterest, int frameIndex) const {
         cv::Rect frameRect(cv::Point(0, 0), GetInnerFrameSize(frameIndex));
         return regionOfInterest & frameRect;
     }
+
 
     cv::Rect SearchRegionFrameCropper::GetRegionOfInterest(int frameIndex) {
         return searchRegion_;
