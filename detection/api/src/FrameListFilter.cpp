@@ -26,6 +26,8 @@
 
 
 #include <iostream>
+#include <sstream>
+
 #include "FrameListFilter.h"
 
 namespace MPF { namespace COMPONENT {
@@ -36,7 +38,15 @@ namespace MPF { namespace COMPONENT {
 
 
     int FrameListFilter::SegmentToOriginalFramePosition(int segmentPosition) const {
-        return framesToShow_.at(static_cast<size_t>(segmentPosition));
+        try {
+            return framesToShow_.at(static_cast<size_t>(segmentPosition));
+        }
+        catch (const std::out_of_range &error) {
+            std::stringstream ss;
+            ss << "Attempted to get the original position for segment position: "
+               << segmentPosition << ", but the maximum segment position is " << GetSegmentFrameCount() - 1;
+            throw std::out_of_range(ss.str());
+        }
     }
 
 
