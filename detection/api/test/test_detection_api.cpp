@@ -914,3 +914,63 @@ TEST(ReverseTransformTest, NoFeedForwardWithSearchRegion) {
     ASSERT_EQ(location.width, 15);
     ASSERT_EQ(location.height, 5);
 }
+
+
+void assertDetectionLocationsMatch(const MPFImageLocation &loc1, const MPFImageLocation &loc2) {
+    ASSERT_EQ(loc1.x_left_upper, loc2.x_left_upper);
+    ASSERT_EQ(loc1.y_left_upper, loc2.y_left_upper);
+    ASSERT_EQ(loc1.width, loc2.width);
+    ASSERT_EQ(loc1.height, loc2.height);
+}
+
+
+TEST(FeedForwardFrameCropperTest, CanCropToExactRegion) {
+    MPFVideoTrack feedForwardTrack(4, 29, 1, {});
+    feedForwardTrack.frame_locations = {
+            {4, MPFImageLocation(10, 60, 65, 125)},
+            {15, MPFImageLocation(60, 20, 100, 200)},
+            {29, MPFImageLocation(70, 0, 30, 240)}
+    };
+
+    MPFVideoJob job("Test", frameFilterTestVideo, 4, 29, { {"FEED_FORWARD_TYPE", "REGION"} }, {});
+    job.has_feed_forward_track = true;
+    job.feed_forward_track = feedForwardTrack;
+
+    MPFVideoCapture cap(job);
+
+    MPFVideoTrack outputTrack(0, 2, 1, {});
+
+    cv::Mat frame;
+    int framePos = cap.GetCurrentFramePosition();
+    ASSERT_TRUE(cap.Read(frame));
+    ASSERT_EQ(GetFrameNumber(frame), 4);
+    ASSERT_EQ(frame.size(), cv::Size(65, 125));
+    outputTrack.frame_locations[framePos] = MPFImageLocation(0, 0, frame.cols, frame.rows);
+
+    framePos = cap.GetCurrentFramePosition();
+    ASSERT_TRUE(cap.Read(frame));
+    ASSERT_EQ(GetFrameNumber(frame), 15);
+    ASSERT_EQ(frame.size(), cv::Size(100, 200));
+    outputTrack.frame_locations[framePos] = MPFImageLocation(0, 0, frame.cols, frame.rows);
+
+    framePos = cap.GetCurrentFramePosition();
+    ASSERT_TRUE(cap.Read(frame));
+    ASSERT_EQ(GetFrameNumber(frame), 29);
+    ASSERT_EQ(frame.size(), cv::Size(30, 240));
+    outputTrack.frame_locations[framePos] = MPFImageLocation(5, 40, 15, 60);
+
+    assertReadFails(cap);
+
+    cap.ReverseTransform(outputTrack);
+
+    ASSERT_EQ(outputTrack.frame_locations.size(), feedForwardTrack.frame_locations.size());
+
+    assertDetectionLocationsMatch(outputTrack.frame_locations.at(4), outputTrack.frame_locations.at(4));
+    assertDetectionLocationsMatch(outputTrack.frame_locations.at(15), outputTrack.frame_locations.at(15));
+
+    const auto &lastDetection = outputTrack.frame_locations.at(29);
+    ASSERT_EQ(lastDetection.x_left_upper, 75);
+    ASSERT_EQ(lastDetection.y_left_upper, 40);
+    ASSERT_EQ(lastDetection.width, 15);
+    ASSERT_EQ(lastDetection.height, 60);
+}
