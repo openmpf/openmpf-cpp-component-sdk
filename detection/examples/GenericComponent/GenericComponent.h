@@ -25,43 +25,30 @@
  ******************************************************************************/
 
 
-#ifndef OPENMPF_CPP_COMPONENT_SDK_MPFIMAGEDETECTIONCOMPONENTADAPTER_H
-#define OPENMPF_CPP_COMPONENT_SDK_MPFIMAGEDETECTIONCOMPONENTADAPTER_H
+#ifndef OPENMPF_CPP_COMPONENT_SDK_GENERIC_COMPONENT_H
+#define OPENMPF_CPP_COMPONENT_SDK_GENERIC_COMPONENT_H
 
 
-#include <vector>
+#include <string>
+#include <adapters/MPFGenericDetectionComponentAdapter.h>
 
-#include "MPFDetectionComponent.h"
+using namespace MPF;
+using namespace COMPONENT;
 
-namespace MPF { namespace COMPONENT {
+class GenericComponent : public MPFGenericDetectionComponentAdapter {
 
-    class MPFImageDetectionComponentAdapter : public MPFDetectionComponent {
-    public:
-        virtual ~MPFImageDetectionComponentAdapter() = default;
+public:
 
+    bool Init();
 
-        MPFDetectionError GetDetections(const MPFVideoJob &job, std::vector<MPFVideoTrack> &tracks) override {
-            return MPFDetectionError::MPF_UNSUPPORTED_DATA_TYPE;
-        }
+    bool Close();
 
-        MPFDetectionError GetDetections(const MPFAudioJob &job, std::vector<MPFAudioTrack> &tracks) override {
-            return MPFDetectionError::MPF_UNSUPPORTED_DATA_TYPE;
-        };
+    MPFDetectionError GetDetections(const MPFGenericJob &job, std::vector <MPFGenericTrack> &tracks);
 
-        MPFDetectionError GetDetections(const MPFGenericJob &job, std::vector<MPFGenericTrack> &tracks) override {
-            return MPFDetectionError::MPF_UNSUPPORTED_DATA_TYPE;
-        }
+    bool Supports(MPFDetectionDataType data_type);
+
+    std::string GetDetectionType();
+};
 
 
-        bool Supports(MPFDetectionDataType data_type) override {
-            return MPFDetectionDataType::IMAGE == data_type;
-        };
-
-
-    protected:
-        MPFImageDetectionComponentAdapter() = default;
-    };
-
-}}
-
-#endif //OPENMPF_CPP_COMPONENT_SDK_MPFIMAGEDETECTIONCOMPONENTADAPTER_H
+#endif //OPENMPF_CPP_COMPONENT_SDK_GENERIC_COMPONENT_H

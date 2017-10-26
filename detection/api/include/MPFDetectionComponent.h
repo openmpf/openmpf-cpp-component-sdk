@@ -144,6 +144,16 @@ namespace MPF { namespace COMPONENT {
     };
 
 
+    struct MPFGenericTrack {
+        float confidence;  // optional
+        Properties detection_properties;
+
+        MPFGenericTrack(float confidence = -1, const Properties &detection_properties = {})
+                : confidence(confidence)
+                , detection_properties(detection_properties) { }
+    };
+
+
     struct MPFJob {
         const std::string job_name;
         const std::string data_uri;
@@ -254,6 +264,30 @@ namespace MPF { namespace COMPONENT {
     };
 
 
+    struct MPFGenericJob : MPFJob {
+        bool has_feed_forward_track = false;
+        MPFGenericTrack feed_forward_track;
+
+        MPFGenericJob(const std::string &job_name,
+                      const std::string &data_uri,
+                      const Properties &job_properties,
+                      const Properties &media_properties)
+                : MPFJob(job_name, data_uri, job_properties, media_properties)
+                , has_feed_forward_track(false) {
+        }
+
+        MPFGenericJob(const std::string &job_name,
+                      const std::string &data_uri,
+                      const MPFGenericTrack &track,
+                      const Properties &job_properties,
+                      const Properties &media_properties)
+                : MPFJob(job_name, data_uri, job_properties, media_properties)
+                , has_feed_forward_track(true)
+                , feed_forward_track(track) {
+        }
+    };
+
+
     class MPFDetectionComponent : public MPFComponent {
 
     public:
@@ -266,6 +300,8 @@ namespace MPF { namespace COMPONENT {
         virtual MPFDetectionError GetDetections(const MPFImageJob &job, std::vector<MPFImageLocation> &locations) = 0;
 
         virtual MPFDetectionError GetDetections(const MPFAudioJob &job, std::vector<MPFAudioTrack> &tracks) = 0;
+
+        virtual MPFDetectionError GetDetections(const MPFGenericJob &job, std::vector<MPFGenericTrack> &tracks) = 0;
 
         virtual bool Supports(MPFDetectionDataType data_type) = 0;
 
