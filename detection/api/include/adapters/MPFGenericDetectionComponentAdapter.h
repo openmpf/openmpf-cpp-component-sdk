@@ -70,12 +70,68 @@ namespace MPF { namespace COMPONENT {
             return MPFDetectionError::MPF_DETECTION_SUCCESS;
         };
 
-        MPFDetectionError GetDetections(const MPFImageJob &job, std::vector<MPFImageLocation> &locations) override {
-            return MPFDetectionError::MPF_UNSUPPORTED_DATA_TYPE;
+        MPFDetectionError GetDetections(const MPFImageJob &image_job, std::vector<MPFImageLocation> &locations) override {
+            // create generic job
+            MPFGenericJob generic_job(image_job.job_name, image_job.data_uri, image_job.job_properties, image_job.media_properties);
+            if (image_job.has_feed_forward_location) {
+                MPFGenericTrack generic_feed_forward_track(image_job.feed_forward_location.confidence, image_job.feed_forward_location.detection_properties);
+                generic_job.feed_forward_track = generic_feed_forward_track;
+            }
+
+            // process generic job
+            std::vector<MPFGenericTrack> generic_tracks;
+            MPFDetectionError rc = GetDetections(generic_job, generic_tracks);
+
+            if (rc != MPFDetectionError::MPF_DETECTION_SUCCESS) {
+                return rc;
+            }
+
+            // convert generic tracks to expected type
+            for (auto generic_track : generic_tracks) {
+                MPFImageLocation location;
+                if (image_job.has_feed_forward_location) {
+                    location.x_left_upper = image_job.feed_forward_location.x_left_upper;
+                    location.y_left_upper = image_job.feed_forward_location.y_left_upper;
+                    location.width = image_job.feed_forward_location.width;
+                    location.height = image_job.feed_forward_location.height;
+                }
+                location.confidence = generic_track.confidence;
+                location.detection_properties = generic_track.detection_properties;
+                locations.push_back(location);
+            }
+
+            return MPFDetectionError::MPF_DETECTION_SUCCESS;
         }
 
-        MPFDetectionError GetDetections(const MPFVideoJob &job, std::vector<MPFVideoTrack> &tracks) override {
-            return MPFDetectionError::MPF_UNSUPPORTED_DATA_TYPE;
+        MPFDetectionError GetDetections(const MPFVideoJob &video_job, std::vector<MPFVideoTrack> &video_tracks) override {
+            // create generic job
+            MPFGenericJob generic_job(video_job.job_name, video_job.data_uri, video_job.job_properties, video_job.media_properties);
+            if (video_job.has_feed_forward_track) {
+                MPFGenericTrack generic_feed_forward_track(video_job.feed_forward_track.confidence, video_job.feed_forward_track.detection_properties);
+                generic_job.feed_forward_track = generic_feed_forward_track;
+            }
+
+            // process generic job
+            std::vector<MPFGenericTrack> generic_tracks;
+            MPFDetectionError rc = GetDetections(generic_job, generic_tracks);
+
+            if (rc != MPFDetectionError::MPF_DETECTION_SUCCESS) {
+                return rc;
+            }
+
+            // convert generic tracks to expected type
+            for (auto generic_track : generic_tracks) {
+                MPFVideoTrack video_track;
+                if (video_job.has_feed_forward_track) {
+                    video_track.start_frame = video_job.feed_forward_track.start_frame;
+                    video_track.stop_frame = video_job.feed_forward_track.stop_frame;
+                }
+                video_track.confidence = generic_track.confidence;
+                video_track.detection_properties = generic_track.detection_properties;
+                video_tracks.push_back(video_track);
+            }
+
+            return MPFDetectionError::MPF_DETECTION_SUCCESS;
         }
 
         virtual MPFDetectionError GetDetections(const MPFGenericJob &job, std::vector<MPFGenericTrack> &tracks) = 0;
