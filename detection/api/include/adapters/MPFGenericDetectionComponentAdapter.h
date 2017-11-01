@@ -128,6 +128,10 @@ namespace MPF { namespace COMPONENT {
                 }
                 video_track.confidence = generic_track.confidence;
                 video_track.detection_properties = generic_track.detection_properties;
+
+                // a video track needs at least one frame location
+                video_track.frame_locations[0] = MPFImageLocation(0, 0, 0, 0, generic_track.confidence, generic_track.detection_properties);
+
                 video_tracks.push_back(video_track);
             }
 
