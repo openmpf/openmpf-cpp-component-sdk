@@ -149,11 +149,39 @@ MPFDetectionError HelloWorld::GetDetections(const MPFImageJob &job,
 }
 
 //-----------------------------------------------------------------------------
+// Generic case
+MPFDetectionError HelloWorld::GetDetections(const MPFGenericJob &job,
+                                            std::vector <MPFGenericTrack> &tracks)
+{
+
+    // The MPFGenericJob structure contains all of the details needed to
+    // process a generic file.
+    std::cout << "[" << job.job_name << "] Processing \"" << job.data_uri << "\"." << std::endl;
+
+    // Detection logic goes here
+
+    MPFGenericTrack track(0.80f);
+
+    // The MPFGenericTrack structure contains a Properties member that
+    // can be used to return component-specific information about the
+    // file. Here we add "METADATA", which might be used, for
+    // example, to return the type of object detected in the image.
+    track.detection_properties["METADATA"] = "extra generic track info";
+
+    tracks.push_back(track);
+
+    std::cout << "[" << job.job_name << "] Processing complete. Generated " << tracks.size() << " dummy tracks." << std::endl;
+
+    return MPF_DETECTION_SUCCESS;
+}
+
+//-----------------------------------------------------------------------------
 bool HelloWorld::Supports(MPFDetectionDataType data_type) {
 
     return data_type == MPFDetectionDataType::IMAGE
            || data_type == MPFDetectionDataType::VIDEO
-           || data_type == MPFDetectionDataType::AUDIO;
+           || data_type == MPFDetectionDataType::AUDIO
+           || data_type == MPFDetectionDataType::UNKNOWN;
 }
 
 //-----------------------------------------------------------------------------

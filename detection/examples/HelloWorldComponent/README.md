@@ -15,12 +15,13 @@ From within the build directory:
 
 ./sample_hello_world_detector
 
-./sample_hello_world_detector <image_file>
+./sample_hello_world_detector -i <image_file>
 
-./sample_hello_world_detector <audio_file> 0 60000
+./sample_hello_world_detector -a <audio_file> 0 60000
 
-./sample_hello_world_detector <video_file> 0 100 5
+./sample_hello_world_detector -v <video_file> 0 100 5
 
+./sample_hello_world_detector -g <generic_file>
 
 # REGISTER PACKAGE
 

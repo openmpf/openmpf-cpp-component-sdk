@@ -61,6 +61,7 @@ int main(int argc, char* argv[]) {
 
             for (int i = 0; i < tracks.size(); i++) {
                 std::cout << "Generic track number " << i << "\n"
+                          << "   confidence = " << tracks[i].confidence << "\n"
                           << "   metadata = \"" << tracks[i].detection_properties.at("METADATA") << "\"" << std::endl;
             }
         }

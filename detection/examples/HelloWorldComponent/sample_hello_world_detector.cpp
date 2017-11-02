@@ -29,6 +29,13 @@
 #include <iostream>
 #include "HelloWorld.h"
 
+void print_usage(char* program) {
+    std::cout << "Usage: " << program << " -i IMAGE_DATA_URI" << std::endl;
+    std::cout << "Usage: " << program << " -a AUDIO_DATA_URI START_TIME STOP_TIME" << std::endl;
+    std::cout << "Usage: " << program << " -v VIDEO_DATA_URI START_FRAME STOP_FRAME FRAME_INTERVAL" << std::endl;
+    std::cout << "Usage: " << program << " -g GENERIC_DATA_URI" << std::endl;
+}
+
 /**
  * NOTE: This main is only intended to serve as a test harness for compiling a
  * stand-alone binary to debug the component logic independently of MPF.
@@ -38,25 +45,32 @@
  */
 int main(int argc, char* argv[]) {
 
-    if ((2 != argc) && (4 != argc) && (5 != argc)) {
-        std::cout << "Usage: " << argv[0] << " IMAGE_DATA_URI" << std::endl;
-        std::cout << "Usage: " << argv[0] << " AUDIO_DATA_URI START_TIME STOP_TIME" << std::endl;
-        std::cout << "Usage: " << argv[0] << " VIDEO_DATA_URI START_FRAME STOP_FRAME FRAME_INTERVAL" << std::endl;
+    if (argc < 3) {
+        print_usage(argv[0]);
         return 0;
     }
-
-    std::string uri(argv[1]);
 
     MPF::COMPONENT::Properties algorithm_properties;
     MPF::COMPONENT::Properties media_properties;
     MPFDetectionError rc = MPF_DETECTION_SUCCESS;
 
-    MPFDetectionDataType media_type = IMAGE;
-    if (4 == argc) {
+    std::string option(argv[1]);
+
+    MPFDetectionDataType media_type;
+    if (3 == argc && option == "-i") {
+        media_type = IMAGE;
+    } else if (3 == argc && option == "-g") {
+        media_type = UNKNOWN;
+    } else if (5 == argc && option == "-a") {
         media_type = AUDIO;
-    } else if (5 == argc) {
+    } else if (6 == argc && option == "-v") {
         media_type = VIDEO;
+    } else {
+        print_usage(argv[0]);
+        return 0;
     }
+
+    std::string uri(argv[2]);
 
     // instantiate the test component
     HelloWorld hw;
@@ -147,6 +161,26 @@ int main(int argc, char* argv[]) {
                                       << "      confidence = " << it.second.confidence << "\n"
                                       << "      metadata = \"" << it.second.detection_properties.at("METADATA") << "\"" << std::endl;
                         }
+                    }
+                }
+                break;
+            }
+
+            case UNKNOWN:
+            {
+                MPFGenericJob job("TestGenericJob", uri,
+                                  algorithm_properties,
+                                  media_properties);
+                std::vector<MPFGenericTrack> tracks;
+
+                rc = hw.GetDetections(job, tracks);
+                if (rc == MPF_DETECTION_SUCCESS) {
+                    std::cout << "Number of generic tracks = " << tracks.size() << std::endl;
+
+                    for (int i = 0; i < tracks.size(); i++) {
+                        std::cout << "Generic track number " << i << "\n"
+                                  << "   confidence = " << tracks[i].confidence << "\n"
+                                  << "   metadata = \"" << tracks[i].detection_properties.at("METADATA") << "\"" << std::endl;
                     }
                 }
                 break;

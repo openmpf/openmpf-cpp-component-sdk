@@ -53,7 +53,8 @@
 MPFDetectionError GenericComponent::GetDetections(const MPFGenericJob &job, std::vector <MPFGenericTrack> &tracks)
 {
 
-    // The MPFGenericJob structure contains all of the details needed to process a generic file.
+    // The MPFGenericJob structure contains all of the details needed to
+    // process a generic file.
     std::cout << "[" << job.job_name << "] Processing \"" << job.data_uri << "\"." << std::endl;
 
     // Detection logic goes here
@@ -64,7 +65,7 @@ MPFDetectionError GenericComponent::GetDetections(const MPFGenericJob &job, std:
     // can be used to return component-specific information about the
     // file. Here we add "METADATA", which might be used, for
     // example, to return the type of object detected in the image.
-    track.detection_properties["METADATA"] = "extra info";
+    track.detection_properties["METADATA"] = "extra generic track info";
 
     tracks.push_back(track);
 

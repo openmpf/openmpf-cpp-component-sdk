@@ -52,6 +52,9 @@ public:
     MPFDetectionError GetDetections(const MPFAudioJob &job,
                                     std::vector<MPFAudioTrack> &tracks);
 
+    MPFDetectionError GetDetections(const MPFGenericJob &job,
+                                    std::vector <MPFGenericTrack> &tracks);
+
     bool Supports(MPFDetectionDataType data_type);
 
     std::string GetDetectionType();
