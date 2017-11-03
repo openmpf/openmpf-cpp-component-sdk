@@ -95,8 +95,10 @@ int main(int argc, char* argv[]) {
                                   << "   y left upper = " << locations[i].y_left_upper << "\n"
                                   << "   width = " << locations[i].width << "\n"
                                   << "   height = " << locations[i].height << "\n"
-                                  << "   confidence = " << locations[i].confidence << "\n"
-                                  << "   metadata = \"" << locations[i].detection_properties.at("METADATA") << "\"" << std::endl;
+                                  << "   confidence = " << locations[i].confidence << std::endl;
+                        for (auto prop : locations[i].detection_properties) {
+                            std::cout << "   " << prop.first << " = \"" << prop.second << "\"" << std::endl;
+                        }
                     }
                 }
                 break;
@@ -120,8 +122,10 @@ int main(int argc, char* argv[]) {
                         std::cout << "Audio track number " << i << "\n"
                                   << "   start time = " << tracks[i].start_time << "\n"
                                   << "   stop time = " << tracks[i].stop_time << "\n"
-                                  << "   confidence = " << tracks[i].confidence << "\n"
-                                  << "   metadata = \"" << tracks[i].detection_properties.at("METADATA") << "\"" << std::endl;
+                                  << "   confidence = " << tracks[i].confidence << std::endl;
+                        for (auto prop : tracks[i].detection_properties) {
+                            std::cout << "   " << prop.first << " = \"" << prop.second << "\"" << std::endl;
+                        }
                     }
                 }
                 break;
@@ -149,8 +153,10 @@ int main(int argc, char* argv[]) {
                                   << "   start frame = " << tracks[i].start_frame << "\n"
                                   << "   stop frame = " << tracks[i].stop_frame << "\n"
                                   << "   number of locations = " << tracks[i].frame_locations.size() << "\n"
-                                  << "   confidence = " << tracks[i].confidence << "\n"
-                                  << "   metadata = \"" << tracks[i].detection_properties.at("METADATA") << "\"" << std::endl;
+                                  << "   confidence = " << tracks[i].confidence << std::endl;
+                        for (auto prop : tracks[i].detection_properties) {
+                            std::cout << "   " << prop.first << " = \"" << prop.second << "\"" << std::endl;
+                        }
 
                         for (auto it : tracks[i].frame_locations) {
                             std::cout << "   Image location frame = " << it.first << "\n"
@@ -158,8 +164,10 @@ int main(int argc, char* argv[]) {
                                       << "      y left upper = " << it.second.y_left_upper << "\n"
                                       << "      width = " << it.second.width << "\n"
                                       << "      height = " << it.second.height << "\n"
-                                      << "      confidence = " << it.second.confidence << "\n"
-                                      << "      metadata = \"" << it.second.detection_properties.at("METADATA") << "\"" << std::endl;
+                                      << "      confidence = " << it.second.confidence << std::endl;
+                            for (auto prop : it.second.detection_properties) {
+                                std::cout << "      " << prop.first << " = \"" << prop.second << "\"" << std::endl;
+                            }
                         }
                     }
                 }
@@ -179,8 +187,10 @@ int main(int argc, char* argv[]) {
 
                     for (int i = 0; i < tracks.size(); i++) {
                         std::cout << "Generic track number " << i << "\n"
-                                  << "   confidence = " << tracks[i].confidence << "\n"
-                                  << "   metadata = \"" << tracks[i].detection_properties.at("METADATA") << "\"" << std::endl;
+                                  << "   confidence = " << tracks[i].confidence << std::endl;
+                        for (auto prop : tracks[i].detection_properties) {
+                            std::cout << "   " << prop.first << " = \"" << prop.second << "\"" << std::endl;
+                        }
                     }
                 }
                 break;
