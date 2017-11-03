@@ -93,8 +93,11 @@ MPFDetectionError HelloWorld::GetDetections(const MPFVideoJob &job,
 
     // Do something with the feed forward track if it exists
     if (job.has_feed_forward_track) {
-        int feed_forward_count = DetectionComponentUtils::GetProperty(job.feed_forward_track.frame_locations.at(0).detection_properties, "FEED_FORWARD_COUNT", 0);
-        image_location.detection_properties["FEED_FORWARD_COUNT"] = std::to_string(feed_forward_count+1);
+        std::map<int, MPFImageLocation>::const_iterator iter =  job.feed_forward_track.frame_locations.begin();
+        if (iter != job.feed_forward_track.frame_locations.end()) {
+            int feed_forward_count = DetectionComponentUtils::GetProperty((iter->second).detection_properties, "FEED_FORWARD_COUNT", 0);
+            image_location.detection_properties["FEED_FORWARD_COUNT"] = std::to_string(feed_forward_count+1);
+        }
     }
 
     video_track.frame_locations.insert(std::pair<int, MPFImageLocation>(job.start_frame, image_location));
