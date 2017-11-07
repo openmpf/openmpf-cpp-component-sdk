@@ -44,6 +44,7 @@ namespace MPF { namespace COMPONENT {
             MPFGenericJob generic_job(audio_job.job_name, audio_job.data_uri, audio_job.job_properties, audio_job.media_properties);
             if (audio_job.has_feed_forward_track) {
                 generic_job.feed_forward_track = MPFGenericTrack(audio_job.feed_forward_track.confidence, audio_job.feed_forward_track.detection_properties);
+                generic_job.has_feed_forward_track = true;
             }
 
             // process generic job
@@ -74,6 +75,7 @@ namespace MPF { namespace COMPONENT {
             MPFGenericJob generic_job(image_job.job_name, image_job.data_uri, image_job.job_properties, image_job.media_properties);
             if (image_job.has_feed_forward_location) {
                 generic_job.feed_forward_track = MPFGenericTrack(image_job.feed_forward_location.confidence, image_job.feed_forward_location.detection_properties);
+                generic_job.has_feed_forward_track = true;
             }
 
             // process generic job
@@ -106,6 +108,7 @@ namespace MPF { namespace COMPONENT {
             MPFGenericJob generic_job(video_job.job_name, video_job.data_uri, video_job.job_properties, video_job.media_properties);
             if (video_job.has_feed_forward_track) {
                 generic_job.feed_forward_track = MPFGenericTrack(video_job.feed_forward_track.confidence, video_job.feed_forward_track.detection_properties);
+                generic_job.has_feed_forward_track = true;
             }
 
             // process generic job
@@ -127,7 +130,7 @@ namespace MPF { namespace COMPONENT {
                 video_track.detection_properties = std::move(generic_track.detection_properties);
 
                 // a video track needs at least one frame location
-                video_track.frame_locations[0] = MPFImageLocation(0, 0, 0, 0, generic_track.confidence, generic_track.detection_properties);
+                video_track.frame_locations[0] = MPFImageLocation(0, 0, 0, 0, generic_track.confidence, video_track.detection_properties);
 
                 video_tracks.push_back(std::move(video_track));
             }

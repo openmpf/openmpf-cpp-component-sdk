@@ -26,6 +26,7 @@
 
 #include <map>
 #include <iostream>
+#include <detectionComponentUtils.h>
 #include "GenericComponent.h"
 
 //-----------------------------------------------------------------------------
@@ -66,6 +67,12 @@ MPFDetectionError GenericComponent::GetDetections(const MPFGenericJob &job, std:
     // file. Here we add "METADATA", which might be used, for
     // example, to return the type of object detected in the image.
     track.detection_properties["METADATA"] = "extra generic track info";
+
+    // Do something with the feed forward track if it exists
+    if (job.has_feed_forward_track) {
+        int feed_forward_count = DetectionComponentUtils::GetProperty(job.feed_forward_track.detection_properties, "FEED_FORWARD_COUNT", 0);
+        track.detection_properties["FEED_FORWARD_COUNT"] = std::to_string(feed_forward_count+1);
+    }
 
     tracks.push_back(track);
 
