@@ -39,15 +39,15 @@ class GenericComponent : public MPFGenericDetectionComponentAdapter {
 
 public:
 
-    bool Init();
+    bool Init() override;
 
-    bool Close();
+    bool Close() override;
 
-    MPFDetectionError GetDetections(const MPFGenericJob &job, std::vector <MPFGenericTrack> &tracks);
+    MPFDetectionError GetDetections(const MPFGenericJob &job, std::vector <MPFGenericTrack> &tracks) override;
 
-    bool Supports(MPFDetectionDataType data_type);
+    bool Supports(MPFDetectionDataType data_type) override;
 
-    std::string GetDetectionType();
+    std::string GetDetectionType() override;
 };
 
 

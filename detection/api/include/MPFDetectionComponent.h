@@ -148,7 +148,7 @@ namespace MPF { namespace COMPONENT {
         float confidence;  // optional
         Properties detection_properties;
 
-        MPFGenericTrack(float confidence = -1, const Properties &detection_properties = {})
+        explicit MPFGenericTrack(float confidence = -1, const Properties &detection_properties = {})
                 : confidence(confidence)
                 , detection_properties(detection_properties) { }
     };

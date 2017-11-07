@@ -43,8 +43,7 @@ namespace MPF { namespace COMPONENT {
             // create generic job
             MPFGenericJob generic_job(audio_job.job_name, audio_job.data_uri, audio_job.job_properties, audio_job.media_properties);
             if (audio_job.has_feed_forward_track) {
-                MPFGenericTrack generic_feed_forward_track(audio_job.feed_forward_track.confidence, audio_job.feed_forward_track.detection_properties);
-                generic_job.feed_forward_track = generic_feed_forward_track;
+                generic_job.feed_forward_track = MPFGenericTrack(audio_job.feed_forward_track.confidence, audio_job.feed_forward_track.detection_properties);
             }
 
             // process generic job
@@ -56,15 +55,15 @@ namespace MPF { namespace COMPONENT {
             }
 
             // convert generic tracks to expected type
-            for (auto generic_track : generic_tracks) {
+            for (auto &generic_track : generic_tracks) {
                 MPFAudioTrack audio_track;
                 if (audio_job.has_feed_forward_track) {
                     audio_track.start_time = audio_job.feed_forward_track.start_time;
                     audio_track.stop_time = audio_job.feed_forward_track.stop_time;
                 }
                 audio_track.confidence = generic_track.confidence;
-                audio_track.detection_properties = generic_track.detection_properties;
-                audio_tracks.push_back(audio_track);
+                audio_track.detection_properties = std::move(generic_track.detection_properties);
+                audio_tracks.push_back(std::move(audio_track));
             }
 
             return MPFDetectionError::MPF_DETECTION_SUCCESS;
@@ -74,8 +73,7 @@ namespace MPF { namespace COMPONENT {
             // create generic job
             MPFGenericJob generic_job(image_job.job_name, image_job.data_uri, image_job.job_properties, image_job.media_properties);
             if (image_job.has_feed_forward_location) {
-                MPFGenericTrack generic_feed_forward_track(image_job.feed_forward_location.confidence, image_job.feed_forward_location.detection_properties);
-                generic_job.feed_forward_track = generic_feed_forward_track;
+                generic_job.feed_forward_track = MPFGenericTrack(image_job.feed_forward_location.confidence, image_job.feed_forward_location.detection_properties);
             }
 
             // process generic job
@@ -87,7 +85,7 @@ namespace MPF { namespace COMPONENT {
             }
 
             // convert generic tracks to expected type
-            for (auto generic_track : generic_tracks) {
+            for (auto &generic_track : generic_tracks) {
                 MPFImageLocation location;
                 if (image_job.has_feed_forward_location) {
                     location.x_left_upper = image_job.feed_forward_location.x_left_upper;
@@ -96,8 +94,8 @@ namespace MPF { namespace COMPONENT {
                     location.height = image_job.feed_forward_location.height;
                 }
                 location.confidence = generic_track.confidence;
-                location.detection_properties = generic_track.detection_properties;
-                locations.push_back(location);
+                location.detection_properties = std::move(generic_track.detection_properties);
+                locations.push_back(std::move(location));
             }
 
             return MPFDetectionError::MPF_DETECTION_SUCCESS;
@@ -107,8 +105,7 @@ namespace MPF { namespace COMPONENT {
             // create generic job
             MPFGenericJob generic_job(video_job.job_name, video_job.data_uri, video_job.job_properties, video_job.media_properties);
             if (video_job.has_feed_forward_track) {
-                MPFGenericTrack generic_feed_forward_track(video_job.feed_forward_track.confidence, video_job.feed_forward_track.detection_properties);
-                generic_job.feed_forward_track = generic_feed_forward_track;
+                generic_job.feed_forward_track = MPFGenericTrack(video_job.feed_forward_track.confidence, video_job.feed_forward_track.detection_properties);
             }
 
             // process generic job
@@ -120,19 +117,19 @@ namespace MPF { namespace COMPONENT {
             }
 
             // convert generic tracks to expected type
-            for (auto generic_track : generic_tracks) {
+            for (auto &generic_track : generic_tracks) {
                 MPFVideoTrack video_track;
                 if (video_job.has_feed_forward_track) {
                     video_track.start_frame = video_job.feed_forward_track.start_frame;
                     video_track.stop_frame = video_job.feed_forward_track.stop_frame;
                 }
                 video_track.confidence = generic_track.confidence;
-                video_track.detection_properties = generic_track.detection_properties;
+                video_track.detection_properties = std::move(generic_track.detection_properties);
 
                 // a video track needs at least one frame location
                 video_track.frame_locations[0] = MPFImageLocation(0, 0, 0, 0, generic_track.confidence, generic_track.detection_properties);
 
-                video_tracks.push_back(video_track);
+                video_tracks.push_back(std::move(video_track));
             }
 
             return MPFDetectionError::MPF_DETECTION_SUCCESS;

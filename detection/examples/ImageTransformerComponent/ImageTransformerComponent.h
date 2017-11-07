@@ -36,16 +36,16 @@ namespace MPF { namespace COMPONENT {
     class ImageTransformerComponent : public MPFImageDetectionComponentAdapter {
 
     public:
-        std::string GetDetectionType() { return "IMAGE_DATA"; }
+        std::string GetDetectionType() override { return "IMAGE_DATA"; }
 
-        bool Init();
+        bool Init() override;
 
-        bool Close();
+        bool Close() override;
 
-        bool Supports(MPFDetectionDataType data_type);
+        bool Supports(MPFDetectionDataType data_type) override;
 
         MPFDetectionError GetDetections(const MPFImageJob &job,
-                                        std::vector<MPFImageLocation> &locations);
+                                        std::vector<MPFImageLocation> &locations) override;
 
     };
 }}
