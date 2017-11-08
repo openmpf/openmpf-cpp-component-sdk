@@ -26,16 +26,25 @@
 
 
 cmake_minimum_required(VERSION 3.6)
-project(openmpf-example-components)
+project(generic-component)
 
 set(CMAKE_CXX_STANDARD 11)
 
+include(../ComponentSetup.cmake)
 
-add_subdirectory(AudioOnlyComponent)
-add_subdirectory(FrameDataComponent)
-add_subdirectory(GenericComponent)
-add_subdirectory(HelloWorldComponent)
-add_subdirectory(ImageTransformerComponent)
-add_subdirectory(VideoCaptureComponent)
+find_package(mpfComponentInterface REQUIRED)
+find_package(mpfDetectionComponentApi REQUIRED)
+find_package(OpenCV 3.3 EXACT REQUIRED PATHS /opt/opencv-3.3.0 COMPONENTS opencv_core)
 
+
+set(GENERIC_COMPONENT_SOURCES GenericComponent.cpp GenericComponent.h)
+
+add_library(mpfGeneric SHARED ${GENERIC_COMPONENT_SOURCES})
+target_link_libraries(mpfGeneric mpfDetectionComponentApi)
+
+configure_mpf_component(GenericComponent mpfGeneric)
+
+
+add_executable(sample_generic_detector sample_generic_detector.cpp)
+target_link_libraries(sample_generic_detector mpfGeneric)
 

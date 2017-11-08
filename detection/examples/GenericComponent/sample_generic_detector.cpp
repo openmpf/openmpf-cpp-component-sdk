@@ -24,44 +24,53 @@
  * limitations under the License.                                             *
  ******************************************************************************/
 
-
-#ifndef OPENMPF_CPP_COMPONENT_SDK_MPFIMAGEDETECTIONCOMPONENTADAPTER_H
-#define OPENMPF_CPP_COMPONENT_SDK_MPFIMAGEDETECTIONCOMPONENTADAPTER_H
-
-
+#include <string>
 #include <vector>
+#include <iostream>
+#include "GenericComponent.h"
 
-#include "MPFDetectionComponent.h"
+/**
+ * NOTE: This main is only intended to serve as a test harness for compiling a
+ * stand-alone binary to debug the component logic independently of MPF.
+ * MPF requires that the component logic be compiled into a shared object
+ * library that is then dynamically loaded into a common detection component
+ * executable.
+ */
+int main(int argc, char* argv[]) {
 
-namespace MPF { namespace COMPONENT {
+    if (2 != argc) {
+        std::cout << "Usage: " << argv[0] << " DATA_URI" << std::endl;
+        return 0;
+    }
 
-    class MPFImageDetectionComponentAdapter : public MPFDetectionComponent {
-    public:
-        virtual ~MPFImageDetectionComponentAdapter() = default;
+    std::string uri(argv[1]);
 
+    MPF::COMPONENT::Properties algorithm_properties;
+    MPF::COMPONENT::Properties media_properties;
+    MPFDetectionError rc = MPF_DETECTION_SUCCESS;
 
-        MPFDetectionError GetDetections(const MPFVideoJob &job, std::vector<MPFVideoTrack> &tracks) override {
-            return MPFDetectionError::MPF_UNSUPPORTED_DATA_TYPE;
+    // instantiate the test component
+    GenericComponent comp;
+
+    if (comp.Init()) {
+        MPF::COMPONENT::MPFGenericJob job("TestGenericJob", uri,algorithm_properties, media_properties);
+        std::vector<MPFGenericTrack> tracks;
+        rc = comp.GetDetections(job, tracks);
+        if (rc == MPF_DETECTION_SUCCESS) {
+            std::cout << "Number of generic tracks = " << tracks.size() << std::endl;
+
+            for (int i = 0; i < tracks.size(); i++) {
+                std::cout << "Generic track number " << i << "\n"
+                          << "   confidence = " << tracks[i].confidence << "\n"
+                          << "   metadata = \"" << tracks[i].detection_properties.at("METADATA") << "\"" << std::endl;
+            }
         }
+    } else {
+        std::cerr << "Error: Could not initialize detection component." << std::endl;
+    }
 
-        MPFDetectionError GetDetections(const MPFAudioJob &job, std::vector<MPFAudioTrack> &tracks) override {
-            return MPFDetectionError::MPF_UNSUPPORTED_DATA_TYPE;
-        };
-
-        MPFDetectionError GetDetections(const MPFGenericJob &job, std::vector<MPFGenericTrack> &tracks) override {
-            return MPFDetectionError::MPF_UNSUPPORTED_DATA_TYPE;
-        }
-
-
-        bool Supports(MPFDetectionDataType data_type) override {
-            return MPFDetectionDataType::IMAGE == data_type;
-        };
+    comp.Close();
+    return 0;
+}
 
 
-    protected:
-        MPFImageDetectionComponentAdapter() = default;
-    };
-
-}}
-
-#endif //OPENMPF_CPP_COMPONENT_SDK_MPFIMAGEDETECTIONCOMPONENTADAPTER_H

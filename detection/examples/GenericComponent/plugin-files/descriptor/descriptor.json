@@ -1,0 +1,37 @@
+{
+  "componentName" : "GenericComponent",
+  "componentVersion" : "1.0.0",
+  "middlewareVersion" :  "1.0.0",
+  "sourceLanguage" : "c++",
+  "pathName" : "amq_detection_component",
+  "launchArgs" : ["${MPF_HOME}/plugins/GenericComponent/lib/libmpfGeneric.so"],
+  "environmentVariables" : [ {
+    "name" : "LD_LIBRARY_PATH",
+    "value" : "${MPF_HOME}/plugins/GenericComponent/lib:${LD_LIBRARY_PATH}"
+  } ],
+  "algorithm" : {
+    "name" : "Generic",
+    "description" : "This is a dummy detection component.",
+    "actionType" : "DETECTION",
+    "supportsBatchProcessing": true,
+    "requiresCollection" : {
+      "states" : []
+    },
+    "providesCollection" : {
+      "states" : [
+        "DETECTION",
+        "DETECTION_GENERIC",
+        "DETECTION_GENERIC_CPP"
+      ],
+      "properties" : [
+        {
+          "name" : "FRAME_INTERVAL",
+          "description" : "This is a test property with a default value of 1.",
+          "type" : "INT",
+          "defaultValue" : "1"
+        }
+      ]
+    }
+  }
+}
+

@@ -80,6 +80,7 @@ set(SOURCE_FILES
         include/adapters/MPFImageDetectionComponentAdapter.h
         include/adapters/MPFVideoDetectionComponentAdapter.h
         include/adapters/MPFVideoFrameDataDetectionAdapter.h
+        include/adapters/MPFGenericDetectionComponentAdapter.h
 
         include/SeekStrategy.h
         src/SeekStrategy.cpp
