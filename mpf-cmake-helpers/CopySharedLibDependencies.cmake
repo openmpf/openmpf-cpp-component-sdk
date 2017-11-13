@@ -47,54 +47,6 @@ set(linux_std_libs
     libstdc++
     libutil
     libz
-    libGL
-    libGLU
-    libICE
-    libQtCore
-    libQtGui
-    libQtNetwork
-    libQtOpenGL
-    libQtSql
-    libQtSvg
-    libQtXml
-    libSM
-    libX11
-    libXext
-    libXft
-    libXi
-    libXrender
-    libXt
-    libXtst
-    libasound
-    libatk-1
-    libcairo
-    libcairo-gobject
-    libcairo-script-interpreter
-    libfontconfig
-    libfreetype
-    libgdk-x11-2
-    libgdk_pixbuf-2
-    libgdk_pixbuf_xlib-2
-    libgio-2
-    libglib-2
-    libgmodule-2
-    libgobject-2
-    libgthread-2
-    libgtk-x11-2
-    libjpeg
-    libpango-1
-    libpangocairo-1
-    libpangoft2-1
-    libpangoxft-1
-    libpng12
-    libtiff
-    libxcb
-    libcups
-    libcupsimage
-    libsane
-    libxml2
-    libxslt
-    libjvm
 )
 
 
