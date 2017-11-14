@@ -36,20 +36,20 @@ namespace MPF { namespace COMPONENT {
     class VideoFrameDataComponent : public MPFVideoFrameDataDetectionAdapter {
 
     public:
-        bool Init();
+        bool Init() override;
 
-        bool Close();
+        bool Close() override;
 
-        std::string GetDetectionType() { return "VIDEO_FRAME_DATA"; }
+        std::string GetDetectionType() override { return "VIDEO_FRAME_DATA"; }
 
         MPFDetectionError GetDetectionsFromVideoFrameData(
                 const MPFVideoFrameData &video_byte_data,
                 const Properties &job_properties,
                 const std::string &job_name,
-                std::vector<MPFVideoTrack> &tracks);
+                std::vector<MPFVideoTrack> &tracks) override;
 
         MPFDetectionError GetDetections(const MPFVideoJob &job,
-                                        std::vector<MPFVideoTrack> &tracks);
+                                        std::vector<MPFVideoTrack> &tracks) override;
 
     };
 

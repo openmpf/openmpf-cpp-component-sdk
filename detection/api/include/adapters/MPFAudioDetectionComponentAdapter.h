@@ -42,7 +42,11 @@ namespace MPF { namespace COMPONENT {
             return MPFDetectionError::MPF_UNSUPPORTED_DATA_TYPE;
         }
 
-        MPFDetectionError GetDetections(const MPFVideoJob &job, std::vector<MPFVideoTrack> &locations) override {
+        MPFDetectionError GetDetections(const MPFVideoJob &job, std::vector<MPFVideoTrack> &tracks) override {
+            return MPFDetectionError::MPF_UNSUPPORTED_DATA_TYPE;
+        }
+
+        MPFDetectionError GetDetections(const MPFGenericJob &job, std::vector<MPFGenericTrack> &tracks) override {
             return MPFDetectionError::MPF_UNSUPPORTED_DATA_TYPE;
         }
 

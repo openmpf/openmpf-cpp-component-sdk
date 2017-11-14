@@ -36,14 +36,14 @@ namespace MPF { namespace COMPONENT {
     class VideoCaptureComponent : public MPFVideoDetectionComponentAdapter {
 
     public:
-        std::string GetDetectionType() { return "VIDEO"; }
+        std::string GetDetectionType() override { return "VIDEO"; }
 
-        bool Init();
+        bool Init() override;
 
-        bool Close();
+        bool Close() override;
 
         MPFDetectionError GetDetections(const MPFVideoJob &job,
-                                        std::vector <MPFVideoTrack> &tracks);
+                                        std::vector <MPFVideoTrack> &tracks) override;
 
     };
 
