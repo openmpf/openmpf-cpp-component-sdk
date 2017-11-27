@@ -26,6 +26,7 @@
 
 #include <map>
 #include <iostream>
+#include <detectionComponentUtils.h>
 #include "HelloWorld.h"
 
 //-----------------------------------------------------------------------------
@@ -75,6 +76,12 @@ MPFDetectionError HelloWorld::GetDetections(const MPFVideoJob &job,
     // example, to return the type of the object that is tracked.
     video_track.detection_properties["METADATA"] = "extra video track info";
 
+    // Do something with the feed forward track if it exists
+    if (job.has_feed_forward_track) {
+        int feed_forward_count = DetectionComponentUtils::GetProperty(job.feed_forward_track.detection_properties, "FEED_FORWARD_COUNT", 0);
+        video_track.detection_properties["FEED_FORWARD_COUNT"] = std::to_string(feed_forward_count+1);
+    }
+
     MPFImageLocation image_location(0, 0, 100, 100);
     image_location.confidence = 0.80f;
     // The MPFImageLocation structure also contains a Properties
@@ -83,6 +90,15 @@ MPFDetectionError HelloWorld::GetDetections(const MPFVideoJob &job,
     // "METADATA", which might be used, for example, to return the
     // pose of the object detected in the frame.
     image_location.detection_properties["METADATA"] = "extra image location info";
+
+    // Do something with the feed forward track if it exists
+    if (job.has_feed_forward_track) {
+        std::map<int, MPFImageLocation>::const_iterator iter =  job.feed_forward_track.frame_locations.begin();
+        if (iter != job.feed_forward_track.frame_locations.end()) {
+            int feed_forward_count = DetectionComponentUtils::GetProperty((iter->second).detection_properties, "FEED_FORWARD_COUNT", 0);
+            image_location.detection_properties["FEED_FORWARD_COUNT"] = std::to_string(feed_forward_count+1);
+        }
+    }
 
     video_track.frame_locations.insert(std::pair<int, MPFImageLocation>(job.start_frame, image_location));
 
@@ -114,6 +130,12 @@ MPFDetectionError HelloWorld::GetDetections(const MPFAudioJob &job,
     // example, to return the phrase recognized in the audio track.
     audio_track.detection_properties["METADATA"] = "extra audio track info";
 
+    // Do something with the feed forward track if it exists
+    if (job.has_feed_forward_track) {
+        int feed_forward_count = DetectionComponentUtils::GetProperty(job.feed_forward_track.detection_properties, "FEED_FORWARD_COUNT", 0);
+        audio_track.detection_properties["FEED_FORWARD_COUNT"] = std::to_string(feed_forward_count+1);
+    }
+
     tracks.push_back(audio_track);
 
     std::cout << "[" << job.job_name << "] Processing complete. Generated " << tracks.size() << " dummy audio tracks." << std::endl;
@@ -141,9 +163,48 @@ MPFDetectionError HelloWorld::GetDetections(const MPFImageJob &job,
     // example, to return the type of object detected in the image.
     image_location.detection_properties["METADATA"] = "extra image location info";
 
+    // Do something with the feed forward location if it exists
+    if (job.has_feed_forward_location) {
+        int feed_forward_count = DetectionComponentUtils::GetProperty(job.feed_forward_location.detection_properties, "FEED_FORWARD_COUNT", 0);
+        image_location.detection_properties["FEED_FORWARD_COUNT"] = std::to_string(feed_forward_count+1);
+    }
+
     locations.push_back(image_location);
 
     std::cout << "[" << job.job_name << "] Processing complete. Generated " << locations.size() << " dummy image locations." << std::endl;
+
+    return MPF_DETECTION_SUCCESS;
+}
+
+//-----------------------------------------------------------------------------
+// Generic case
+MPFDetectionError HelloWorld::GetDetections(const MPFGenericJob &job,
+                                            std::vector <MPFGenericTrack> &tracks)
+{
+
+    // The MPFGenericJob structure contains all of the details needed to
+    // process a generic file.
+    std::cout << "[" << job.job_name << "] Processing \"" << job.data_uri << "\"." << std::endl;
+
+    // Detection logic goes here
+
+    MPFGenericTrack generic_track(0.80f);
+
+    // The MPFGenericTrack structure contains a Properties member that
+    // can be used to return component-specific information about the
+    // file. Here we add "METADATA", which might be used, for
+    // example, to return the type of object detected in the image.
+    generic_track.detection_properties["METADATA"] = "extra generic track info";
+
+    // Do something with the feed forward track if it exists
+    if (job.has_feed_forward_track) {
+        int feed_forward_count = DetectionComponentUtils::GetProperty(job.feed_forward_track.detection_properties, "FEED_FORWARD_COUNT", 0);
+        generic_track.detection_properties["FEED_FORWARD_COUNT"] = std::to_string(feed_forward_count+1);
+    }
+
+    tracks.push_back(generic_track);
+
+    std::cout << "[" << job.job_name << "] Processing complete. Generated " << tracks.size() << " dummy tracks." << std::endl;
 
     return MPF_DETECTION_SUCCESS;
 }
@@ -153,7 +214,8 @@ bool HelloWorld::Supports(MPFDetectionDataType data_type) {
 
     return data_type == MPFDetectionDataType::IMAGE
            || data_type == MPFDetectionDataType::VIDEO
-           || data_type == MPFDetectionDataType::AUDIO;
+           || data_type == MPFDetectionDataType::AUDIO
+           || data_type == MPFDetectionDataType::UNKNOWN;
 }
 
 //-----------------------------------------------------------------------------

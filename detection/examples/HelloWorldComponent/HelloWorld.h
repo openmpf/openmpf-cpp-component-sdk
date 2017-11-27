@@ -39,22 +39,25 @@ class HelloWorld : public MPFDetectionComponent {
 
 public:
 
-    bool Init();
+    bool Init() override;
 
-    bool Close();
+    bool Close() override;
 
     MPFDetectionError GetDetections(const MPFVideoJob &job,
-                                    std::vector<MPFVideoTrack> &tracks);
+                                    std::vector<MPFVideoTrack> &tracks) override;
 
     MPFDetectionError GetDetections(const MPFImageJob &job,
-                                    std::vector<MPFImageLocation> &locations);
+                                    std::vector<MPFImageLocation> &locations) override;
 
     MPFDetectionError GetDetections(const MPFAudioJob &job,
-                                    std::vector<MPFAudioTrack> &tracks);
+                                    std::vector<MPFAudioTrack> &tracks) override;
 
-    bool Supports(MPFDetectionDataType data_type);
+    MPFDetectionError GetDetections(const MPFGenericJob &job,
+                                    std::vector <MPFGenericTrack> &tracks) override;
 
-    std::string GetDetectionType();
+    bool Supports(MPFDetectionDataType data_type) override;
+
+    std::string GetDetectionType() override;
 };
 
 

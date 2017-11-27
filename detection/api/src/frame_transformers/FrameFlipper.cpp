@@ -36,18 +36,18 @@ namespace MPF { namespace COMPONENT {
 
     }
 
-    void FrameFlipper::DoFrameTransform(cv::Mat &frame) {
+    void FrameFlipper::DoFrameTransform(cv::Mat &frame, int frameIndex) {
         // Flip around y-axis
         cv::flip(frame, frame, 1);
 
     }
 
-    void FrameFlipper::DoReverseTransform(MPFImageLocation &imageLocation) {
+    void FrameFlipper::DoReverseTransform(MPFImageLocation &imageLocation, int frameIndex) {
         int topRightX = imageLocation.x_left_upper + imageLocation.width;
-        imageLocation.x_left_upper = GetFrameSize().width - topRightX;
+        imageLocation.x_left_upper = GetFrameSize(frameIndex).width - topRightX;
     }
 
-    cv::Size FrameFlipper::GetFrameSize() {
-        return GetInnerFrameSize();
+    cv::Size FrameFlipper::GetFrameSize(int frameIndex) {
+        return GetInnerFrameSize(frameIndex);
     }
 }}

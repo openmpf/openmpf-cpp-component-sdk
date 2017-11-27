@@ -45,11 +45,11 @@ namespace MPF { namespace COMPONENT {
 
         virtual ~IFrameTransformer() = default;
 
-        virtual void TransformFrame(cv::Mat &frame) = 0;
+        virtual void TransformFrame(cv::Mat &frame, int frameIndex) = 0;
 
-        virtual void ReverseTransform(MPFImageLocation &imageLocation) = 0;
+        virtual void ReverseTransform(MPFImageLocation &imageLocation, int frameIndex) = 0;
 
-        virtual cv::Size GetFrameSize() = 0;
+        virtual cv::Size GetFrameSize(int frameIndex) = 0;
     };
 }}
 

@@ -27,6 +27,7 @@
 
 #include <iostream>
 #include <string>
+#include <wordexp.h>
 
 #include <opencv2/imgproc.hpp>
 
@@ -69,6 +70,34 @@ namespace MPF { namespace COMPONENT { namespace Utils {
         return HandleDetectionExceptionInner(job.job_name, MPFDetectionDataType::AUDIO, logger);
     }
 
+    // This function performs shell-like file name expansion. It
+    // returns an error string. If that string is not empty, then the
+    // filename expansion failed and the exp_filename output should
+    // not be used.
+    std::string expandFileName(const std::string &filename, std::string &exp_filename) {
+        wordexp_t my_exp;
+        std::string err_string;
+        int rc = wordexp(filename.c_str(), &my_exp, WRDE_UNDEF);
+        if (rc) {
+            switch (rc) {
+                case WRDE_BADCHAR:
+                    err_string = "Illegal occurrence of an unescaped character from the set: \\n, |, &, ;, <, >, (, ), {, }.";
+                    break;
+                case WRDE_BADVAL:
+                    err_string = "An undefined shell variable was referenced.";
+                    break;
+                case WRDE_SYNTAX:
+                    err_string = "Shell syntax error, such as unbalanced parentheses or unmatched quotes.";
+                    break;
+                default:
+                    err_string = "Unknown error.";
+            }
+            return err_string;
+        }
+        exp_filename = *my_exp.we_wordv;
+
+        return "";
+    }
 
     cv::Mat ConvertToGray(const cv::Mat &image) {
         cv::Mat gray;

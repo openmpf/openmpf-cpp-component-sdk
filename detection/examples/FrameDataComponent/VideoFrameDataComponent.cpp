@@ -162,11 +162,11 @@ MPFDetectionError VideoFrameDataComponent::GetDetections(const MPFVideoJob &job,
 
         }
         if (frame_data.data.empty()) {
-            // In this case, no frame data was extracte from the
+            // In this case, no frame data was extracted from the
             // video.  The convention used with other MPF components
             // has been to simply return success in this circumstance,
             // but a component may choose to handle it differently.
-            std::cout << "[" << job.job_name << "] Processing complete. found 0 detections" << std::endl;
+            std::cout << "[" << job.job_name << "] Processing complete. Found 0 detections." << std::endl;
             return MPF_DETECTION_SUCCESS;
         }
 
