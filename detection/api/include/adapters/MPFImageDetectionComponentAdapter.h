@@ -48,6 +48,10 @@ namespace MPF { namespace COMPONENT {
             return MPFDetectionError::MPF_UNSUPPORTED_DATA_TYPE;
         };
 
+        MPFDetectionError GetDetections(const MPFGenericJob &job, std::vector<MPFGenericTrack> &tracks) override {
+            return MPFDetectionError::MPF_UNSUPPORTED_DATA_TYPE;
+        }
+
 
         bool Supports(MPFDetectionDataType data_type) override {
             return MPFDetectionDataType::IMAGE == data_type;

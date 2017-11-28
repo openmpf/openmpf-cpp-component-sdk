@@ -28,7 +28,7 @@ cmake_minimum_required(VERSION 3.6)
 
 include(GetPrerequisites)
 
-# List from http://refspecs.linuxfoundation.org/LSB_5.0.0/LSB-Common/LSB-Common/requirements.html#RLIBRARIES
+# List from http://refspecs.linuxfoundation.org/LSB_5.0.0/LSB-Common/LSB-Common/requirements.html#RLIBRARIES.
 set(linux_std_libs
     libc
     libm

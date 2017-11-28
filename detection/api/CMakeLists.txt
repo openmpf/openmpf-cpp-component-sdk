@@ -30,7 +30,7 @@ project(openmpf-cpp-component-api)
 
 set(CMAKE_CXX_STANDARD 11)
 
-find_package(OpenCV 3.2 EXACT REQUIRED PATHS /opt/opencv-3.2.0
+find_package(OpenCV 3.3 EXACT REQUIRED PATHS /opt/opencv-3.3.0
     COMPONENTS opencv_core opencv_imgcodecs opencv_imgproc opencv_videoio)
 
 
@@ -80,9 +80,27 @@ set(SOURCE_FILES
         include/adapters/MPFImageDetectionComponentAdapter.h
         include/adapters/MPFVideoDetectionComponentAdapter.h
         include/adapters/MPFVideoFrameDataDetectionAdapter.h
+        include/adapters/MPFGenericDetectionComponentAdapter.h
 
-        include/FrameSkipper.h
-        src/FrameSkipper.cpp
+        include/SeekStrategy.h
+        src/SeekStrategy.cpp
+
+
+        include/FrameFilter.h
+        src/FrameFilter.cpp
+
+        include/IntervalFrameFilter.h
+        src/IntervalFrameFilter.cpp
+
+
+        include/FeedForwardFrameFilter.h
+        src/FeedForwardFrameFilter.cpp
+
+        include/FrameListFilter.h
+        src/FrameListFilter.cpp
+
+        include/KeyFrameFilter.h
+        src/KeyFrameFilter.cpp
     )
 
 add_library(mpfDetectionComponentApi SHARED ${SOURCE_FILES})

@@ -40,14 +40,14 @@ class AudioOnly : public MPFAudioDetectionComponentAdapter {
 
 public:
 
-    bool Init();
+    bool Init() override;
 
-    bool Close();
+    bool Close() override;
 
     MPFDetectionError GetDetections(const MPFAudioJob &job,
-                                    std::vector <MPFAudioTrack> &tracks);
+                                    std::vector <MPFAudioTrack> &tracks) override;
 
-    std::string GetDetectionType();
+    std::string GetDetectionType() override;
 };
 
 #endif //OPENMPF_CPP_COMPONENT_SDK_AUDIOONLY_H
