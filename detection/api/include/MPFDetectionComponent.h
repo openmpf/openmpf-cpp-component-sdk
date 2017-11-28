@@ -144,6 +144,16 @@ namespace MPF { namespace COMPONENT {
     };
 
 
+    struct MPFGenericTrack {
+        float confidence;  // optional
+        Properties detection_properties;
+
+        explicit MPFGenericTrack(float confidence = -1, const Properties &detection_properties = {})
+                : confidence(confidence)
+                , detection_properties(detection_properties) { }
+    };
+
+
     struct MPFJob {
         const std::string job_name;
         const std::string data_uri;
@@ -254,6 +264,30 @@ namespace MPF { namespace COMPONENT {
     };
 
 
+    struct MPFGenericJob : MPFJob {
+        bool has_feed_forward_track = false;
+        MPFGenericTrack feed_forward_track;
+
+        MPFGenericJob(const std::string &job_name,
+                      const std::string &data_uri,
+                      const Properties &job_properties,
+                      const Properties &media_properties)
+                : MPFJob(job_name, data_uri, job_properties, media_properties)
+                , has_feed_forward_track(false) {
+        }
+
+        MPFGenericJob(const std::string &job_name,
+                      const std::string &data_uri,
+                      const MPFGenericTrack &track,
+                      const Properties &job_properties,
+                      const Properties &media_properties)
+                : MPFJob(job_name, data_uri, job_properties, media_properties)
+                , has_feed_forward_track(true)
+                , feed_forward_track(track) {
+        }
+    };
+
+
     class MPFDetectionComponent : public MPFComponent {
 
     public:
@@ -267,6 +301,8 @@ namespace MPF { namespace COMPONENT {
 
         virtual MPFDetectionError GetDetections(const MPFAudioJob &job, std::vector<MPFAudioTrack> &tracks) = 0;
 
+        virtual MPFDetectionError GetDetections(const MPFGenericJob &job, std::vector<MPFGenericTrack> &tracks) = 0;
+
         virtual bool Supports(MPFDetectionDataType data_type) = 0;
 
         virtual std::string GetDetectionType() = 0;
@@ -276,6 +312,30 @@ namespace MPF { namespace COMPONENT {
     protected:
 
         MPFDetectionComponent() = default;
+    };
+
+
+
+// Class used for streaming video detection jobs.
+    class MPFStreamingDetectionComponent : public MPFComponent {
+
+    public:
+        virtual ~MPFStreamingDetectionComponent() { }
+
+        virtual MPFDetectionError SetupJob(const MPFJob &job) = 0;
+        virtual MPFDetectionError ProcessFrame(const cv::Mat &frame, bool &activityFound) = 0;
+        virtual MPFDetectionError GetVideoTracks(std::vector<MPFVideoTracks> &tracks) = 0;
+
+        virtual bool Supports(MPFDetectionDataType data_type) {
+            return (MPFDetectionDataType::VIDEO == data_type);
+        }
+
+        virtual std::string GetDetectionType() = 0;
+
+        MPFComponentType GetComponentType() { return MPF_STREAMING_DETECTION_COMPONENT; };
+
+    protected:
+        MPFStreamingDetectionComponent() = default;
     };
 }}
 
