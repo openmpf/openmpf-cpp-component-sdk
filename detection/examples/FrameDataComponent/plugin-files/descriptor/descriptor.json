@@ -1,10 +1,9 @@
 {
   "componentName" : "FrameDataComponent",
   "componentVersion" : "1.0.0",
-  "middlewareVersion" :  "1.0.0",
+  "middlewareVersion" : "1.0.0",
   "sourceLanguage" : "c++",
-  "pathName" : "amq_detection_component",
-  "launchArgs" : ["${MPF_HOME}/plugins/FrameDataComponent/lib/libmpfFrameData.so"],
+  "batchLibraryPath" : "${MPF_HOME}/plugins/FrameDataComponent/lib/libmpfFrameData.so",
   "environmentVariables" : [ {
     "name" : "LD_LIBRARY_PATH",
     "value" : "${MPF_HOME}/plugins/FrameDataComponent/lib:${LD_LIBRARY_PATH}",
@@ -14,7 +13,6 @@
     "name" : "FrameData",
     "description" : "This is a dummy detection component.",
     "actionType" : "DETECTION",
-    "supportsBatchProcessing": true,
     "requiresCollection" : {
       "states" : []
     },
