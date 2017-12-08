@@ -3,7 +3,7 @@
   "componentVersion" : "1.0.0",
   "middlewareVersion" : "1.0.0",
   "sourceLanguage" : "c++",
-  "batchLibraryPath" : "${MPF_HOME}/plugins/FrameDataComponent/lib/libmpfFrameData.so",
+  "batchLibrary" : "${MPF_HOME}/plugins/FrameDataComponent/lib/libmpfFrameData.so",
   "environmentVariables" : [ {
     "name" : "LD_LIBRARY_PATH",
     "value" : "${MPF_HOME}/plugins/FrameDataComponent/lib:${LD_LIBRARY_PATH}",
