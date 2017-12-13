@@ -1,10 +1,9 @@
 {
   "componentName" : "ImageTransformerComponent",
   "componentVersion" : "1.0.0",
-  "middlewareVersion" :  "1.0.0",
+  "middlewareVersion" : "1.0.0",
   "sourceLanguage" : "c++",
-  "pathName" : "amq_detection_component",
-  "launchArgs" : ["${MPF_HOME}/plugins/ImageTransformerComponent/lib/libmpfImageTransformer.so"],
+  "batchLibrary" : "${MPF_HOME}/plugins/ImageTransformerComponent/lib/libmpfImageTransformer.so",
   "environmentVariables" : [ {
     "name" : "LD_LIBRARY_PATH",
     "value" : "${MPF_HOME}/plugins/ImageTransformerComponent/lib:${LD_LIBRARY_PATH}"
@@ -13,7 +12,6 @@
     "name" : "TransformImage",
     "description" : "This is a dummy detection component.",
     "actionType" : "DETECTION",
-    "supportsBatchProcessing": true,
     "requiresCollection" : {
       "states" : []
     },

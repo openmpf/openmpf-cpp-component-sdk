@@ -1,10 +1,9 @@
 {
   "componentName" : "GenericComponent",
   "componentVersion" : "1.0.0",
-  "middlewareVersion" :  "1.0.0",
+  "middlewareVersion" : "1.0.0",
   "sourceLanguage" : "c++",
-  "pathName" : "amq_detection_component",
-  "launchArgs" : ["${MPF_HOME}/plugins/GenericComponent/lib/libmpfGeneric.so"],
+  "batchLibrary" : "${MPF_HOME}/plugins/GenericComponent/lib/libmpfGeneric.so",
   "environmentVariables" : [ {
     "name" : "LD_LIBRARY_PATH",
     "value" : "${MPF_HOME}/plugins/GenericComponent/lib:${LD_LIBRARY_PATH}"
@@ -13,7 +12,6 @@
     "name" : "Generic",
     "description" : "This is a dummy detection component.",
     "actionType" : "DETECTION",
-    "supportsBatchProcessing": true,
     "requiresCollection" : {
       "states" : []
     },
