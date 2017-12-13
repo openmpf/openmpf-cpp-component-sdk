@@ -324,7 +324,7 @@ namespace MPF { namespace COMPONENT {
 
         virtual MPFDetectionError SetupJob(const MPFJob &job) = 0;
         virtual MPFDetectionError ProcessFrame(const cv::Mat &frame, bool &activityFound) = 0;
-        virtual MPFDetectionError GetVideoTracks(std::vector<MPFVideoTracks> &tracks) = 0;
+        virtual MPFDetectionError GetVideoTracks(std::vector<MPFVideoTrack> &tracks) = 0;
 
         virtual bool Supports(MPFDetectionDataType data_type) {
             return (MPFDetectionDataType::VIDEO == data_type);
