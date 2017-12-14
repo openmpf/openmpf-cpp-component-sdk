@@ -42,7 +42,7 @@ set(VIDEO_CAPTURE_COMPONENT_SOURCES VideoCaptureComponent.h VideoCaptureComponen
 add_library(mpfVideoCapture SHARED ${VIDEO_CAPTURE_COMPONENT_SOURCES})
 target_link_libraries(mpfVideoCapture mpfDetectionComponentApi ${OpenCV_LIBS})
 
-configure_mpf_component(VideoCaptureComponent mpfVideoCapture)
+configure_mpf_component(VideoCaptureComponent TARGETS mpfVideoCapture)
 
 
 add_executable(sample_video_capture_component sample_video_capture_component.cpp)

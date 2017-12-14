@@ -42,7 +42,7 @@ set(GENERIC_COMPONENT_SOURCES GenericComponent.cpp GenericComponent.h)
 add_library(mpfGeneric SHARED ${GENERIC_COMPONENT_SOURCES})
 target_link_libraries(mpfGeneric mpfDetectionComponentApi)
 
-configure_mpf_component(GenericComponent mpfGeneric)
+configure_mpf_component(GenericComponent TARGETS mpfGeneric)
 
 
 add_executable(sample_generic_detector sample_generic_detector.cpp)

@@ -42,7 +42,7 @@ set(FRAME_DATA_COMPONENT_SOURCES VideoFrameDataComponent.h VideoFrameDataCompone
 add_library(mpfFrameData SHARED ${FRAME_DATA_COMPONENT_SOURCES})
 target_link_libraries(mpfFrameData mpfDetectionComponentApi)
 
-configure_mpf_component(FrameDataComponent mpfFrameData)
+configure_mpf_component(FrameDataComponent TARGETS mpfFrameData)
 
 
 add_executable(sample_frame_data_component sample_frame_data_component.cpp)
