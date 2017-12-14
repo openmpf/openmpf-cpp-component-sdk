@@ -32,6 +32,7 @@
 #include <map>
 #include <string>
 #include <vector>
+#include <opencv2/core.hpp>
 
 #include "MPFComponentInterface.h"
 
@@ -288,6 +289,7 @@ namespace MPF { namespace COMPONENT {
     };
 
 
+// Class used for batch processing detection jobs, any type of media.
     class MPFDetectionComponent : public MPFComponent {
 
     public:
@@ -312,6 +314,30 @@ namespace MPF { namespace COMPONENT {
     protected:
 
         MPFDetectionComponent() = default;
+    };
+
+
+
+// Class used for streaming video detection jobs.
+    class MPFStreamingDetectionComponent : public MPFComponent {
+
+    public:
+        virtual ~MPFStreamingDetectionComponent() { }
+
+        virtual MPFDetectionError SetupJob(const MPFJob &job) = 0;
+        virtual MPFDetectionError ProcessFrame(const cv::Mat &frame, bool &activityFound) = 0;
+        virtual MPFDetectionError GetVideoTracks(std::vector<MPFVideoTrack> &tracks) = 0;
+
+        virtual bool Supports(MPFDetectionDataType data_type) {
+            return (MPFDetectionDataType::VIDEO == data_type);
+        }
+
+        virtual std::string GetDetectionType() = 0;
+
+        MPFComponentType GetComponentType() { return MPF_STREAMING_DETECTION_COMPONENT; };
+
+    protected:
+        MPFStreamingDetectionComponent() = default;
     };
 }}
 
