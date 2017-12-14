@@ -289,6 +289,7 @@ namespace MPF { namespace COMPONENT {
     };
 
 
+// Class used for batch processing detection jobs, any type of media.
     class MPFDetectionComponent : public MPFComponent {
 
     public:
