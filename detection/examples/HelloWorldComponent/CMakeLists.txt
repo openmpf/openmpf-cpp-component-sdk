@@ -42,7 +42,7 @@ set(HELLO_WORLD_COMPONENT_SOURCES HelloWorld.cpp HelloWorld.h)
 add_library(mpfHelloWorld SHARED ${HELLO_WORLD_COMPONENT_SOURCES})
 target_link_libraries(mpfHelloWorld mpfDetectionComponentApi)
 
-configure_mpf_component(HelloWorldComponent mpfHelloWorld)
+configure_mpf_component(HelloWorldComponent TARGETS mpfHelloWorld)
 
 
 add_executable(sample_hello_world_detector sample_hello_world_detector.cpp)

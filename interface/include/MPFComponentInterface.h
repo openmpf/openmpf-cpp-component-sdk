@@ -70,7 +70,7 @@ namespace MPF { namespace COMPONENT {
   }
 
 #define MPF_COMPONENT_DELETER() \
-  extern "C" MPF::COMPONENT::MPFComponent* component_deleter(MPFComponent *detect_P_) { \
+  extern "C" void component_deleter(MPF::COMPONENT::MPFComponent *detect_P_) { \
     delete detect_P_; \
   }
 

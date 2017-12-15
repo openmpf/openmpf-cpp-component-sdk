@@ -42,7 +42,7 @@ set(IMAGE_TRANSFORMER_COMPONENT_SOURCES ImageTransformerComponent.h ImageTransfo
 add_library(mpfImageTransformer SHARED ${IMAGE_TRANSFORMER_COMPONENT_SOURCES})
 target_link_libraries(mpfImageTransformer mpfDetectionComponentApi ${OpenCV_LIBS})
 
-configure_mpf_component(ImageTransformerComponent mpfImageTransformer)
+configure_mpf_component(ImageTransformerComponent TARGETS mpfImageTransformer)
 
 
 add_executable(sample_image_transformer sample_image_transformer.cpp)

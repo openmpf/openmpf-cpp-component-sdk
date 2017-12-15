@@ -42,7 +42,7 @@ set(AUDIO_ONLY_COMPONENT_SOURCES AudioOnly.cpp AudioOnly.h)
 add_library(mpfAudioOnly SHARED ${AUDIO_ONLY_COMPONENT_SOURCES})
 target_link_libraries(mpfAudioOnly mpfDetectionComponentApi)
 
-configure_mpf_component(AudioOnlyComponent mpfAudioOnly)
+configure_mpf_component(AudioOnlyComponent TARGETS mpfAudioOnly)
 
 
 add_executable(sample_audio_only_detector sample_audio_only_detector.cpp)

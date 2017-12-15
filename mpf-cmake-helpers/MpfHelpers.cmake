@@ -27,13 +27,26 @@
 cmake_minimum_required(VERSION 3.6)
 
 
-function(configure_mpf_component pluginName targetName)
-    get_plugin_build_location(${pluginName} pluginLocation)
+function(configure_mpf_component pluginName)
+    cmake_parse_arguments(kw_args "" "" "TARGETS;EXTRA_LIB_PATHS" ${ARGN})
+    if (NOT DEFINED kw_args_TARGETS)
+        message(FATAL_ERROR "One or more targets must follow the \"TARGETS\" keyword")
+    endif()
 
-    copy_shared_libs(${targetName} ${pluginLocation} "${ARGV2}")
-    configure_mpf_component_install(${targetName} ${pluginLocation})
+    if (DEFINED kw_args_UNPARSED_ARGUMENTS)
+        message(FATAL_ERROR "Unexpected arguments: ${kw_args_UNPARSED_ARGUMENTS}")
+    endif()
+
+    get_plugin_build_location(${pluginName} pluginLocation)
+    foreach (targetName ${kw_args_TARGETS})
+        copy_shared_libs(${targetName} ${pluginLocation} "${kw_args_EXTRA_LIB_PATHS}")
+        configure_mpf_component_install(${targetName} ${pluginLocation})
+    endforeach()
+
     tar_mpf_component(${pluginName} ${pluginLocation})
 endfunction()
+
+
 
 
 function(get_plugin_build_location pluginName result)
@@ -53,11 +66,13 @@ endmacro()
 
 # Add post-build command that copies all referenced libraries to the plugin's lib directory
 function(copy_shared_libs targetName pluginLocation)
-    add_custom_command(TARGET ${targetName} POST_BUILD
-        COMMAND ${CMAKE_COMMAND} -D TARGET_BINARY_LOCATION="$<TARGET_FILE:${targetName}>"
-        -D DEP_LIBS_INSTALL_LOCATION="${pluginLocation}/lib"
-        -D EXTRA_LIB_DIRS="${ARGV2}"
-        -P ${CopySharedLibDependencies_LOCATION})
+    if (NOT CMAKE_BUILD_TYPE STREQUAL "Debug")
+        add_custom_command(TARGET ${targetName} POST_BUILD
+            COMMAND ${CMAKE_COMMAND} -D TARGET_BINARY_LOCATION="$<TARGET_FILE:${targetName}>"
+            -D DEP_LIBS_INSTALL_LOCATION="${pluginLocation}/lib"
+            -D EXTRA_LIB_DIRS="${ARGV2}"
+            -P ${CopySharedLibDependencies_LOCATION})
+    endif()
 endfunction()
 
 
