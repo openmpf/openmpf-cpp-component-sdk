@@ -379,5 +379,3 @@ namespace MPF { namespace COMPONENT {
     }
 
 #endif //OPENMPF_CPP_COMPONENT_SDK_DETECTION_BASE_H
-
-#pragma clang diagnostic pop
