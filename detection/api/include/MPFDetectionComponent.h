@@ -315,67 +315,7 @@ namespace MPF { namespace COMPONENT {
 
         MPFDetectionComponent() = default;
     };
-
-
-    struct MPFStreamingVideoJob {
-        const std::string job_name;
-        const std::string run_directory;
-        const Properties job_properties;
-        const Properties media_properties;
-
-        MPFStreamingVideoJob(
-                const std::string &job_name,
-                const std::string &run_directory,
-                const Properties &job_properties,
-                const Properties &media_properties)
-            : job_name(job_name)
-            , run_directory(run_directory)
-            , job_properties(job_properties)
-            , media_properties(media_properties) {
-
-        }
-    };
-
-    struct VideoSegmentInfo {
-        const int segment_number;
-        const int start_frame;
-        const int end_frame;
-
-        VideoSegmentInfo(int segment_number, int start_frame, int end_frame)
-            : segment_number(segment_number)
-            , start_frame(start_frame)
-            , end_frame(end_frame) {
-        }
-    };
-
-
-    class MPFStreamingDetectionComponent {
-
-    public:
-        virtual ~MPFStreamingDetectionComponent() = default;
-
-        virtual std::string GetDetectionType() = 0;
-
-        // Optional
-        virtual void BeginSegment(const VideoSegmentInfo &segment_info) { };
-
-        virtual bool ProcessFrame(const cv::Mat &frame, int frame_number) = 0;
-
-        virtual std::vector<MPFVideoTrack> EndSegment() = 0;
-
-    protected:
-        explicit MPFStreamingDetectionComponent(const MPFStreamingVideoJob &job) { };
-    };
-
-
 }}
-#define EXPORT_MPF_STREAMING_COMPONENT(name) \
-    extern "C" MPF::COMPONENT::MPFStreamingDetectionComponent* streaming_component_creator(MPF::COMPONENT::MPFStreamingVideoJob *job) { \
-          return new (name)(*job);      \
-    } \
-    \
-    extern "C" void streaming_component_deleter(MPF::COMPONENT::MPFStreamingDetectionComponent *component) { \
-            delete component; \
-    }
+
 
 #endif //OPENMPF_CPP_COMPONENT_SDK_DETECTION_BASE_H
