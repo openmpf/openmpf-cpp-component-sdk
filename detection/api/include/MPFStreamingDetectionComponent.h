@@ -61,10 +61,15 @@ namespace MPF { namespace COMPONENT {
         const int start_frame;
         const int end_frame;
 
-        VideoSegmentInfo(int segment_number, int start_frame, int end_frame)
+        const int frame_width;
+        const int frame_height;
+
+        VideoSegmentInfo(int segment_number, int start_frame, int end_frame, int frame_width, int frame_height)
                 : segment_number(segment_number)
                 , start_frame(start_frame)
-                , end_frame(end_frame) {
+                , end_frame(end_frame)
+                , frame_width(frame_width)
+                , frame_height(frame_height) {
         }
     };
 
