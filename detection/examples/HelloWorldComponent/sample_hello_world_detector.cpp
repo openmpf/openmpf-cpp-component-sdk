@@ -77,6 +77,7 @@ int main(int argc, char* argv[]) {
 
     // instantiate the test component
     HelloWorld hw;
+    hw.SetRunDirectory("plugin");
 
     if (hw.Init()) {
 

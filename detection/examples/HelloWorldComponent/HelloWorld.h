@@ -30,6 +30,8 @@
 
 
 #include <string>
+#include <log4cxx/logger.h>
+
 #include <MPFDetectionComponent.h>
 
 
@@ -56,6 +58,9 @@ public:
     bool Supports(MPF::COMPONENT::MPFDetectionDataType data_type) override;
 
     std::string GetDetectionType() override;
+
+private:
+    log4cxx::LoggerPtr hw_logger_;
 };
 
 
