@@ -29,6 +29,9 @@
 #include <iostream>
 #include "HelloWorld.h"
 
+using namespace MPF::COMPONENT;
+
+
 void print_usage(char* program) {
     std::cout << "Usage: " << program << " -i IMAGE_DATA_URI" << std::endl;
     std::cout << "Usage: " << program << " -a AUDIO_DATA_URI START_TIME STOP_TIME" << std::endl;

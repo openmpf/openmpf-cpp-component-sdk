@@ -32,10 +32,8 @@
 #include <string>
 #include <MPFDetectionComponent.h>
 
-using namespace MPF;
-using namespace COMPONENT;
 
-class HelloWorld : public MPFDetectionComponent {
+class HelloWorld : public MPF::COMPONENT::MPFDetectionComponent {
 
 public:
 
@@ -43,19 +41,19 @@ public:
 
     bool Close() override;
 
-    MPFDetectionError GetDetections(const MPFVideoJob &job,
-                                    std::vector<MPFVideoTrack> &tracks) override;
+    MPF::COMPONENT::MPFDetectionError GetDetections(const MPF::COMPONENT::MPFVideoJob &job,
+                                                    std::vector<MPF::COMPONENT::MPFVideoTrack> &tracks) override;
 
-    MPFDetectionError GetDetections(const MPFImageJob &job,
-                                    std::vector<MPFImageLocation> &locations) override;
+    MPF::COMPONENT::MPFDetectionError GetDetections(const MPF::COMPONENT::MPFImageJob &job,
+                                                    std::vector<MPF::COMPONENT::MPFImageLocation> &locations) override;
 
-    MPFDetectionError GetDetections(const MPFAudioJob &job,
-                                    std::vector<MPFAudioTrack> &tracks) override;
+    MPF::COMPONENT::MPFDetectionError GetDetections(const MPF::COMPONENT::MPFAudioJob &job,
+                                                    std::vector<MPF::COMPONENT::MPFAudioTrack> &tracks) override;
 
-    MPFDetectionError GetDetections(const MPFGenericJob &job,
-                                    std::vector <MPFGenericTrack> &tracks) override;
+    MPF::COMPONENT::MPFDetectionError GetDetections(const MPF::COMPONENT::MPFGenericJob &job,
+                                                    std::vector <MPF::COMPONENT::MPFGenericTrack> &tracks) override;
 
-    bool Supports(MPFDetectionDataType data_type) override;
+    bool Supports(MPF::COMPONENT::MPFDetectionDataType data_type) override;
 
     std::string GetDetectionType() override;
 };

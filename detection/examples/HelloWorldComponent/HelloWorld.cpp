@@ -29,6 +29,8 @@
 #include <detectionComponentUtils.h>
 #include "HelloWorld.h"
 
+using namespace MPF::COMPONENT;
+
 //-----------------------------------------------------------------------------
 /* virtual */ bool HelloWorld::Init() {
 
