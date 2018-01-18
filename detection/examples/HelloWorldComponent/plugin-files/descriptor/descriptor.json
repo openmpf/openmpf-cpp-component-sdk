@@ -24,10 +24,22 @@
       ],
       "properties" : [
         {
-          "name" : "FRAME_INTERVAL",
-          "description" : "This is a test property with a default value of 1.",
+          "name" : "prop1",
+          "description" : "my prop 1",
           "type" : "INT",
-          "defaultValue" : "1"
+          "defaultValue" : "2"
+        },
+        {
+          "name" : "prop2",
+          "description" : "my prop 2",
+          "type" : "BOOLEAN",
+          "defaultValue" : "true"
+        },
+        {
+          "name" : "prop3",
+          "description" : "my prop 3",
+          "type" : "STRING",
+          "defaultValue" : "string property"
         }
       ]
     }
