@@ -19,7 +19,7 @@ From within the build directory:
 
 ./sample_hello_world_detector -a <audio_file> 0 60000
 
-./sample_hello_world_detector -v <video_file> 0 100 5
+./sample_hello_world_detector -v <video_file> 0 100
 
 ./sample_hello_world_detector -g <generic_file>
 
