@@ -35,14 +35,19 @@ include(../ComponentSetup.cmake)
 find_package(mpfComponentInterface REQUIRED)
 find_package(mpfDetectionComponentApi REQUIRED)
 find_package(OpenCV 3.3 EXACT REQUIRED PATHS /opt/opencv-3.3.0 COMPONENTS opencv_core)
+find_package(PkgConfig)
+pkg_search_module(LOG4CXX REQUIRED liblog4cxx)
 
 
 set(HELLO_WORLD_COMPONENT_SOURCES HelloWorld.cpp HelloWorld.h)
 
 add_library(mpfHelloWorld SHARED ${HELLO_WORLD_COMPONENT_SOURCES})
-target_link_libraries(mpfHelloWorld mpfDetectionComponentApi)
+target_link_libraries(mpfHelloWorld mpfDetectionComponentApi ${LOG4CXX_LIBRARIES})
 
-configure_mpf_component(HelloWorldComponent TARGETS mpfHelloWorld)
+add_library(mpfStreamingHelloWorld SHARED StreamingHelloWorld.cpp StreamingHelloWorld.h)
+target_link_libraries(mpfStreamingHelloWorld mpfDetectionComponentApi ${LOG4CXX_LIBRARIES})
+
+configure_mpf_component(HelloWorldComponent TARGETS mpfHelloWorld mpfStreamingHelloWorld)
 
 
 add_executable(sample_hello_world_detector sample_hello_world_detector.cpp)

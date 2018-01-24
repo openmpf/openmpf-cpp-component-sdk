@@ -27,18 +27,24 @@
 #include <map>
 #include <iostream>
 #include <detectionComponentUtils.h>
+#include <log4cxx/xml/domconfigurator.h>
+
 #include "HelloWorld.h"
+
+using namespace MPF::COMPONENT;
 
 //-----------------------------------------------------------------------------
 /* virtual */ bool HelloWorld::Init() {
 
     // Determine where the executable is running
-    std::string run_dir = GetRunDirectory();
-    if (run_dir == "") {
-        run_dir = ".";
+    std::string run_directory = GetRunDirectory();
+    if (run_directory.empty()) {
+        run_directory = ".";
     }
 
-    std::cout << "Running in directory " << run_dir << std::endl;
+    log4cxx::xml::DOMConfigurator::configure(run_directory + "/HelloWorldComponent/config/Log4cxxConfig.xml");
+    hw_logger_ = log4cxx::Logger::getLogger("HelloWorldSample");
+    LOG4CXX_INFO(hw_logger_, "Running in directory \"" << run_directory << "\"");
 
     return true;
 }
@@ -56,15 +62,15 @@ MPFDetectionError HelloWorld::GetDetections(const MPFVideoJob &job,
 
     // The MPFVideoJob structure contains all of the details needed to
     // process a video.
-    std::cout << "[" << job.job_name << "] Processing \"" << job.data_uri
+    LOG4CXX_INFO(hw_logger_, "[" << job.job_name << "] Processing \"" << job.data_uri
               << "\" from frame " << job.start_frame
-              << " to frame " << job.stop_frame << "." << std::endl;
+              << " to frame " << job.stop_frame << ".");
 
     // The MPFVideoJob structure contains two Properties entries, one
     // that contains job-specific properties, and one that contains
-    // media-specific properties.  The frame processing interval is one
-    // example of a job-specific property.
-    std::cout << "[" << job.job_name << "] Job properties contains FRAME_INTERVAL with a value of " << job.job_properties.at("FRAME_INTERVAL") << "." << std::endl;
+    // media-specific properties.
+    LOG4CXX_INFO(hw_logger_, "[" << job.job_name << "] Job properties contains \"prop3\" with a value of \""
+            << DetectionComponentUtils::GetProperty(job.job_properties, "prop3", std::string()) << "\".");
 
     // Detection logic goes here
 
@@ -104,7 +110,8 @@ MPFDetectionError HelloWorld::GetDetections(const MPFVideoJob &job,
 
     tracks.push_back(video_track);
 
-    std::cout << "[" << job.job_name << "] Processing complete. Generated " << tracks.size() << " dummy video tracks." << std::endl;
+    LOG4CXX_INFO(hw_logger_, "[" << job.job_name << "] Processing complete. Generated " << tracks.size()
+                                 << " dummy video tracks.");
 
     return MPF_DETECTION_SUCCESS;
 }
@@ -116,7 +123,8 @@ MPFDetectionError HelloWorld::GetDetections(const MPFAudioJob &job,
 
     // The MPFAudioJob structure contains all of the details needed to
     // process an audio file.
-    std::cout << "[" << job.job_name << "] Processing \"" << job.data_uri << "\" from start time " << job.start_time << " msec to stop time " << job.stop_time << " msec." << std::endl;
+    LOG4CXX_INFO(hw_logger_, "[" << job.job_name << "] Processing \"" << job.data_uri << "\" from start time "
+                                 << job.start_time << " msec to stop time " << job.stop_time << " msec.");
 
     // NOTE: A stop_time parameter of -1 means process the whole file.
 
@@ -138,7 +146,8 @@ MPFDetectionError HelloWorld::GetDetections(const MPFAudioJob &job,
 
     tracks.push_back(audio_track);
 
-    std::cout << "[" << job.job_name << "] Processing complete. Generated " << tracks.size() << " dummy audio tracks." << std::endl;
+    LOG4CXX_INFO(hw_logger_, "[" << job.job_name << "] Processing complete. Generated " << tracks.size()
+                                 << " dummy audio tracks.");
 
     return MPF_DETECTION_SUCCESS;
 }
@@ -151,7 +160,7 @@ MPFDetectionError HelloWorld::GetDetections(const MPFImageJob &job,
 
     // The MPFImageJob structure contains all of the details needed to
     // process an image file.
-    std::cout << "[" << job.job_name << "] Processing \"" << job.data_uri << "\"." << std::endl;
+    LOG4CXX_INFO(hw_logger_, "[" << job.job_name << "] Processing \"" << job.data_uri << "\".");
 
     // Detection logic goes here
 
@@ -171,7 +180,8 @@ MPFDetectionError HelloWorld::GetDetections(const MPFImageJob &job,
 
     locations.push_back(image_location);
 
-    std::cout << "[" << job.job_name << "] Processing complete. Generated " << locations.size() << " dummy image locations." << std::endl;
+    LOG4CXX_INFO(hw_logger_, "[" << job.job_name << "] Processing complete. Generated " << locations.size()
+                                 << " dummy image locations.");
 
     return MPF_DETECTION_SUCCESS;
 }
@@ -184,7 +194,7 @@ MPFDetectionError HelloWorld::GetDetections(const MPFGenericJob &job,
 
     // The MPFGenericJob structure contains all of the details needed to
     // process a generic file.
-    std::cout << "[" << job.job_name << "] Processing \"" << job.data_uri << "\"." << std::endl;
+    LOG4CXX_INFO(hw_logger_, "[" << job.job_name << "] Processing \"" << job.data_uri << "\".");
 
     // Detection logic goes here
 
@@ -204,7 +214,8 @@ MPFDetectionError HelloWorld::GetDetections(const MPFGenericJob &job,
 
     tracks.push_back(generic_track);
 
-    std::cout << "[" << job.job_name << "] Processing complete. Generated " << tracks.size() << " dummy tracks." << std::endl;
+    LOG4CXX_INFO(hw_logger_, "[" << job.job_name << "] Processing complete. Generated " << tracks.size()
+                                 << " dummy tracks.")
 
     return MPF_DETECTION_SUCCESS;
 }

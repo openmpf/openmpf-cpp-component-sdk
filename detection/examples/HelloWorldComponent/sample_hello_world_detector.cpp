@@ -29,10 +29,13 @@
 #include <iostream>
 #include "HelloWorld.h"
 
+using namespace MPF::COMPONENT;
+
+
 void print_usage(char* program) {
     std::cout << "Usage: " << program << " -i IMAGE_DATA_URI" << std::endl;
     std::cout << "Usage: " << program << " -a AUDIO_DATA_URI START_TIME STOP_TIME" << std::endl;
-    std::cout << "Usage: " << program << " -v VIDEO_DATA_URI START_FRAME STOP_FRAME FRAME_INTERVAL" << std::endl;
+    std::cout << "Usage: " << program << " -v VIDEO_DATA_URI START_FRAME STOP_FRAME" << std::endl;
     std::cout << "Usage: " << program << " -g GENERIC_DATA_URI" << std::endl;
 }
 
@@ -63,7 +66,7 @@ int main(int argc, char* argv[]) {
         media_type = UNKNOWN;
     } else if (5 == argc && option == "-a") {
         media_type = AUDIO;
-    } else if (6 == argc && option == "-v") {
+    } else if (5 == argc && option == "-v") {
         media_type = VIDEO;
     } else {
         print_usage(argv[0]);
@@ -74,6 +77,7 @@ int main(int argc, char* argv[]) {
 
     // instantiate the test component
     HelloWorld hw;
+    hw.SetRunDirectory("plugin");
 
     if (hw.Init()) {
 
@@ -135,7 +139,7 @@ int main(int argc, char* argv[]) {
             {
                 int start_frame = atoi(argv[2]);
                 int stop_frame = atoi(argv[3]);
-                algorithm_properties["FRAME_INTERVAL"] = argv[4];
+                algorithm_properties["prop3"] = "test property value";
 
                 MPFVideoJob job("TestVideoJob", uri,
                                 start_frame, stop_frame,
