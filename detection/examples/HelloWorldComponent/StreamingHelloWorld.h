@@ -25,43 +25,40 @@
  ******************************************************************************/
 
 
-#ifndef OPENMPF_CPP_COMPONENT_SDK_HELLOWORLD_H
-#define OPENMPF_CPP_COMPONENT_SDK_HELLOWORLD_H
+#ifndef OPENMPF_CPP_COMPONENT_SDK_STREAMINGHELLOWORLD_H
+#define OPENMPF_CPP_COMPONENT_SDK_STREAMINGHELLOWORLD_H
 
-
+#include <vector>
 #include <string>
+
+#include <opencv2/core.hpp>
 #include <log4cxx/logger.h>
 
-#include <MPFDetectionComponent.h>
+#include <MPFComponentInterface.h>
+#include <MPFStreamingDetectionComponent.h>
 
 
-class HelloWorld : public MPF::COMPONENT::MPFDetectionComponent {
+class StreamingHelloWorld : public MPF::COMPONENT::MPFStreamingDetectionComponent {
 
 public:
+    explicit StreamingHelloWorld(const MPF::COMPONENT::MPFStreamingVideoJob &job);
 
-    bool Init() override;
-
-    bool Close() override;
-
-    MPF::COMPONENT::MPFDetectionError GetDetections(const MPF::COMPONENT::MPFVideoJob &job,
-                                                    std::vector<MPF::COMPONENT::MPFVideoTrack> &tracks) override;
-
-    MPF::COMPONENT::MPFDetectionError GetDetections(const MPF::COMPONENT::MPFImageJob &job,
-                                                    std::vector<MPF::COMPONENT::MPFImageLocation> &locations) override;
-
-    MPF::COMPONENT::MPFDetectionError GetDetections(const MPF::COMPONENT::MPFAudioJob &job,
-                                                    std::vector<MPF::COMPONENT::MPFAudioTrack> &tracks) override;
-
-    MPF::COMPONENT::MPFDetectionError GetDetections(const MPF::COMPONENT::MPFGenericJob &job,
-                                                    std::vector <MPF::COMPONENT::MPFGenericTrack> &tracks) override;
-
-    bool Supports(MPF::COMPONENT::MPFDetectionDataType data_type) override;
+    ~StreamingHelloWorld() override;
 
     std::string GetDetectionType() override;
 
+    void BeginSegment(const MPF::COMPONENT::VideoSegmentInfo &segment_info) override;
+
+    bool ProcessFrame(const cv::Mat &frame, int frame_number) override;
+
+    std::vector<MPF::COMPONENT::MPFVideoTrack> EndSegment() override;
+
 private:
     log4cxx::LoggerPtr hw_logger_;
+    std::string job_name_;
+
+    static log4cxx::LoggerPtr GetLogger(const std::string &run_directory);
 };
 
 
-#endif //OPENMPF_CPP_COMPONENT_SDK_HELLOWORLD_H
+#endif //OPENMPF_CPP_COMPONENT_SDK_STREAMINGHELLOWORLD_H

@@ -4,6 +4,7 @@
   "middlewareVersion" : "1.0.0",
   "sourceLanguage" : "c++",
   "batchLibrary" : "${MPF_HOME}/plugins/HelloWorldComponent/lib/libmpfHelloWorld.so",
+  "streamLibrary" : "${MPF_HOME}/plugins/HelloWorldComponent/lib/libmpfStreamingHelloWorld.so",
   "environmentVariables" : [ {
     "name" : "LD_LIBRARY_PATH",
     "value" : "${MPF_HOME}/plugins/HelloWorldComponent/lib:${LD_LIBRARY_PATH}"
@@ -23,13 +24,51 @@
       ],
       "properties" : [
         {
-          "name" : "FRAME_INTERVAL",
-          "description" : "This is a test property with a default value of 1.",
+          "name" : "prop1",
+          "description" : "my prop 1",
           "type" : "INT",
-          "defaultValue" : "1"
+          "defaultValue" : "2"
+        },
+        {
+          "name" : "prop2",
+          "description" : "my prop 2",
+          "type" : "BOOLEAN",
+          "defaultValue" : "true"
+        },
+        {
+          "name" : "prop3",
+          "description" : "my prop 3",
+          "type" : "STRING",
+          "defaultValue" : "string property"
         }
       ]
     }
-  }
+  },
+  "actions" : [
+    {
+      "name": "HELLOWORLD SAMPLE ACTION",
+      "description": "HELLOWORLD SAMPLE ACTION",
+      "algorithm": "HelloWorld",
+      "properties": []
+    }
+  ],
+  "tasks": [
+    {
+      "name": "HELLOWORLD SAMPLE TASK",
+      "description": "HELLOWORLD SAMPLE TASK",
+      "actions": [
+        "HELLOWORLD SAMPLE ACTION"
+      ]
+    }
+  ],
+  "pipelines":[
+    {
+      "name": "HELLOWORLD SAMPLE PIPELINE",
+      "description": "HELLOWORLD SAMPLE PIPELINE",
+      "tasks": [
+        "HELLOWORLD SAMPLE TASK"
+      ]
+    }
+  ]
 }
 
