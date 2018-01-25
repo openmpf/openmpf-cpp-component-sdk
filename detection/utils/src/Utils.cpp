@@ -95,6 +95,7 @@ namespace MPF { namespace COMPONENT { namespace Utils {
             return err_string;
         }
         exp_filename = *my_exp.we_wordv;
+        wordfree(&my_exp);
 
         return "";
     }
