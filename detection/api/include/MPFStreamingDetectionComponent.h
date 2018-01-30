@@ -57,12 +57,12 @@ namespace MPF { namespace COMPONENT {
 
 
     struct VideoSegmentInfo {
-        const int segment_number;
-        const int start_frame;
-        const int end_frame;
+        int segment_number;
+        int start_frame;
+        int end_frame;
 
-        const int frame_width;
-        const int frame_height;
+        int frame_width;
+        int frame_height;
 
         VideoSegmentInfo(int segment_number, int start_frame, int end_frame, int frame_width, int frame_height)
                 : segment_number(segment_number)
