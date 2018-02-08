@@ -120,13 +120,14 @@ namespace MPF { namespace COMPONENT { namespace FrameTransformerFactory {
         }
 
 
-        void AddFlipperIfNeeded(const MPFJob &job, IFrameTransformer::Ptr &currentTransformer) {
+        void AddFlipperIfNeeded(const Properties &jobProperties, const Properties &mediaProperties,
+                                IFrameTransformer::Ptr &currentTransformer) {
             bool shouldFlip;
-            if (DetectionComponentUtils::GetProperty(job.job_properties, "AUTO_FLIP", false)) {
-                shouldFlip = DetectionComponentUtils::GetProperty(job.media_properties, "HORIZONTAL_FLIP", false);
+            if (DetectionComponentUtils::GetProperty(jobProperties, "AUTO_FLIP", false)) {
+                shouldFlip = DetectionComponentUtils::GetProperty(mediaProperties, "HORIZONTAL_FLIP", false);
             }
             else {
-                shouldFlip = DetectionComponentUtils::GetProperty(job.job_properties, "HORIZONTAL_FLIP", false);
+                shouldFlip = DetectionComponentUtils::GetProperty(jobProperties, "HORIZONTAL_FLIP", false);
             }
 
             if (shouldFlip) {
@@ -135,14 +136,15 @@ namespace MPF { namespace COMPONENT { namespace FrameTransformerFactory {
         }
 
 
-        void AddRotatorIfNeeded(const MPFJob &job, IFrameTransformer::Ptr &currentTransformer) {
+        void AddRotatorIfNeeded(const Properties &jobProperties, const Properties &mediaProperties,
+                                IFrameTransformer::Ptr &currentTransformer) {
             string rotationKey = "ROTATION";
             int rotation = 0;
-            if (DetectionComponentUtils::GetProperty(job.job_properties, "AUTO_ROTATE", false)) {
-                rotation = DetectionComponentUtils::GetProperty(job.media_properties, rotationKey, 0);
+            if (DetectionComponentUtils::GetProperty(jobProperties, "AUTO_ROTATE", false)) {
+                rotation = DetectionComponentUtils::GetProperty(mediaProperties, rotationKey, 0);
             }
             else {
-                rotation = DetectionComponentUtils::GetProperty(job.job_properties, rotationKey, 0);
+                rotation = DetectionComponentUtils::GetProperty(jobProperties, rotationKey, 0);
             }
 
             if (rotation != 0 && rotation != 90 && rotation != 180 && rotation != 270) {
@@ -153,6 +155,17 @@ namespace MPF { namespace COMPONENT { namespace FrameTransformerFactory {
 
             if (rotation != 0) {
                 currentTransformer = IFrameTransformer::Ptr(new FrameRotator(std::move(currentTransformer), rotation));
+            }
+        }
+
+
+        void AddCropperIfNeeded(const cv::Rect &regionOfInterest, const cv::Size &inputVideoSize,
+                                IFrameTransformer::Ptr &currentTransformer) {
+
+            bool regionOfInterestIsEntireFrame = cv::Rect({0, 0}, inputVideoSize) == regionOfInterest;
+            if (!regionOfInterestIsEntireFrame) {
+                currentTransformer = IFrameTransformer::Ptr(
+                        new SearchRegionFrameCropper(std::move(currentTransformer), regionOfInterest));
             }
         }
 
@@ -189,13 +202,7 @@ namespace MPF { namespace COMPONENT { namespace FrameTransformerFactory {
             else {
                 regionOfInterest = GetSearchRegion(job.job_properties, inputVideoSize);
             }
-
-            bool regionOfInterestIsEntireFrame = cv::Rect({0, 0}, inputVideoSize) == regionOfInterest;
-
-            if (!regionOfInterestIsEntireFrame) {
-                currentTransformer = IFrameTransformer::Ptr(
-                        new SearchRegionFrameCropper(std::move(currentTransformer), regionOfInterest));
-            }
+            AddCropperIfNeeded(regionOfInterest, inputVideoSize, currentTransformer);
         }
 
 
@@ -204,8 +211,8 @@ namespace MPF { namespace COMPONENT { namespace FrameTransformerFactory {
 
             IFrameTransformer::Ptr transformer(new NoOpFrameTransformer(inputVideoSize));
 
-            AddRotatorIfNeeded(job, transformer);
-            AddFlipperIfNeeded(job, transformer);
+            AddRotatorIfNeeded(job.job_properties, job.media_properties, transformer);
+            AddFlipperIfNeeded(job.job_properties, job.media_properties, transformer);
             AddCropperIfNeeded(job, inputVideoSize, trackLocations, transformer);
 
             return transformer;
@@ -224,4 +231,17 @@ namespace MPF { namespace COMPONENT { namespace FrameTransformerFactory {
     }
 
 
+    IFrameTransformer::Ptr GetTransformer(const MPFStreamingVideoJob &job, const cv::Size &inputVideoSize) {
+
+        IFrameTransformer::Ptr transformer(new NoOpFrameTransformer(inputVideoSize));
+
+        AddRotatorIfNeeded(job.job_properties, job.media_properties, transformer);
+        AddFlipperIfNeeded(job.job_properties, job.media_properties, transformer);
+
+        if (SearchRegionCroppingIsEnabled(job.job_properties)) {
+            AddCropperIfNeeded(GetSearchRegion(job.job_properties, inputVideoSize),
+                               inputVideoSize, transformer);
+        }
+        return transformer;
+    }
 }}}
