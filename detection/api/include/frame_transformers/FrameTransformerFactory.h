@@ -33,6 +33,7 @@
 
 #include "IFrameTransformer.h"
 #include "MPFDetectionComponent.h"
+#include "MPFStreamingDetectionComponent.h"
 
 
 namespace MPF { namespace COMPONENT { namespace FrameTransformerFactory {
@@ -40,6 +41,8 @@ namespace MPF { namespace COMPONENT { namespace FrameTransformerFactory {
     IFrameTransformer::Ptr GetTransformer(const MPFVideoJob &job, const cv::Size &inputVideoSize);
 
     IFrameTransformer::Ptr GetTransformer(const MPFImageJob &job, const cv::Size &inputVideoSize);
+
+    IFrameTransformer::Ptr GetTransformer(const MPFStreamingVideoJob &job, const cv::Size &inputVideoSize);
 
 }}}
 
