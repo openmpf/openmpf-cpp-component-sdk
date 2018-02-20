@@ -64,11 +64,11 @@ namespace MPF { namespace COMPONENT {
 
         bool IsOpened() const;
 
-        int GetFrameCount() const;
+        long GetFrameCount() const;
 
-        bool SetFramePosition(int frameIdx);
+        bool SetFramePosition(long frameIdx);
 
-        int GetCurrentFramePosition() const;
+        long GetCurrentFramePosition() const;
 
         void Release();
 
@@ -102,7 +102,7 @@ namespace MPF { namespace COMPONENT {
          * @param numberOfRequestedFrames
          * @return Vector that contains between 0 and numberOfRequestedFrames frames
          */
-        std::vector<cv::Mat> GetInitializationFramesIfAvailable(int numberOfRequestedFrames);
+        std::vector<cv::Mat> GetInitializationFramesIfAvailable(long numberOfRequestedFrames);
 
 
 
@@ -118,7 +118,7 @@ namespace MPF { namespace COMPONENT {
          * cv::VideoCapture::get(cv::VideoCaptureProperties::CAP_PROP_POS_FRAMES)
          * because for certain videos it does not correctly report the frame position.
          */
-        int framePosition_ = 0;
+        long framePosition_ = 0;
 
         SeekStrategy::CPtr seekStrategy_ = SeekStrategy::CPtr(new SetFramePositionSeek);
 
@@ -143,9 +143,9 @@ namespace MPF { namespace COMPONENT {
          * @param newOriginalFramePosition
          * @return true if the frame position was successfully set to newOriginalFramePosition
          */
-        bool UpdateOriginalFramePosition(int newOriginalFramePosition);
+        bool UpdateOriginalFramePosition(long newOriginalFramePosition);
 
-        static int GetFrameCount(const MPFVideoJob &job, const cv::VideoCapture &cvVideoCapture);
+        static long GetFrameCount(const MPFVideoJob &job, const cv::VideoCapture &cvVideoCapture);
 
         static FrameFilter::CPtr GetFrameFilter(bool frameFilteringEnabled, const MPFVideoJob &job,
                                                 const cv::VideoCapture &cvVideoCapture);

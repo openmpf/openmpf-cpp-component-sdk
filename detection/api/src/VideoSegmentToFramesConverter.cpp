@@ -59,8 +59,8 @@ namespace MPF { namespace COMPONENT {
         cv::Mat frame;
         uint8_t *frame_data;
         unsigned long frames_in_segment = cap.GetFrameCount();
-        int start_frame = cap.GetCurrentFramePosition();
-        int stop_frame = frames_in_segment - 1;
+        long start_frame = cap.GetCurrentFramePosition();
+        long stop_frame = frames_in_segment - 1;
 
         try {
             //Get the first frame so that we can figure out how much memory
@@ -104,7 +104,7 @@ namespace MPF { namespace COMPONENT {
                 return std::make_pair(rc, err_msg);
             }
 
-            for (int i = 0; i < frames_in_segment; i++) {
+            for (long i = 0; i < frames_in_segment; i++) {
                 output.data.push_back(frame_data + (i * frame_data_byte_size));
             }
 
@@ -129,9 +129,9 @@ namespace MPF { namespace COMPONENT {
                 memcpy(dst_addr, ptr, bytes_per_row);
             }
 
-            int k = cap.GetCurrentFramePosition();
+            long k = cap.GetCurrentFramePosition();
 
-            for (int buffer_index = 1; buffer_index < frames_in_segment; buffer_index++) {
+            for (long buffer_index = 1; buffer_index < frames_in_segment; buffer_index++) {
 
                 success = cap.Read(frame);
                 if (!success || (frame.empty() || frame.rows == 0 || frame.cols == 0)) {

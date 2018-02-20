@@ -43,12 +43,12 @@ namespace MPF { namespace COMPONENT {
     public:
         explicit FrameFlipper(IFrameTransformer::Ptr innerTransform);
 
-        cv::Size GetFrameSize(int frameIndex) override;
+        cv::Size GetFrameSize(long frameIndex) override;
 
     protected:
-        void DoFrameTransform(cv::Mat &frame, int frameIndex) override;
+        void DoFrameTransform(cv::Mat &frame, long frameIndex) override;
 
-        void DoReverseTransform(MPFImageLocation &imageLocation, int frameIndex) override;
+        void DoReverseTransform(MPFImageLocation &imageLocation, long frameIndex) override;
     };
 }}
 

@@ -40,13 +40,13 @@
 namespace MPF { namespace COMPONENT {
 
     struct MPFVideoFrameData {
-        int start_frame;
-        int stop_frame;
+        long start_frame;
+        long stop_frame;
         int width;
         int height;
         int num_channels;
         int bytes_per_channel;
-        int frames_in_segment;
+        long frames_in_segment;
         int fps;
         std::vector<uint8_t *> data;
     };

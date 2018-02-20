@@ -31,12 +31,12 @@
 
 namespace MPF { namespace COMPONENT {
 
-    IntervalFrameFilter::IntervalFrameFilter(const MPFVideoJob &job, int originalFrameCount)
+    IntervalFrameFilter::IntervalFrameFilter(const MPFVideoJob &job, long originalFrameCount)
             : IntervalFrameFilter(job.start_frame, GetStopFrame(job, originalFrameCount), GetFrameInterval(job)) {
 
     }
 
-    IntervalFrameFilter::IntervalFrameFilter(int startFrame, int stopFrame, int frameInterval)
+    IntervalFrameFilter::IntervalFrameFilter(long startFrame, long stopFrame, long frameInterval)
             : startFrame_(startFrame)
             , stopFrame_(stopFrame)
             , frameInterval_(frameInterval) {
@@ -44,19 +44,19 @@ namespace MPF { namespace COMPONENT {
     }
 
 
-    int IntervalFrameFilter::SegmentToOriginalFramePosition(int segmentPosition) const {
+    long IntervalFrameFilter::SegmentToOriginalFramePosition(long segmentPosition) const {
         return frameInterval_ * segmentPosition + startFrame_;
     }
 
 
-    int IntervalFrameFilter::OriginalToSegmentFramePosition(int originalPosition) const {
+    long IntervalFrameFilter::OriginalToSegmentFramePosition(long originalPosition) const {
         return (originalPosition - startFrame_) / frameInterval_;
     }
 
 
-    int IntervalFrameFilter::GetSegmentFrameCount() const {
-        int range = stopFrame_ - startFrame_ + 1;
-        int fullSegments = range / frameInterval_;
+    long IntervalFrameFilter::GetSegmentFrameCount() const {
+        long range = stopFrame_ - startFrame_ + 1;
+        long fullSegments = range / frameInterval_;
         bool hasRemainder = range % frameInterval_ != 0;
         if (hasRemainder) {
             return fullSegments + 1;
@@ -66,30 +66,30 @@ namespace MPF { namespace COMPONENT {
 
 
     double IntervalFrameFilter::GetSegmentDuration(double originalFrameRate) const {
-        int range = stopFrame_ - startFrame_ + 1;
+        long range = stopFrame_ - startFrame_ + 1;
         return range / originalFrameRate;
     }
 
 
-    int IntervalFrameFilter::GetAvailableInitializationFrameCount() const {
+    long IntervalFrameFilter::GetAvailableInitializationFrameCount() const {
         return startFrame_ / frameInterval_;
     }
 
 
-    int IntervalFrameFilter::GetFrameInterval(const MPFJob &job) {
-        int interval = DetectionComponentUtils::GetProperty(job.job_properties, "FRAME_INTERVAL", 1);
+    long IntervalFrameFilter::GetFrameInterval(const MPFJob &job) {
+        long interval = DetectionComponentUtils::GetProperty<long>(job.job_properties, "FRAME_INTERVAL", 1L);
         return interval > 0
                ? interval
                : 1;
     }
 
 
-    int IntervalFrameFilter::GetStopFrame(const MPFVideoJob &job, int originalFrameCount) {
+    long IntervalFrameFilter::GetStopFrame(const MPFVideoJob &job, long originalFrameCount) {
         if (job.stop_frame > 0 && job.stop_frame < originalFrameCount) {
             return job.stop_frame;
         }
 
-        int stopFrame  = originalFrameCount - 1;
+        long stopFrame  = originalFrameCount - 1;
         if (stopFrame < job.start_frame) {
             std::stringstream ss;
             ss << "Unable to handle segment: " << job.start_frame << " - " << job.stop_frame

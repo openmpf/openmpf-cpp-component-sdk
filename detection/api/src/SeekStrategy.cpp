@@ -30,7 +30,8 @@
 
 namespace MPF { namespace COMPONENT {
 
-    int SetFramePositionSeek::ChangePosition(cv::VideoCapture &cap, int currentPosition, int requestedPosition) const {
+    long SetFramePositionSeek::ChangePosition(cv::VideoCapture &cap,
+                                              long currentPosition, long requestedPosition) const {
         if (cap.set(cv::VideoCaptureProperties::CAP_PROP_POS_FRAMES, requestedPosition)) {
             return requestedPosition;
         }
@@ -45,10 +46,10 @@ namespace MPF { namespace COMPONENT {
 
 
 
-    int SequentialSeek::ChangePosition(cv::VideoCapture &cap, int currentPosition, int requestedPosition) const {
+    long SequentialSeek::ChangePosition(cv::VideoCapture &cap, long currentPosition, long requestedPosition) const {
         bool newPositionInFuture = requestedPosition > currentPosition;
 
-        int start;
+        long start;
         if (newPositionInFuture) {
             start = currentPosition;
         }
@@ -62,10 +63,10 @@ namespace MPF { namespace COMPONENT {
             start = 0;
         }
 
-        int numFramesToDiscard = requestedPosition - start;
+        long numFramesToDiscard = requestedPosition - start;
 
-        int numSuccess = 0;
-        for (int i = 0; i < numFramesToDiscard; i++) {
+        long numSuccess = 0;
+        for (long i = 0; i < numFramesToDiscard; i++) {
             if (Advance(cap)) {
                 numSuccess++;
             }

@@ -37,7 +37,7 @@ namespace MPF { namespace COMPONENT {
         explicit KeyFrameFilter(const MPFVideoJob &job);
 
     private:
-        static std::vector<int> GetKeyFrames(const MPFVideoJob &job);
+        static std::vector<long> GetKeyFrames(const MPFVideoJob &job);
     };
 
 }}

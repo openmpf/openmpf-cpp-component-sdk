@@ -57,14 +57,14 @@ namespace MPF { namespace COMPONENT {
 
 
     struct VideoSegmentInfo {
-        int segment_number;
-        int start_frame;
-        int end_frame;
+        long segment_number;
+        long start_frame;
+        long end_frame;
 
         int frame_width;
         int frame_height;
 
-        VideoSegmentInfo(int segment_number, int start_frame, int end_frame, int frame_width, int frame_height)
+        VideoSegmentInfo(long segment_number, long start_frame, long end_frame, int frame_width, int frame_height)
                 : segment_number(segment_number)
                 , start_frame(start_frame)
                 , end_frame(end_frame)
@@ -84,7 +84,7 @@ namespace MPF { namespace COMPONENT {
         // Optional
         virtual void BeginSegment(const VideoSegmentInfo &segment_info) { };
 
-        virtual bool ProcessFrame(const cv::Mat &frame, int frame_number) = 0;
+        virtual bool ProcessFrame(const cv::Mat &frame, long frame_number) = 0;
 
         virtual std::vector<MPFVideoTrack> EndSegment() = 0;
 

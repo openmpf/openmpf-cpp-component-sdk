@@ -38,7 +38,7 @@ namespace MPF { namespace COMPONENT {
 
     }
 
-    std::vector<int> KeyFrameFilter::GetKeyFrames(const MPFVideoJob &job) {
+    std::vector<long> KeyFrameFilter::GetKeyFrames(const MPFVideoJob &job) {
         std::string command =
                 "ffprobe -loglevel warning -select_streams v -show_entries frame=key_frame -print_format flat=h=0 '"
                 + job.data_uri + "'";
@@ -47,11 +47,12 @@ namespace MPF { namespace COMPONENT {
             throw std::runtime_error("Unable to get key frames because ffprobe process failed to start.");
         }
 
-        std::vector<int> keyFrames;
+        std::vector<long> keyFrames;
         static const std::string linePrefix = "frame.";
         char lineBuf[128];
-        int numKeyFramesSeen = 0;
-        int frameInterval = std::max(1, DetectionComponentUtils::GetProperty(job.job_properties, "FRAME_INTERVAL", 1));
+        long numKeyFramesSeen = 0;
+        long frameInterval = std::max(1L, DetectionComponentUtils::GetProperty<long>(job.job_properties,
+                                                                                     "FRAME_INTERVAL", 1L));
 
         while (fgets(lineBuf, 128, pipe) != nullptr) {
             // Expected line format for key frame: frame.209.key_frame=1
@@ -64,7 +65,7 @@ namespace MPF { namespace COMPONENT {
             }
 
             size_t endOfFrameNumber = 0;
-            int frameNumber = std::stoi(lineStr.substr(linePrefix.size()), &endOfFrameNumber);
+            long frameNumber = std::stol(lineStr.substr(linePrefix.size()), &endOfFrameNumber);
             if (frameNumber < job.start_frame) {
                 continue;
             }

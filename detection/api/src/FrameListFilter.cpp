@@ -32,12 +32,12 @@
 
 namespace MPF { namespace COMPONENT {
 
-    FrameListFilter::FrameListFilter(std::vector<int> &&framesToShow)
+    FrameListFilter::FrameListFilter(std::vector<long> &&framesToShow)
         : framesToShow_(std::move(framesToShow)) {
     }
 
 
-    int FrameListFilter::SegmentToOriginalFramePosition(int segmentPosition) const {
+    long FrameListFilter::SegmentToOriginalFramePosition(long segmentPosition) const {
         try {
             return framesToShow_.at(static_cast<size_t>(segmentPosition));
         }
@@ -50,28 +50,28 @@ namespace MPF { namespace COMPONENT {
     }
 
 
-    int FrameListFilter::OriginalToSegmentFramePosition(int originalPosition) const {
+    long FrameListFilter::OriginalToSegmentFramePosition(long originalPosition) const {
         // Use binary search to get index of original position
         auto iter = std::lower_bound(framesToShow_.begin(), framesToShow_.end(), originalPosition);
         if (iter == framesToShow_.end()) {
             return GetSegmentFrameCount();
         }
-        return static_cast<int>(iter - framesToShow_.begin());
+        return iter - framesToShow_.begin();
     }
 
 
-    int FrameListFilter::GetSegmentFrameCount() const {
-        return static_cast<int>(framesToShow_.size());
+    long FrameListFilter::GetSegmentFrameCount() const {
+        return framesToShow_.size();
     }
 
 
     double FrameListFilter::GetSegmentDuration(double originalFrameRate) const {
-        int range = framesToShow_.back() - framesToShow_.front() + 1;
+        long range = framesToShow_.back() - framesToShow_.front() + 1;
         return range / originalFrameRate;
     }
 
 
-    int FrameListFilter::GetAvailableInitializationFrameCount() const {
+    long FrameListFilter::GetAvailableInitializationFrameCount() const {
         return 0;
     }
 }}

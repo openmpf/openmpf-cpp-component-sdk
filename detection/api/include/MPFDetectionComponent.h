@@ -103,10 +103,10 @@ namespace MPF { namespace COMPONENT {
 
 
     struct MPFVideoTrack {
-        int start_frame;
-        int stop_frame;
+        long start_frame;
+        long stop_frame;
         float confidence;  // optional
-        std::map<int, MPFImageLocation> frame_locations;
+        std::map<long, MPFImageLocation> frame_locations;
         Properties detection_properties;
 
         MPFVideoTrack()
@@ -116,7 +116,7 @@ namespace MPF { namespace COMPONENT {
         }
 
 
-        MPFVideoTrack(int start, int stop, float confidence = -1, const Properties &detection_properties = {})
+        MPFVideoTrack(long start, long stop, float confidence = -1, const Properties &detection_properties = {})
                 : start_frame(start)
                 , stop_frame(stop)
                 , confidence(confidence)
@@ -126,8 +126,8 @@ namespace MPF { namespace COMPONENT {
 
 
     struct MPFAudioTrack {
-        int start_time;
-        int stop_time;
+        long start_time;
+        long stop_time;
         float confidence;  // optional
         Properties detection_properties;
 
@@ -137,7 +137,7 @@ namespace MPF { namespace COMPONENT {
                 , confidence(-1) {
         }
 
-        MPFAudioTrack(int start, int stop, float confidence = -1, const Properties &detection_properties = {})
+        MPFAudioTrack(long start, long stop, float confidence = -1, const Properties &detection_properties = {})
                 : start_time(start)
                 , stop_time(stop)
                 , confidence(confidence)
@@ -175,15 +175,15 @@ namespace MPF { namespace COMPONENT {
 
 
     struct MPFVideoJob : MPFJob {
-        const int start_frame;
-        const int stop_frame;
+        const long start_frame;
+        const long stop_frame;
         bool has_feed_forward_track = false;
         MPFVideoTrack feed_forward_track;
 
         MPFVideoJob(const std::string &job_name,
                     const std::string &data_uri,
-                    int start_frame,
-                    int stop_frame,
+                    long start_frame,
+                    long stop_frame,
                     const Properties &job_properties,
                     const Properties &media_properties)
                 : MPFJob(job_name, data_uri, job_properties, media_properties)
@@ -194,8 +194,8 @@ namespace MPF { namespace COMPONENT {
 
         MPFVideoJob(const std::string &job_name,
                     const std::string &data_uri,
-                    int start_frame,
-                    int stop_frame,
+                    long start_frame,
+                    long stop_frame,
                     const MPFVideoTrack &track,
                     const Properties &job_properties,
                     const Properties &media_properties)
@@ -232,15 +232,15 @@ namespace MPF { namespace COMPONENT {
 
 
     struct MPFAudioJob : MPFJob {
-        const int start_time;
-        const int stop_time;
+        const long start_time;
+        const long stop_time;
         bool has_feed_forward_track = false;
         MPFAudioTrack feed_forward_track;
 
         MPFAudioJob(const std::string &job_name,
                     const std::string &data_uri,
-                    int start_time,
-                    int stop_time,
+                    long start_time,
+                    long stop_time,
                     const Properties &job_properties,
                     const Properties &media_properties)
                 : MPFJob(job_name, data_uri, job_properties, media_properties)
@@ -251,8 +251,8 @@ namespace MPF { namespace COMPONENT {
 
         MPFAudioJob(const std::string &job_name,
                     const std::string &data_uri,
-                    int start_time,
-                    int stop_time,
+                    long start_time,
+                    long stop_time,
                     const MPFAudioTrack &track,
                     const Properties &job_properties,
                     const Properties &media_properties)

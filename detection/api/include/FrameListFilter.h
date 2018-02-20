@@ -35,20 +35,20 @@ namespace MPF { namespace COMPONENT {
 
     class FrameListFilter : public FrameFilter {
     public:
-        explicit FrameListFilter(std::vector<int> &&framesToShow);
+        explicit FrameListFilter(std::vector<long> &&framesToShow);
 
-        int SegmentToOriginalFramePosition(int segmentPosition) const override;
+        long SegmentToOriginalFramePosition(long segmentPosition) const override;
 
-        int OriginalToSegmentFramePosition(int originalPosition) const override;
+        long OriginalToSegmentFramePosition(long originalPosition) const override;
 
-        int GetSegmentFrameCount() const override;
+        long GetSegmentFrameCount() const override;
 
         double GetSegmentDuration(double originalFrameRate) const override;
 
-        int GetAvailableInitializationFrameCount() const override;
+        long GetAvailableInitializationFrameCount() const override;
 
     private:
-        const std::vector<int> framesToShow_;
+        const std::vector<long> framesToShow_;
 
     };
 

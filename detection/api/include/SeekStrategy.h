@@ -45,7 +45,7 @@ namespace MPF { namespace COMPONENT {
 
         virtual ~SeekStrategy() = default;
 
-        virtual int ChangePosition(cv::VideoCapture &cap, int currentPosition, int requestedPosition) const = 0;
+        virtual long ChangePosition(cv::VideoCapture &cap, long currentPosition, long requestedPosition) const = 0;
 
         virtual SeekStrategy::CPtr fallback() const = 0;
     };
@@ -54,7 +54,7 @@ namespace MPF { namespace COMPONENT {
 
     class SetFramePositionSeek : public SeekStrategy {
     public:
-        int ChangePosition(cv::VideoCapture &cap, int currentPosition, int requestedPosition) const override;
+        long ChangePosition(cv::VideoCapture &cap, long currentPosition, long requestedPosition) const override;
 
         SeekStrategy::CPtr fallback() const override;
     };
@@ -63,7 +63,7 @@ namespace MPF { namespace COMPONENT {
 
     class SequentialSeek : public SeekStrategy {
     public:
-        int ChangePosition(cv::VideoCapture &cap, int currentPosition, int requestedPosition) const final;
+        long ChangePosition(cv::VideoCapture &cap, long currentPosition, long requestedPosition) const final;
 
     private:
         virtual bool Advance(cv::VideoCapture &cap) const = 0;

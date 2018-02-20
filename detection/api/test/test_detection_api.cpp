@@ -47,10 +47,10 @@ const char videoWithFramePositionIssues[] = "test/test_vids/vid-with-set-positio
 
 
 FeedForwardFrameFilter toFeedForwardFilter(const IntervalFrameFilter &filter) {
-    int frameCount = filter.GetSegmentFrameCount();
+    long frameCount = filter.GetSegmentFrameCount();
 
     MPFVideoTrack feedForwardTrack;
-    for (int i = 0; i < frameCount; i++) {
+    for (long i = 0; i < frameCount; i++) {
         feedForwardTrack.frame_locations[filter.SegmentToOriginalFramePosition(i)] = { };
     }
 
@@ -60,7 +60,7 @@ FeedForwardFrameFilter toFeedForwardFilter(const IntervalFrameFilter &filter) {
 
 
 
-void assertSegmentFrameCount(const IntervalFrameFilter &frameFilter, int expected) {
+void assertSegmentFrameCount(const IntervalFrameFilter &frameFilter, long expected) {
     ASSERT_EQ(frameFilter.GetSegmentFrameCount(), expected);
     ASSERT_EQ(toFeedForwardFilter(frameFilter).GetSegmentFrameCount(), expected);
 }
@@ -82,8 +82,8 @@ TEST(FrameFilterTest, CanCalculateSegmentFrameCount) {
 
 
 
-void assertSegmentToOriginalFramePosition(const IntervalFrameFilter &filter, int segmentPosition,
-                                          int expectedOriginalPosition) {
+void assertSegmentToOriginalFramePosition(const IntervalFrameFilter &filter, long segmentPosition,
+                                          long expectedOriginalPosition) {
 
     ASSERT_EQ(filter.SegmentToOriginalFramePosition(segmentPosition), expectedOriginalPosition);
     ASSERT_EQ(toFeedForwardFilter(filter).SegmentToOriginalFramePosition(segmentPosition), expectedOriginalPosition);
@@ -105,8 +105,8 @@ TEST(FrameFilterTest, CanMapSegmentToOriginalFramePosition) {
 }
 
 
-void assertOriginalToSegmentFramePosition(const IntervalFrameFilter &filter, int originalPosition,
-                                          int expectedSegmentPosition) {
+void assertOriginalToSegmentFramePosition(const IntervalFrameFilter &filter, long originalPosition,
+                                          long expectedSegmentPosition) {
 
     ASSERT_EQ(filter.OriginalToSegmentFramePosition(originalPosition), expectedSegmentPosition);
     ASSERT_EQ(toFeedForwardFilter(filter).OriginalToSegmentFramePosition(originalPosition), expectedSegmentPosition);
@@ -168,7 +168,7 @@ TEST(FrameFilterTest, CanCalculateSegmentFrameRate) {
 }
 
 
-void assertCurrentSegmentTime(const IntervalFrameFilter &filter, int originalPosition,
+void assertCurrentSegmentTime(const IntervalFrameFilter &filter, long originalPosition,
                               double expectedIntervalTimeInMillis, double expectedFeedForwardTimeInMillis) {
 
     ASSERT_DOUBLE_EQ(filter.GetCurrentSegmentTimeInMillis(originalPosition, 30), expectedIntervalTimeInMillis);
@@ -204,7 +204,7 @@ TEST(FrameFilterTest, CanGetCurrentSegmentTimeInMillis) {
 
 
 
-void assertSegmentFramePositionRatio(const IntervalFrameFilter &filter, int originalPosition,
+void assertSegmentFramePositionRatio(const IntervalFrameFilter &filter, long originalPosition,
                                      double expectedRatio) {
 
     ASSERT_DOUBLE_EQ(filter.GetSegmentFramePositionRatio(originalPosition), expectedRatio);
@@ -245,7 +245,7 @@ TEST(FrameFilterTest, CanCalculateSegmentFramePositionRatio) {
 
 
 
-void assertRatioToOriginalFramePosition(const IntervalFrameFilter &filter, double ratio, int expectedFramePosition) {
+void assertRatioToOriginalFramePosition(const IntervalFrameFilter &filter, double ratio, long expectedFramePosition) {
     ASSERT_EQ(filter.RatioToOriginalFramePosition(ratio), expectedFramePosition);
     ASSERT_EQ(toFeedForwardFilter(filter).RatioToOriginalFramePosition(ratio), expectedFramePosition);
 
@@ -264,7 +264,7 @@ TEST(FrameFilterTest, CanCalculateRatioToOriginalFramePosition) {
 
 
 void assertMillisToSegmentFramePosition(const IntervalFrameFilter &filter, double originalFrameRate,
-                                        double segmentMillis, int expectedSegmentPos) {
+                                        double segmentMillis, long expectedSegmentPos) {
 
     ASSERT_EQ(filter.MillisToSegmentFramePosition(originalFrameRate, segmentMillis), expectedSegmentPos);
     ASSERT_EQ(toFeedForwardFilter(filter).MillisToSegmentFramePosition(originalFrameRate, segmentMillis),
@@ -288,10 +288,10 @@ TEST(FrameFilterTest, CanCalculateMillisToSegmentFramePosition) {
 }
 
 
-void assertAvailableInitializationFrames(int startFrame, int frameInterval, int expectedNumAvailable) {
+void assertAvailableInitializationFrames(long startFrame, long frameInterval, long expectedNumAvailable) {
 
     IntervalFrameFilter filter(startFrame, startFrame + 10, frameInterval);
-    int actualNumAvailable = filter.GetAvailableInitializationFrameCount();
+    long actualNumAvailable = filter.GetAvailableInitializationFrameCount();
     ASSERT_EQ(expectedNumAvailable, actualNumAvailable);
 }
 
@@ -314,26 +314,26 @@ TEST(FrameFilterTest, CanDetermineAvailableInitializationFrames) {
 }
 
 
-int GetFrameNumber(const cv::Mat &frame)  {
+long GetFrameNumber(const cv::Mat &frame)  {
     cv::Scalar_<uchar> color = frame.at<cv::Scalar_<uchar>>(0, 0);
-    return static_cast<int>(color.val[0]);
+    return static_cast<long>(color.val[0]);
 }
 
 
 
-MPFVideoCapture CreateVideoCapture(int startFrame, int stopFrame) {
+MPFVideoCapture CreateVideoCapture(long startFrame, long stopFrame) {
     MPFVideoJob job("Test", frameFilterTestVideo, startFrame, stopFrame, {}, {} );
     return MPFVideoCapture(job, true, true);
 }
 
 
-MPFVideoJob CreateVideoJob(int startFrame, int stopFrame, int frameInterval) {
+MPFVideoJob CreateVideoJob(long startFrame, long stopFrame, long frameInterval) {
     return {"Test", frameFilterTestVideo, startFrame, stopFrame,
             {{"FRAME_INTERVAL", std::to_string(frameInterval)}}, {}};
 
 }
 
-MPFVideoCapture CreateVideoCapture(int startFrame, int stopFrame, int frameInterval) {
+MPFVideoCapture CreateVideoCapture(long startFrame, long stopFrame, long frameInterval) {
     return MPFVideoCapture(CreateVideoJob(startFrame, stopFrame, frameInterval), true, true);
 }
 
@@ -377,10 +377,10 @@ TEST(FrameFilterTest, NoFramesSkippedWhenDefaultValues) {
 }
 
 
-void assertExpectedFramesShown(MPFVideoCapture &cap, const vector<int> &expectedFrames) {
+void assertExpectedFramesShown(MPFVideoCapture &cap, const vector<long> &expectedFrames) {
     ASSERT_EQ(expectedFrames.size(), cap.GetFrameCount());
 
-    for (int expectedFrame : expectedFrames) {
+    for (long expectedFrame : expectedFrames) {
         cv::Mat frame;
         bool wasRead = cap.Read(frame);
         ASSERT_TRUE(wasRead);
@@ -390,8 +390,8 @@ void assertExpectedFramesShown(MPFVideoCapture &cap, const vector<int> &expected
 }
 
 
-void assertExpectedFramesShown(int startFrame, int stopFrame, int frameInterval,
-                               const vector<int> &expectedFrames) {
+void assertExpectedFramesShown(long startFrame, long stopFrame, long frameInterval,
+                               const vector<long> &expectedFrames) {
 
     auto cap = CreateVideoCapture(startFrame, stopFrame, frameInterval);
     assertExpectedFramesShown(cap, expectedFrames);
@@ -470,10 +470,10 @@ TEST(FrameFilterTest, CanNotSetPositionBeyondSegment) {
 
 
 
-void assertMapContainsKeys(const map<int, MPFImageLocation> &map, const std::vector<int> &expectedKeys) {
+void assertMapContainsKeys(const map<long, MPFImageLocation> &map, const std::vector<long> &expectedKeys) {
 
     ASSERT_EQ(map.size(), expectedKeys.size());
-    for (const int key : expectedKeys) {
+    for (const long key : expectedKeys) {
         bool keyInMap = map.find(key) != map.end();
         ASSERT_TRUE(keyInMap) << "Expected to map to have key: " << key;
     }
@@ -499,8 +499,8 @@ TEST(FrameFilterTest, CanFixFramePosInReverseTransform) {
 
 
 
-void assertInitializationFrameIds(int startFrame, int frameInterval, int numberRequested,
-                                  const vector<int> &expectedInitFrames) {
+void assertInitializationFrameIds(long startFrame, long frameInterval, long numberRequested,
+                                  const vector<long> &expectedInitFrames) {
     auto cap = CreateVideoCapture(startFrame, 29, frameInterval);
 
     const vector<cv::Mat> &initFrames = cap.GetInitializationFramesIfAvailable(numberRequested);
@@ -508,7 +508,7 @@ void assertInitializationFrameIds(int startFrame, int frameInterval, int numberR
     ASSERT_EQ(expectedInitFrames.size(), initFrames.size());
 
     auto initFramesIter = initFrames.begin();
-    for (int expectedFrameNum : expectedInitFrames) {
+    for (long expectedFrameNum : expectedInitFrames) {
         ASSERT_EQ(expectedFrameNum, GetFrameNumber(*initFramesIter));
         initFramesIter++;
     }
@@ -565,7 +565,7 @@ TEST(FrameFilterTest, VerifyInitializationFramesIndependentOfCurrentPosition) {
 
 
 
-void assertFrameRead(MPFVideoCapture &cap, int expectedFrameNumber, const cv::Size &expectedSize,
+void assertFrameRead(MPFVideoCapture &cap, long expectedFrameNumber, const cv::Size &expectedSize,
                      double expectedRatio) {
     ASSERT_EQ(cap.GetFramePositionRatio(), expectedRatio);
 
@@ -678,7 +678,7 @@ TEST(FrameFilterTest, VerifyCvVideoCaptureGetFramePositionIssue) {
     cap.set(cv::CAP_PROP_POS_FRAMES, 10);
     cap.read(frame);
 
-    auto framePosition = static_cast<int>(cap.get(cv::CAP_PROP_POS_FRAMES));
+    auto framePosition = static_cast<long>(cap.get(cv::CAP_PROP_POS_FRAMES));
 
     ASSERT_NE(framePosition, 11) << "If this test fails, then a bug with OpenCV has been fixed. See test for details";
 }
@@ -714,7 +714,7 @@ TEST(FrameFilterTest, VerifyCvVideoCaptureSetFramePositionIssue) {
 
     cv::VideoCapture cap(videoWithFramePositionIssues);
 
-    auto frameCount = static_cast<int>(cap.get(cv::CAP_PROP_FRAME_COUNT));
+    auto frameCount = static_cast<long>(cap.get(cv::CAP_PROP_FRAME_COUNT));
 
     cap.set(cv::CAP_PROP_POS_FRAMES, frameCount - 5);
 
@@ -742,7 +742,7 @@ TEST(FrameFilterTest, VerifyMPfVideoCaptureDoesNotHaveSetFramePositionIssue) {
 
 void assertCanChangeFramePosition(const SeekStrategy& seekStrategy) {
     cv::VideoCapture cap(frameFilterTestVideo);
-    int framePosition = 0;
+    long framePosition = 0;
 
     framePosition = seekStrategy.ChangePosition(cap, framePosition, 28);
     ASSERT_EQ(framePosition, 28) << "Failed to seek forward";
@@ -941,7 +941,7 @@ TEST(FeedForwardFrameCropperTest, CanCropToExactRegion) {
     MPFVideoTrack outputTrack(0, 2, 1, {});
 
     cv::Mat frame;
-    int framePos = cap.GetCurrentFramePosition();
+    long framePos = cap.GetCurrentFramePosition();
     ASSERT_TRUE(cap.Read(frame));
     ASSERT_EQ(GetFrameNumber(frame), 4);
     ASSERT_EQ(frame.size(), cv::Size(65, 125));

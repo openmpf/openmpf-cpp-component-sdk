@@ -81,7 +81,7 @@ MPFDetectionError VideoCaptureComponent::GetDetections(
     // value. When no frame interval is supplied through the job
     // properties, the component must use a value of 1 as the
     // default.
-    int frame_interval = DetectionComponentUtils::GetProperty<int>(
+    long frame_interval = DetectionComponentUtils::GetProperty<long>(
             job.job_properties, "FRAME_INTERVAL", 1);
 
     // The MPFVideoCapture object is a wrapper around the OpenCV
@@ -97,7 +97,7 @@ MPFDetectionError VideoCaptureComponent::GetDetections(
     }
 
     // The MPFVideoCapture can provide information about the segment.
-    int total_frames = cap.GetFrameCount();
+    long total_frames = cap.GetFrameCount();
     std::cout << "Total video frames: " << total_frames << std::endl;
 
     // Make sure the start and stop frames defined for this segment is
@@ -134,7 +134,7 @@ MPFDetectionError VideoCaptureComponent::GetDetections(
     // start and stop frame positions requested in the job are within
     // the bounds of the video being captured. We then set the
     // position of the next frame to be captured to the start frame.
-    int frame_index = 0;
+    long frame_index = 0;
     //try to set start frame if start_frame != 0
     if (job.start_frame > 0 && job.stop_frame < total_frames) {
         cap.SetFramePosition(job.start_frame);

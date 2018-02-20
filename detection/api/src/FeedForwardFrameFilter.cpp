@@ -37,8 +37,8 @@ namespace MPF { namespace COMPONENT {
     }
 
 
-    std::vector<int> FeedForwardFrameFilter::GetFramesInTrack(const MPFVideoTrack &track) {
-        std::vector<int> framesInTrack;
+    std::vector<long> FeedForwardFrameFilter::GetFramesInTrack(const MPFVideoTrack &track) {
+        std::vector<long> framesInTrack;
         framesInTrack.reserve(track.frame_locations.size());
 
         for (const auto &frameLocPair : track.frame_locations) {

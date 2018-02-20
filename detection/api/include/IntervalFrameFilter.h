@@ -45,30 +45,30 @@ namespace MPF { namespace COMPONENT {
     class IntervalFrameFilter : public FrameFilter {
 
     public:
-        IntervalFrameFilter(int startFrame, int stopFrame, int frameInterval);
+        IntervalFrameFilter(long startFrame, long stopFrame, long frameInterval);
 
-        IntervalFrameFilter(const MPFVideoJob &job, int originalFrameCount);
+        IntervalFrameFilter(const MPFVideoJob &job, long originalFrameCount);
 
 
-        int SegmentToOriginalFramePosition(int segmentPosition) const override;
+        long SegmentToOriginalFramePosition(long segmentPosition) const override;
 
-        int OriginalToSegmentFramePosition(int originalPosition) const override;
+        long OriginalToSegmentFramePosition(long originalPosition) const override;
 
-        int GetSegmentFrameCount() const override;
+        long GetSegmentFrameCount() const override;
 
         double GetSegmentDuration(double originalFrameRate) const override;
 
-        int GetAvailableInitializationFrameCount() const override;
+        long GetAvailableInitializationFrameCount() const override;
 
 
 
     private:
-        const int startFrame_;
-        const int stopFrame_;
-        const int frameInterval_;
+        const long startFrame_;
+        const long stopFrame_;
+        const long frameInterval_;
 
-        static int GetFrameInterval(const MPFJob &job);
-        static int GetStopFrame(const MPFVideoJob &job, int originalFrameCount);
+        static long GetFrameInterval(const MPFJob &job);
+        static long GetStopFrame(const MPFVideoJob &job, long originalFrameCount);
     };
 
 }}

@@ -42,17 +42,17 @@ namespace MPF { namespace COMPONENT {
     public:
         explicit FrameCropper(IFrameTransformer::Ptr innerTransform);
 
-        cv::Size GetFrameSize(int frameIndex) override;
+        cv::Size GetFrameSize(long frameIndex) override;
 
 
     protected:
-        void DoFrameTransform(cv::Mat &frame, int frameIndex) override;
+        void DoFrameTransform(cv::Mat &frame, long frameIndex) override;
 
-        void DoReverseTransform(MPFImageLocation &imageLocation, int frameIndex) override;
+        void DoReverseTransform(MPFImageLocation &imageLocation, long frameIndex) override;
 
 
     private:
-        virtual cv::Rect GetRegionOfInterest(int frameIndex) = 0;
+        virtual cv::Rect GetRegionOfInterest(long frameIndex) = 0;
     };
 
 
@@ -65,9 +65,9 @@ namespace MPF { namespace COMPONENT {
     private:
         const cv::Rect searchRegion_;
 
-        cv::Rect GetRegionOfInterest(int frameIndex) override;
+        cv::Rect GetRegionOfInterest(long frameIndex) override;
 
-        cv::Rect GetIntersectingRegion(const cv::Rect &regionOfInterest, int frameIndex) const;
+        cv::Rect GetIntersectingRegion(const cv::Rect &regionOfInterest, long frameIndex) const;
     };
 
 
@@ -75,12 +75,12 @@ namespace MPF { namespace COMPONENT {
 
     class FeedForwardFrameCropper : public FrameCropper {
     public:
-        FeedForwardFrameCropper(IFrameTransformer::Ptr innerTransform, const std::map<int, MPFImageLocation> &track);
+        FeedForwardFrameCropper(IFrameTransformer::Ptr innerTransform, const std::map<long, MPFImageLocation> &track);
 
     private:
         std::vector<cv::Rect> fedForwardDetections_;
 
-        cv::Rect GetRegionOfInterest(int frameIndex) override;
+        cv::Rect GetRegionOfInterest(long frameIndex) override;
     };
 
 }}

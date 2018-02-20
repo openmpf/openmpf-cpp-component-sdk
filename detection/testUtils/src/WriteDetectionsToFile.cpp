@@ -88,7 +88,7 @@ namespace MPF { namespace COMPONENT { namespace WriteDetectionsToFile {
                 my_file << tracks[i].start_frame << std::endl;
                 my_file << tracks[i].stop_frame << std::endl;
 
-                for (map<int, MPFImageLocation>::const_iterator it = tracks[i].frame_locations.begin();
+                for (map<long, MPFImageLocation>::const_iterator it = tracks[i].frame_locations.begin();
                      it != tracks[i].frame_locations.end(); ++it) {
                     my_file << it->second.x_left_upper << ","
                             << it->second.y_left_upper << ","

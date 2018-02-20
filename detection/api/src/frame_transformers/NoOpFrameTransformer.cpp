@@ -33,15 +33,15 @@ namespace MPF { namespace COMPONENT {
             : frameSize_(frameSize) {
     }
 
-    cv::Size NoOpFrameTransformer::GetFrameSize(int frameIndex) {
+    cv::Size NoOpFrameTransformer::GetFrameSize(long frameIndex) {
         return frameSize_;
     }
 
-    void NoOpFrameTransformer::TransformFrame(cv::Mat &frame, int frameIndex) {
+    void NoOpFrameTransformer::TransformFrame(cv::Mat &frame, long frameIndex) {
 
     }
 
-    void NoOpFrameTransformer::ReverseTransform(MPFImageLocation &imageLocation, int frameIndex) {
+    void NoOpFrameTransformer::ReverseTransform(MPFImageLocation &imageLocation, long frameIndex) {
 
     }
 

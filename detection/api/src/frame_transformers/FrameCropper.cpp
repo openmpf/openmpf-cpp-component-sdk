@@ -37,19 +37,19 @@ namespace MPF { namespace COMPONENT {
     }
 
 
-    void FrameCropper::DoFrameTransform(cv::Mat &frame, int frameIndex) {
+    void FrameCropper::DoFrameTransform(cv::Mat &frame, long frameIndex) {
         frame = frame(GetRegionOfInterest(frameIndex));
     }
 
 
-    void FrameCropper::DoReverseTransform(MPFImageLocation &imageLocation, int frameIndex) {
+    void FrameCropper::DoReverseTransform(MPFImageLocation &imageLocation, long frameIndex) {
         const cv::Rect roi = GetRegionOfInterest(frameIndex);
         imageLocation.x_left_upper += roi.x;
         imageLocation.y_left_upper += roi.y;
     }
 
 
-    cv::Size FrameCropper::GetFrameSize(int frameIndex) {
+    cv::Size FrameCropper::GetFrameSize(long frameIndex) {
         return GetRegionOfInterest(frameIndex).size();
     }
 
@@ -63,13 +63,13 @@ namespace MPF { namespace COMPONENT {
     }
 
 
-    cv::Rect SearchRegionFrameCropper::GetIntersectingRegion(const cv::Rect &regionOfInterest, int frameIndex) const {
+    cv::Rect SearchRegionFrameCropper::GetIntersectingRegion(const cv::Rect &regionOfInterest, long frameIndex) const {
         cv::Rect frameRect(cv::Point(0, 0), GetInnerFrameSize(frameIndex));
         return regionOfInterest & frameRect;
     }
 
 
-    cv::Rect SearchRegionFrameCropper::GetRegionOfInterest(int frameIndex) {
+    cv::Rect SearchRegionFrameCropper::GetRegionOfInterest(long frameIndex) {
         return searchRegion_;
     }
 
@@ -77,7 +77,7 @@ namespace MPF { namespace COMPONENT {
 
 
     FeedForwardFrameCropper::FeedForwardFrameCropper(IFrameTransformer::Ptr innerTransform,
-                                                     const std::map<int, MPFImageLocation> &track)
+                                                     const std::map<long, MPFImageLocation> &track)
         : FrameCropper(std::move(innerTransform)) {
 
         fedForwardDetections_.reserve(track.size());
@@ -91,7 +91,7 @@ namespace MPF { namespace COMPONENT {
     }
 
 
-    cv::Rect FeedForwardFrameCropper::GetRegionOfInterest(int frameIndex) {
+    cv::Rect FeedForwardFrameCropper::GetRegionOfInterest(long frameIndex) {
         try {
             return fedForwardDetections_.at(frameIndex);
         }

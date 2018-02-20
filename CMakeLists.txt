@@ -72,4 +72,6 @@ include_directories(detection/utils/include)
 add_subdirectory(detection/testUtils)
 include_directories(detection/testUtils/include)
 
+add_subdirectory(detection/examples)
+
 add_subdirectory(mpf-cmake-helpers)

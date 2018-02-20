@@ -105,7 +105,7 @@ namespace MPF { namespace COMPONENT {
         }
 
         for (unsigned int i = 0; i < detections.size(); i++) {
-            for (std::map<int, MPFImageLocation>::const_iterator it = detections[i].frame_locations.begin();
+            for (std::map<long, MPFImageLocation>::const_iterator it = detections[i].frame_locations.begin();
                  it != detections[i].frame_locations.end(); ++it) {
                 Rect face_rect(it->second.x_left_upper, it->second.y_left_upper, it->second.width, it->second.height);
                 cv::rectangle(input_image, face_rect, Scalar(0, 255, 0));

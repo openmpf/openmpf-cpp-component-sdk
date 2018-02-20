@@ -55,7 +55,7 @@ namespace MPF { namespace COMPONENT {
          * @param frame[in,out] Frame to transform.
          * @param frameIndex 0-based index of the frame's position in video or 0 if frame is from image.
          */
-        void TransformFrame(cv::Mat &frame, int frameIndex) override;
+        void TransformFrame(cv::Mat &frame, long frameIndex) override;
 
 
         /**
@@ -63,7 +63,7 @@ namespace MPF { namespace COMPONENT {
          * @param imageLocation[in,out]  The image location to do the reverse transform on.
          * @param frameIndex 0-based index of the frame in which the detection was found or 0 if found in image.
          */
-        void ReverseTransform(MPFImageLocation &imageLocation, int frameIndex) override;
+        void ReverseTransform(MPFImageLocation &imageLocation, long frameIndex) override;
 
 
     protected:
@@ -74,7 +74,7 @@ namespace MPF { namespace COMPONENT {
          * @param frame[in,out] Frame to transform.
          * @param frameIndex 0-based index of the frame's position in video or 0 if frame is from image.
          */
-        virtual void DoFrameTransform(cv::Mat &frame, int frameIndex) = 0;
+        virtual void DoFrameTransform(cv::Mat &frame, long frameIndex) = 0;
 
 
         /**
@@ -82,9 +82,9 @@ namespace MPF { namespace COMPONENT {
          * @param imageLocation[in,out]  The image location to do the reverse transform on.
          * @param frameIndex 0-based index of the frame's position in video or 0 if frame is from image.
          */
-        virtual void DoReverseTransform(MPFImageLocation &imageLocation, int frameIndex) = 0;
+        virtual void DoReverseTransform(MPFImageLocation &imageLocation, long frameIndex) = 0;
 
-        cv::Size GetInnerFrameSize(int frameIndex) const;
+        cv::Size GetInnerFrameSize(long frameIndex) const;
 
     private:
         const IFrameTransformer::Ptr innerTransform_;

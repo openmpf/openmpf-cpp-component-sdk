@@ -41,7 +41,7 @@ namespace MPF { namespace COMPONENT {
     }
 
 
-    void FrameRotator::DoFrameTransform(cv::Mat &frame, int frameIndex) {
+    void FrameRotator::DoFrameTransform(cv::Mat &frame, long frameIndex) {
         switch (rotationDegrees_) {
             case 90:
                 cv::transpose(frame, frame);
@@ -61,7 +61,7 @@ namespace MPF { namespace COMPONENT {
     }
 
 
-    void FrameRotator::DoReverseTransform(MPFImageLocation &detectionLocation, int frameIndex) {
+    void FrameRotator::DoReverseTransform(MPFImageLocation &detectionLocation, long frameIndex) {
         const cv::Point &topLeft(GetRevertedTopLeftCorner(detectionLocation, frameIndex));
 
         detectionLocation.x_left_upper = topLeft.x;
@@ -73,7 +73,7 @@ namespace MPF { namespace COMPONENT {
     }
 
 
-    cv::Point FrameRotator::GetRevertedTopLeftCorner(const MPFImageLocation &imageLocation, int frameIndex) const {
+    cv::Point FrameRotator::GetRevertedTopLeftCorner(const MPFImageLocation &imageLocation, long frameIndex) const {
         cv::Rect detectionRect(imageLocation.x_left_upper, imageLocation.y_left_upper,
                                imageLocation.width, imageLocation.height);
 
@@ -96,7 +96,7 @@ namespace MPF { namespace COMPONENT {
 
 
 
-    cv::Size FrameRotator::GetFrameSize(int frameIndex) {
+    cv::Size FrameRotator::GetFrameSize(long frameIndex) {
         const cv::Size &innerSize(GetInnerFrameSize(frameIndex));
         if (rotationDegrees_ == 90 || rotationDegrees_ == 270) {
             return cv::Size(innerSize.height, innerSize.width);

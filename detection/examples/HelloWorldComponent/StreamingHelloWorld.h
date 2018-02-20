@@ -49,7 +49,7 @@ public:
 
     void BeginSegment(const MPF::COMPONENT::VideoSegmentInfo &segment_info) override;
 
-    bool ProcessFrame(const cv::Mat &frame, int frame_number) override;
+    bool ProcessFrame(const cv::Mat &frame, long frame_number) override;
 
     std::vector<MPF::COMPONENT::MPFVideoTrack> EndSegment() override;
 

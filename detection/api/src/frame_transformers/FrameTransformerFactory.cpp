@@ -87,7 +87,7 @@ namespace MPF { namespace COMPONENT { namespace FrameTransformerFactory {
          * @param feedForwardTrackLocations
          * @return The minimum area rectangle that contains all detections listed in feedForwardTrackLocations
          */
-        cv::Rect GetSupersetRegion(const std::map<int, MPFImageLocation> &feedForwardTrackLocations) {
+        cv::Rect GetSupersetRegion(const std::map<long, MPFImageLocation> &feedForwardTrackLocations) {
             if (feedForwardTrackLocations.empty()) {
                 throw std::length_error(
                         "FEED_FORWARD_TYPE: SUPERSET_REGION is enabled, but feed forward track was empty.");
@@ -171,7 +171,7 @@ namespace MPF { namespace COMPONENT { namespace FrameTransformerFactory {
 
 
         void AddCropperIfNeeded(const MPFJob &job, const cv::Size &inputVideoSize,
-                                const std::map<int, MPFImageLocation> &trackLocations,
+                                const std::map<long, MPFImageLocation> &trackLocations,
                                 IFrameTransformer::Ptr &currentTransformer) {
 
             bool exactRegionCroppingEnabled = FeedForwardExactRegionIsEnabled(job.job_properties);
@@ -207,7 +207,7 @@ namespace MPF { namespace COMPONENT { namespace FrameTransformerFactory {
 
 
         IFrameTransformer::Ptr GetTransformer(const MPFJob &job, const cv::Size &inputVideoSize,
-                                              const std::map<int, MPFImageLocation> &trackLocations) {
+                                              const std::map<long, MPFImageLocation> &trackLocations) {
 
             IFrameTransformer::Ptr transformer(new NoOpFrameTransformer(inputVideoSize));
 

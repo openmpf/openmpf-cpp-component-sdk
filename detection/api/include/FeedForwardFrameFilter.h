@@ -42,7 +42,7 @@ namespace MPF { namespace COMPONENT {
 
 
     private:
-        static std::vector<int> GetFramesInTrack(const MPFVideoTrack &track);
+        static std::vector<long> GetFramesInTrack(const MPFVideoTrack &track);
     };
 
 }}

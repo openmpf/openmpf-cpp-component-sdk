@@ -36,7 +36,7 @@ namespace MPF { namespace COMPONENT {
     public:
         typedef std::unique_ptr<const FrameFilter> CPtr;
 
-        static CPtr GetNoOpFilter(int frameCount);
+        static CPtr GetNoOpFilter(long frameCount);
 
         virtual ~FrameFilter() = default;
 
@@ -46,7 +46,7 @@ namespace MPF { namespace COMPONENT {
          * @param segmentPosition A frame position within the segment
          * @return The matching frame position in the original video.
          */
-        virtual int SegmentToOriginalFramePosition(int segmentPosition) const = 0;
+        virtual long SegmentToOriginalFramePosition(long segmentPosition) const = 0;
 
 
         /**
@@ -54,20 +54,20 @@ namespace MPF { namespace COMPONENT {
          * @param originalPosition  A frame position in the original video
          * @return The matching frame position in the segment
          */
-        virtual int OriginalToSegmentFramePosition(int originalPosition) const = 0;
+        virtual long OriginalToSegmentFramePosition(long originalPosition) const = 0;
 
 
         /**
          * Returns the number of frames before the beginning of the segment. Skipped frames are not counted.
          * @return Number of available initialization frames
          */
-        virtual int GetAvailableInitializationFrameCount() const = 0;
+        virtual long GetAvailableInitializationFrameCount() const = 0;
 
 
         /**
          * @return The number of frames in the segment
          */
-        virtual int GetSegmentFrameCount() const = 0;
+        virtual long GetSegmentFrameCount() const = 0;
 
 
         /**
@@ -80,7 +80,7 @@ namespace MPF { namespace COMPONENT {
 
 
 
-        bool IsPastEndOfSegment(int originalPosition) const;
+        bool IsPastEndOfSegment(long originalPosition) const;
 
 
         /**
@@ -98,7 +98,7 @@ namespace MPF { namespace COMPONENT {
          * @param originalFrameRate Frame rate of original video
          * @return Time in milliseconds since the segment started
          */
-        double GetCurrentSegmentTimeInMillis(int originalPosition, double originalFrameRate) const;
+        double GetCurrentSegmentTimeInMillis(long originalPosition, double originalFrameRate) const;
 
 
         /**
@@ -107,7 +107,7 @@ namespace MPF { namespace COMPONENT {
          * @param segmentMilliseconds Time since start of segment in milliseconds
          * @return Segment frame position for the specified number of milliseconds
          */
-        int MillisToSegmentFramePosition(double originalFrameRate, double segmentMilliseconds) const;
+        long MillisToSegmentFramePosition(double originalFrameRate, double segmentMilliseconds) const;
 
 
         /**
@@ -116,7 +116,7 @@ namespace MPF { namespace COMPONENT {
          * @param originalPosition Frame position in original video
          * @return Number between 0 and 1 indicating current position in video
          */
-        double GetSegmentFramePositionRatio(int originalPosition) const;
+        double GetSegmentFramePositionRatio(long originalPosition) const;
 
 
         /**
@@ -124,7 +124,7 @@ namespace MPF { namespace COMPONENT {
          * @param ratio Number between 0 and 1 that indicates position in video
          * @return Position in the original video
          */
-        int RatioToOriginalFramePosition(double ratio) const;
+        long RatioToOriginalFramePosition(double ratio) const;
     };
 }}
 

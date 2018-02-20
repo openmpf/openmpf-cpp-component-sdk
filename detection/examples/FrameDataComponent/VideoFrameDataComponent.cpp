@@ -34,7 +34,6 @@
 using namespace MPF;
 using namespace COMPONENT;
 
-using std::map;
 using std::pair;
 using std::vector;
 
@@ -77,7 +76,7 @@ MPFDetectionError VideoFrameDataComponent::GetDetectionsFromVideoFrameData(
     // Detection and tracking logic goes here. The address of each
     // frame of data can be obtained through logic similar to the
     // following:
-    for (int i = 0; i < frame_data.frames_in_segment; i++) {
+    for (long i = 0; i < frame_data.frames_in_segment; i++) {
         uint8_t *frame_addr = frame_data.data[i];
         // Detection processing operates on frame_addr.
     }
@@ -96,9 +95,9 @@ MPFDetectionError VideoFrameDataComponent::GetDetectionsFromVideoFrameData(
     track.confidence = 0.8;
     track.detection_properties["METADATA"] = "interesting info about this track";
 
-    int track_stop_frame = track.start_frame;
+    long track_stop_frame = track.start_frame;
     for (int i = 0; i < 4; i++) {
-        int frame_index = track.start_frame + i;
+        long frame_index = track.start_frame + i;
         if (frame_index > frame_data.stop_frame) break;
         track_stop_frame = frame_index;
         MPFImageLocation image(10+i, 10+i, 100, 200, 0.8);
