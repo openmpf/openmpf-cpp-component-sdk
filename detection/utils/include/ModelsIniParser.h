@@ -33,15 +33,32 @@
 #include <vector>
 #include <fstream>
 #include <utility>
-
-#include <boost/property_tree/ptree.hpp>
-#include <boost/property_tree/ini_parser.hpp>
+#include <memory>
+#include <unordered_map>
 
 
 namespace MPF { namespace COMPONENT {
 
     class ModelsIniException : public std::runtime_error {
         using std::runtime_error::runtime_error;
+    };
+
+
+    // In order to avoid including the boost headers in this header,
+    // everything that uses boost is in this class's implementation.
+    // This makes it so the boost related code gets compiled as part of the utils library instead of as part of
+    // the library that includes this.
+    // Something about the boost property tree headers, probably their complexity,
+    // prevents clang-tidy from working correctly. When the boost property tree headers were included in this header,
+    // the clang-tidy issue spread to all files that included this file.
+    class IniHelper {
+    public:
+        IniHelper(const std::string &file_path, const std::string &model_name);
+        std::string GetValue(const std::string &key) const;
+
+    private:
+        std::string model_name_;
+        std::unordered_map<std::string, std::string> model_ini_fields_;
     };
 
 
@@ -67,32 +84,13 @@ namespace MPF { namespace COMPONENT {
 
 
         TModelInfo ParseIni(const std::string &model_name, const std::string &common_models_dir) const {
-            using namespace boost::property_tree;
-            iptree all_models_ini;
             std::string models_ini_path = GetFullPath("models.ini", common_models_dir);
-            try {
-                ini_parser::read_ini(models_ini_path, all_models_ini);
-            }
-            catch (const ini_parser::ini_parser_error &ex) {
-                throw ModelsIniException("Failed to open \"" + models_ini_path + "\" due to: " + ex.what());
-            }
-
-            auto model_iter = all_models_ini.find(model_name);
-            if (model_iter == all_models_ini.not_found()) {
-                throw ModelsIniException("Unable to load model \"" + model_name
-                                         + "\" because the models.ini file does not contain a section with the model name.");
-            }
+            IniHelper helper(models_ini_path, model_name);
 
             TModelInfo model_info;
-            for (const auto& field_info : fields_) {
-                try {
-                    std::string file_name = model_iter->second.get<std::string>(field_info.first);
-                    model_info.*field_info.second = GetFullPath(file_name, common_models_dir);
-                }
-                catch (const ptree_bad_path &ex) {
-                    throw ModelsIniException("Unable load the \"" + model_name + "\" model because the \""
-                                             + field_info.first + "\" key was not present.");
-                }
+            for (const std::pair<std::string, class_field_t>& field_info : fields_) {
+                std::string file_name = helper.GetValue(field_info.first);
+                model_info.*field_info.second = GetFullPath(file_name, common_models_dir);
             }
             return model_info;
         }

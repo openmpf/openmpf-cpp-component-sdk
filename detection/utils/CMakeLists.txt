@@ -47,7 +47,9 @@ set(SOURCE_FILES
         include/MPFSimpleConfigLoader.h
         src/MPFSimpleConfigLoader.cpp
 
-        include/ModelsIniParser.h)
+        include/ModelsIniParser.h
+        src/ModelsIniParser.cpp
+    )
 
 add_library(mpfComponentUtils SHARED ${SOURCE_FILES})
 target_link_libraries(mpfComponentUtils ${OpenCV_LIBS} ${LOG4CXX_LIBRARIES} Qt4::QtCore)
