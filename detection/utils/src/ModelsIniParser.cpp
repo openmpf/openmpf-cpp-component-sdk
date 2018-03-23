@@ -64,7 +64,7 @@ namespace MPF { namespace COMPONENT {
         }
         catch (std::out_of_range &ex) {
             throw ModelsIniException(
-                    "Unable load the \"" + model_name_ + "\" model because the \"" + key
+                    "Unable to load the \"" + model_name_ + "\" model because the \"" + key
                     + "\" key was not present in the [" + model_name_ + "] section.");
         }
     }
