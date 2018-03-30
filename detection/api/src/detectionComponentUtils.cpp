@@ -43,6 +43,7 @@ using MPF::COMPONENT::MPFDetectionDataType;
 using MPF::COMPONENT::MPFDetectionError;
 using MPF::COMPONENT::MPFInvalidPropertyException;
 using MPF::COMPONENT::Properties;
+using MPF::COMPONENT::MPFDetectionException;
 
 
 namespace DetectionComponentUtils {
@@ -82,32 +83,35 @@ namespace DetectionComponentUtils {
 
 
     pair<MPFDetectionError, string> HandleDetectionException(MPFDetectionDataType dataType) {
-
-        MPFDetectionError errorCode;
-        string errorMsg;
         const string &dataTypeName = DetectionDataTypeToString(dataType);
 
         try {
             throw;
         }
-        catch (const MPFInvalidPropertyException &ex) {
-            errorCode = ex.getErrorCode();
-            errorMsg = "An exception occurred while trying to get detections from " + dataTypeName + ": " + ex.what();
+        catch (const MPFDetectionException &ex) {
+            return {
+                ex.error_code,
+                "An exception occurred while trying to get detections from " + dataTypeName + ": " + ex.what()
+            };
         }
         catch (const cv::Exception &ex) {
-            errorCode = MPFDetectionError::MPF_DETECTION_FAILED;
-            errorMsg =
-                    "OpenCV raised an exception while trying to get detections from " + dataTypeName + ": " + ex.what();
+            return {
+                MPFDetectionError::MPF_DETECTION_FAILED,
+                "OpenCV raised an exception while trying to get detections from " + dataTypeName + ": " + ex.what()
+            };
         }
         catch (const exception &ex) {
-            errorCode = MPFDetectionError::MPF_OTHER_DETECTION_ERROR_TYPE;
-            errorMsg = "An exception occurred while trying to get detections from " + dataTypeName + ": " + ex.what();
+            return {
+                MPFDetectionError::MPF_OTHER_DETECTION_ERROR_TYPE,
+                "An exception occurred while trying to get detections from " + dataTypeName + ": " + ex.what()
+            };
         }
         catch (...) {
-            errorCode = MPFDetectionError::MPF_OTHER_DETECTION_ERROR_TYPE;
-            errorMsg = "An unknown error occurred while trying to get detections from " + dataTypeName + ".";
+            return {
+                MPFDetectionError::MPF_OTHER_DETECTION_ERROR_TYPE,
+                "An unknown error occurred while trying to get detections from " + dataTypeName + "."
+            };
         }
-        return std::make_pair(errorCode, errorMsg);
     }
 }
  

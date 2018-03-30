@@ -35,13 +35,10 @@
 #include <utility>
 #include <memory>
 #include <unordered_map>
+#include "MPFDetectionException.h"
 
 
 namespace MPF { namespace COMPONENT {
-
-    class ModelsIniException : public std::runtime_error {
-        using std::runtime_error::runtime_error;
-    };
 
 
     // In order to avoid including the boost headers in this header,
@@ -76,7 +73,7 @@ namespace MPF { namespace COMPONENT {
 
         ModelsIniParser& RegisterField(const std::string &key_name, class_field_t field) {
             if (key_name.empty()) {
-                throw ModelsIniException("\"key_name\" must not be empty.");
+                throw std::invalid_argument("\"key_name\" must not be empty.");
             }
             fields_.emplace_back(key_name, field);
             return *this;
@@ -130,7 +127,7 @@ namespace MPF { namespace COMPONENT {
                              + "\" or \"" + possible_locations.at(1) + "\".";
             }
 
-            throw ModelsIniException(error_msg);
+            throw MPFDetectionException(MPF_COULD_NOT_OPEN_DATAFILE, error_msg);
         }
     };
 }}

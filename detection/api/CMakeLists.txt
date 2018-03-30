@@ -43,7 +43,8 @@ set(SOURCE_FILES
         src/detectionComponentUtils.cpp
 
         include/MPFInvalidPropertyException.h
-        src/MPFInvalidPropertyException.cpp
+
+        include/MPFDetectionException.h
 
         include/MPFImageReader.h
         src/MPFImageReader.cpp
