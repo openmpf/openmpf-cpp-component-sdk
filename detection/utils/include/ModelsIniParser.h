@@ -35,13 +35,11 @@
 #include <utility>
 #include <memory>
 #include <unordered_map>
+#include "MPFDetectionException.h"
+#include "Utils.h"
 
 
 namespace MPF { namespace COMPONENT {
-
-    class ModelsIniException : public std::runtime_error {
-        using std::runtime_error::runtime_error;
-    };
 
 
     // In order to avoid including the boost headers in this header,
@@ -76,7 +74,7 @@ namespace MPF { namespace COMPONENT {
 
         ModelsIniParser& RegisterField(const std::string &key_name, class_field_t field) {
             if (key_name.empty()) {
-                throw ModelsIniException("\"key_name\" must not be empty.");
+                throw std::invalid_argument("\"key_name\" must not be empty.");
             }
             fields_.emplace_back(key_name, field);
             return *this;
@@ -84,13 +82,22 @@ namespace MPF { namespace COMPONENT {
 
 
         TModelInfo ParseIni(const std::string &model_name, const std::string &common_models_dir) const {
-            std::string models_ini_path = GetFullPath("models.ini", common_models_dir);
+            std::string expanded_common_models_dir;
+            std::string exp_error = Utils::expandFileName(common_models_dir, expanded_common_models_dir);
+            if (!exp_error.empty()) {
+                throw MPFDetectionException(
+                        MPF_COULD_NOT_OPEN_DATAFILE,
+                        "Failed to expand path to models directory which was \""
+                            + common_models_dir + "\" due to: " + exp_error);
+            }
+
+            std::string models_ini_path = GetFullPath("models.ini", expanded_common_models_dir);
             IniHelper helper(models_ini_path, model_name);
 
             TModelInfo model_info;
             for (const std::pair<std::string, class_field_t>& field_info : fields_) {
                 std::string file_name = helper.GetValue(field_info.first);
-                model_info.*field_info.second = GetFullPath(file_name, common_models_dir);
+                model_info.*field_info.second = GetFullPath(file_name, expanded_common_models_dir);
             }
             return model_info;
         }
@@ -104,14 +111,22 @@ namespace MPF { namespace COMPONENT {
 
 
         std::string GetFullPath(const std::string &file_name, const std::string &common_models_dir) const {
+            std::string expanded_file_name;
+            std::string exp_error = Utils::expandFileName(file_name, expanded_file_name);
+            if (!exp_error.empty()) {
+                throw MPFDetectionException(
+                        MPF_COULD_NOT_READ_DATAFILE,
+                        "Failed to load model because the expansion of \"" + file_name
+                            + "\" failed due to: " + exp_error);
+            }
 
             std::vector<std::string> possible_locations;
-            if (file_name.front() == '/') {
-                possible_locations.push_back(file_name);
+            if (expanded_file_name.front() == '/') {
+                possible_locations.push_back(expanded_file_name);
             }
             else {
-                possible_locations.push_back(common_models_dir + '/' + file_name);
-                possible_locations.push_back(plugin_models_dir_ + '/' + file_name);
+                possible_locations.push_back(common_models_dir + '/' + expanded_file_name);
+                possible_locations.push_back(plugin_models_dir_ + '/' + expanded_file_name);
             }
 
 
@@ -122,15 +137,15 @@ namespace MPF { namespace COMPONENT {
             }
 
             std::string error_msg = "Failed to load model because a required file was not present. ";
-            if (file_name.front() == '/') {
-                error_msg += "Expected a file at \"" + file_name + "\" to exist.";
+            if (expanded_file_name.front() == '/') {
+                error_msg += "Expected a file at \"" + expanded_file_name + "\" to exist.";
             }
             else {
                 error_msg += "Expected a file to exist at either \"" + possible_locations.at(0)
                              + "\" or \"" + possible_locations.at(1) + "\".";
             }
 
-            throw ModelsIniException(error_msg);
+            throw MPFDetectionException(MPF_COULD_NOT_OPEN_DATAFILE, error_msg);
         }
     };
 }}

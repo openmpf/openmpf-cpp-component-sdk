@@ -33,27 +33,21 @@
 #include <stdexcept>
 
 #include "MPFDetectionComponent.h"
+#include "MPFDetectionException.h"
 
 namespace MPF { namespace COMPONENT {
 
-    class MPFInvalidPropertyException : public std::invalid_argument {
+    class MPFInvalidPropertyException : public MPFDetectionException {
 
     public:
+        explicit MPFInvalidPropertyException(const std::string &propertyName,
+                                             const std::string &reason = "",
+                                             MPFDetectionError detectionError = MPF_INVALID_PROPERTY)
+                : MPFDetectionException(
+                    detectionError,
+                    "The " + propertyName + " job property contained an invalid value. " + reason) {
 
-        MPFInvalidPropertyException(const std::string &propertyName,
-                                    const std::string &reason = "",
-                                    MPFDetectionError detectionError = MPF_INVALID_PROPERTY);
-
-        MPFInvalidPropertyException(const std::string &propertyName, MPFDetectionError detectionError);
-
-        MPFDetectionError getErrorCode() const;
-
-    private:
-        const MPFDetectionError errorCode_;
-
-        static std::string createMessage(const std::string &propertyName,
-                                         const std::string &reason);
-
+        }
     };
 
 }}

@@ -51,6 +51,8 @@ namespace MPF { namespace COMPONENT { namespace Utils {
     // not be used.
     std::string expandFileName(const std::string &filename, std::string &exp_filename);
 
+    void trim(std::string &str);
+
     cv::Mat ConvertToGray(const cv::Mat &image);
 
 

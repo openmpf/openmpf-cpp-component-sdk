@@ -24,38 +24,32 @@
  * limitations under the License.                                             *
  ******************************************************************************/
 
+#ifndef OPENMPF_CPP_COMPONENT_SDK_MPFDETECTIONEXCEPTION_H
+#define OPENMPF_CPP_COMPONENT_SDK_MPFDETECTIONEXCEPTION_H
 
 
-#include "MPFInvalidPropertyException.h"
+#include <stdexcept>
+#include "MPFDetectionComponent.h"
 
-
-using std::invalid_argument;
-using std::string;
 
 namespace MPF { namespace COMPONENT {
 
+    class MPFDetectionException : public std::runtime_error {
+    public:
+        const MPFDetectionError error_code;
 
-    MPFInvalidPropertyException::MPFInvalidPropertyException(const string &propertyName,
-                                                             const string &reason,
-                                                             MPFDetectionError detectionError)
-            : invalid_argument(createMessage(propertyName, reason))
-            , errorCode_(detectionError) {
+        MPFDetectionException(MPFDetectionError error_code, const std::string &what)
+                : std::runtime_error(what)
+                , error_code(error_code) {
+        }
 
-    }
+        explicit MPFDetectionException(const std::string &what)
+            : MPFDetectionException(MPF_OTHER_DETECTION_ERROR_TYPE, what) {
 
-    MPFInvalidPropertyException::MPFInvalidPropertyException(const string &propertyName,
-                                                             MPFDetectionError detectionError)
-            : MPFInvalidPropertyException(propertyName, "", detectionError) {
-
-    }
-
-
-    string MPFInvalidPropertyException::createMessage(const string &propertyName, const string &reason) {
-        return "The " + propertyName + " job property contained an invalid value. " + reason;
-    }
-
-
-    MPFDetectionError MPFInvalidPropertyException::getErrorCode() const {
-        return errorCode_;
-    }
+        }
+    };
 }}
+
+
+
+#endif //OPENMPF_CPP_COMPONENT_SDK_MPFDETECTIONEXCEPTION_H

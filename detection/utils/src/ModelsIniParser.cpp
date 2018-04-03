@@ -41,13 +41,15 @@ namespace MPF { namespace COMPONENT {
             ini_parser::read_ini(file_path, all_models_ini);
         }
         catch (const ini_parser::ini_parser_error &ex) {
-            throw ModelsIniException("Failed to open \"" + file_path + "\" due to: " + ex.what());
+            throw MPFDetectionException(MPF_COULD_NOT_READ_DATAFILE,
+                                        "Failed to open \"" + file_path + "\" due to: " + ex.what());
         }
 
 
         const auto &model_iter = all_models_ini.find(model_name);
         if (model_iter == all_models_ini.not_found() || model_iter->second.empty()) {
-            throw ModelsIniException(
+            throw MPFDetectionException(
+                    MPF_COULD_NOT_READ_DATAFILE,
                     "Failed to load model \"" + model_name
                     + "\" because the models.ini file did not contain a non-empty section named ["
                     + model_name + "].");
@@ -63,7 +65,8 @@ namespace MPF { namespace COMPONENT {
             return model_ini_fields_.at(key);
         }
         catch (std::out_of_range &ex) {
-            throw ModelsIniException(
+            throw MPFDetectionException(
+                    MPF_COULD_NOT_READ_DATAFILE,
                     "Unable to load the \"" + model_name_ + "\" model because the \"" + key
                     + "\" key was not present in the [" + model_name_ + "] section.");
         }

@@ -29,6 +29,8 @@
 #include <string>
 #include <wordexp.h>
 
+#include <boost/algorithm/string/trim.hpp>
+
 #include <opencv2/imgproc.hpp>
 
 #include "Utils.h"
@@ -99,6 +101,12 @@ namespace MPF { namespace COMPONENT { namespace Utils {
 
         return "";
     }
+
+
+    void trim(std::string &str) {
+        boost::trim(str);
+    }
+
 
     cv::Mat ConvertToGray(const cv::Mat &image) {
         cv::Mat gray;
