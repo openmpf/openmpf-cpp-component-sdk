@@ -66,7 +66,8 @@ namespace MPF { namespace COMPONENT {
         MPF_PROPERTY_IS_NOT_INT,
         MPF_PROPERTY_IS_NOT_FLOAT,
         MPF_INVALID_ROTATION,
-        MPF_MEMORY_ALLOCATION_FAILED
+        MPF_MEMORY_ALLOCATION_FAILED,
+        MPF_GPU_ERROR
     };
 
     struct MPFImageLocation {
