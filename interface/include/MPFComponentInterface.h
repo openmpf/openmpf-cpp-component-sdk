@@ -36,8 +36,7 @@ namespace MPF { namespace COMPONENT {
 
 
     enum MPFComponentType {
-        MPF_DETECTION_COMPONENT,
-        MPF_STREAMING_DETECTION_COMPONENT
+        MPF_DETECTION_COMPONENT
     };
 
 
