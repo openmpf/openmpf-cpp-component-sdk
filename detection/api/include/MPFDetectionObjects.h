@@ -31,7 +31,6 @@
 
 #include <map>
 #include <string>
-//#include <vector>
 
 namespace MPF { namespace COMPONENT {
     typedef std::map<std::string, std::string> Properties;

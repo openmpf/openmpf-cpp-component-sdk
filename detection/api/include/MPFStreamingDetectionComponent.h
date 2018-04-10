@@ -95,7 +95,6 @@ namespace MPF { namespace COMPONENT {
 }}
 
 
-
 #define EXPORT_MPF_STREAMING_COMPONENT(name) \
     extern "C" MPF::COMPONENT::MPFStreamingDetectionComponent* streaming_component_creator(const MPF::COMPONENT::MPFStreamingVideoJob *job) { \
           return new (name)(*job);      \
