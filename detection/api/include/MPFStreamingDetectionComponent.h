@@ -31,8 +31,9 @@
 #include <map>
 #include <string>
 #include <vector>
+#include <opencv2/core.hpp>
 
-#include "MPFDetectionComponent.h"
+#include "MPFDetectionObjects.h"
 
 
 namespace MPF { namespace COMPONENT {
