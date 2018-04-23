@@ -63,8 +63,8 @@ namespace MPF { namespace COMPONENT {
             , instance_(LoadClass(lib_handle_.get(), lib_path, creator_func_name, deleter_func_name,
                                   std::forward<CreatorArgs>(creator_args)...))
         {
-            static_assert(all_standard_layout<CreatorArgs...>::value,
-                      "One or more creator_args do not use standard layout so they cannot be used with a function loaded using dlopen.");
+            static_assert(all_standard_layout<typename std::decay<CreatorArgs>::type...>::value,
+                          "One or more creator_args do not use standard layout so they cannot be used with a function loaded using dlopen.");
         }
 
         DlClass* operator->() const noexcept {
@@ -79,6 +79,12 @@ namespace MPF { namespace COMPONENT {
 
         instance_ptr_t instance_;
 
+        // std::decay is used here to convert references to their non-reference type. We can't pass references
+        // to functions loaded through dlopen, because the functions are declared with C linkage (extern "C").
+        // References cannot be passed to functions with C linkage.
+        template <typename... Args>
+        using creator_func_t = DlClass*(typename std::decay<Args>::type...);
+
 
         template <typename... CreatorArgs>
         static instance_ptr_t LoadClass(
@@ -86,13 +92,12 @@ namespace MPF { namespace COMPONENT {
                     const std::string &lib_path,
                     const std::string &creator_func_name,
                     const std::string &deleter_func_name,
-                    CreatorArgs... args) {
-
+                    CreatorArgs&&... args) {
             if (lib_handle == nullptr) {
                 throw std::runtime_error("Failed to open \"" + lib_path + "\" due to: " + dlerror());
             }
 
-            auto create_instance_fn = LoadFunction<DlClass*(CreatorArgs...)>(lib_handle, creator_func_name);
+            auto create_instance_fn = LoadFunction<creator_func_t<CreatorArgs...>>(lib_handle, creator_func_name);
             auto delete_instance_fn = LoadFunction<void(DlClass*)>(lib_handle, deleter_func_name);
 
             instance_ptr_t instance(nullptr, delete_instance_fn);
