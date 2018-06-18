@@ -67,12 +67,12 @@ By default, the SDK will get installed to `~/mpf-sdk-install`. To change the ins
 
 ### Using the Component SDK
 
-Please read the [CPP Component API documentation](https://openmpf.github.io/docs/site/CPP-Component-API/)
-to get started
+Please read the [C++ Batch Component API documentation](https://openmpf.github.io/docs/site/CPP-Batch-Component-API) and [C++ Streaming Component API documentation](https://openmpf.github.io/docs/site/CPP-Streaming-Component-API)
+to get started.
 
 ## Project Website
 
-For more information about OpenMPF, including documentation, guides, and other material, visit our  [website](https://openmpf.github.io/)
+For more information about OpenMPF, including documentation, guides, and other material, visit our [website](https://openmpf.github.io/).
 
 ## Project Workboard
 
