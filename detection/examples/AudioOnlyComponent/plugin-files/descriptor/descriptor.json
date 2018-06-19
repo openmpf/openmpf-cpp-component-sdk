@@ -1,27 +1,29 @@
 {
-  "componentName" : "AudioOnlyComponent",
-  "componentVersion" : "2.0.0",
-  "middlewareVersion" : "2.0.0",
-  "sourceLanguage" : "c++",
-  "batchLibrary" : "${MPF_HOME}/plugins/AudioOnlyComponent/lib/libmpfAudioOnly.so",
-  "environmentVariables" : [ {
-    "name" : "LD_LIBRARY_PATH",
-    "value" : "${MPF_HOME}/plugins/AudioOnlyComponent/lib:${LD_LIBRARY_PATH}"
-  } ],
-  "algorithm" : {
-    "name" : "AudioOnly",
-    "description" : "This is a dummy detection component.",
-    "actionType" : "DETECTION",
-    "requiresCollection" : {
-      "states" : []
+  "componentName": "AudioOnlyComponent",
+  "componentVersion": "2.1.0",
+  "middlewareVersion": "2.1.0",
+  "sourceLanguage": "c++",
+  "batchLibrary": "${MPF_HOME}/plugins/AudioOnlyComponent/lib/libmpfAudioOnly.so",
+  "environmentVariables": [
+    {
+      "name": "LD_LIBRARY_PATH",
+      "value": "${MPF_HOME}/plugins/AudioOnlyComponent/lib:${LD_LIBRARY_PATH}"
+    }
+  ],
+  "algorithm": {
+    "name": "AudioOnly",
+    "description": "This is a dummy detection component.",
+    "actionType": "DETECTION",
+    "requiresCollection": {
+      "states": []
     },
-    "providesCollection" : {
-      "states" : [
+    "providesCollection": {
+      "states": [
         "DETECTION",
         "DETECTION_TEST",
         "DETECTION_TEST_CPP"
       ],
-      "properties" : []
+      "properties": []
     }
   }
 }

@@ -1,27 +1,29 @@
 {
-  "componentName" : "ImageTransformerComponent",
-  "componentVersion" : "2.0.0",
-  "middlewareVersion" : "2.0.0",
-  "sourceLanguage" : "c++",
-  "batchLibrary" : "${MPF_HOME}/plugins/ImageTransformerComponent/lib/libmpfImageTransformer.so",
-  "environmentVariables" : [ {
-    "name" : "LD_LIBRARY_PATH",
-    "value" : "${MPF_HOME}/plugins/ImageTransformerComponent/lib:${LD_LIBRARY_PATH}"
-  } ],
-  "algorithm" : {
-    "name" : "TransformImage",
-    "description" : "This is a dummy detection component.",
-    "actionType" : "DETECTION",
-    "requiresCollection" : {
-      "states" : []
+  "componentName": "ImageTransformerComponent",
+  "componentVersion": "2.1.0",
+  "middlewareVersion": "2.1.0",
+  "sourceLanguage": "c++",
+  "batchLibrary": "${MPF_HOME}/plugins/ImageTransformerComponent/lib/libmpfImageTransformer.so",
+  "environmentVariables": [
+    {
+      "name": "LD_LIBRARY_PATH",
+      "value": "${MPF_HOME}/plugins/ImageTransformerComponent/lib:${LD_LIBRARY_PATH}"
+    }
+  ],
+  "algorithm": {
+    "name": "TransformImage",
+    "description": "This is a dummy detection component.",
+    "actionType": "DETECTION",
+    "requiresCollection": {
+      "states": []
     },
-    "providesCollection" : {
-      "states" : [
+    "providesCollection": {
+      "states": [
         "DETECTION",
         "DETECTION_TRANSFORMED_IMAGE",
         "DETECTION_TRANSFORMED_IMAGE_CPP"
       ],
-      "properties" : [
+      "properties": [
         {
           "name": "SEARCH_REGION_ENABLE_DETECTION",
           "description": "Enable cropping.",
@@ -65,10 +67,10 @@
           "defaultValue": "false"
         },
         {
-          "name" : "FRAME_INTERVAL",
-          "description" : "Controls whether the component performs detection on every frame in the video segment, or skips some frames at a regular interval. Must be greater than or equal to 0. If the frame_interval is set to 0 or 1, a frame_interval of 1 will be used, so that detections are performed on every frame. For a frame interval N > 1, every N-1 frames will be skipped.",
-          "type" : "INT",
-          "defaultValue" : "1"
+          "name": "FRAME_INTERVAL",
+          "description": "Controls whether the component performs detection on every frame in the video segment, or skips some frames at a regular interval. Must be greater than or equal to 0. If the frame_interval is set to 0 or 1, a frame_interval of 1 will be used, so that detections are performed on every frame. For a frame interval N > 1, every N-1 frames will be skipped.",
+          "type": "INT",
+          "defaultValue": "1"
         }
       ]
     }
