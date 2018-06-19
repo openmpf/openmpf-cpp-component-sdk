@@ -103,6 +103,8 @@ set(SOURCE_FILES
 
         include/KeyFrameFilter.h
         src/KeyFrameFilter.cpp
+
+	include/SPSCBoundedQueue.h
     )
 
 add_library(mpfDetectionComponentApi SHARED ${SOURCE_FILES})
