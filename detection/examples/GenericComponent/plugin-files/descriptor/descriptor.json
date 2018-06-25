@@ -1,32 +1,34 @@
 {
-  "componentName" : "GenericComponent",
-  "componentVersion" : "2.0.0",
-  "middlewareVersion" : "2.0.0",
-  "sourceLanguage" : "c++",
-  "batchLibrary" : "${MPF_HOME}/plugins/GenericComponent/lib/libmpfGeneric.so",
-  "environmentVariables" : [ {
-    "name" : "LD_LIBRARY_PATH",
-    "value" : "${MPF_HOME}/plugins/GenericComponent/lib:${LD_LIBRARY_PATH}"
-  } ],
-  "algorithm" : {
-    "name" : "Generic",
-    "description" : "This is a dummy detection component.",
-    "actionType" : "DETECTION",
-    "requiresCollection" : {
-      "states" : []
+  "componentName": "GenericComponent",
+  "componentVersion": "2.1.0",
+  "middlewareVersion": "2.1.0",
+  "sourceLanguage": "c++",
+  "batchLibrary": "${MPF_HOME}/plugins/GenericComponent/lib/libmpfGeneric.so",
+  "environmentVariables": [
+    {
+      "name": "LD_LIBRARY_PATH",
+      "value": "${MPF_HOME}/plugins/GenericComponent/lib:${LD_LIBRARY_PATH}"
+    }
+  ],
+  "algorithm": {
+    "name": "Generic",
+    "description": "This is a dummy detection component.",
+    "actionType": "DETECTION",
+    "requiresCollection": {
+      "states": []
     },
-    "providesCollection" : {
-      "states" : [
+    "providesCollection": {
+      "states": [
         "DETECTION",
         "DETECTION_GENERIC",
         "DETECTION_GENERIC_CPP"
       ],
-      "properties" : [
+      "properties": [
         {
-          "name" : "FRAME_INTERVAL",
-          "description" : "This is a test property with a default value of 1.",
-          "type" : "INT",
-          "defaultValue" : "1"
+          "name": "FRAME_INTERVAL",
+          "description": "This is a test property with a default value of 1.",
+          "type": "INT",
+          "defaultValue": "1"
         }
       ]
     }
