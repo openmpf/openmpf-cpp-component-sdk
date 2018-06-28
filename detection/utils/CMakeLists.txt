@@ -51,6 +51,12 @@ set(SOURCE_FILES
         src/ModelsIniParser.cpp
 
         include/DlClassLoader.h
+
+        include/BaseTracker.h
+        src/BaseTracker.cpp
+
+        include/RegionOverlapTracker.h
+        src/RegionOverlapTracker.cpp
     )
 
 add_library(mpfComponentUtils SHARED ${SOURCE_FILES})
