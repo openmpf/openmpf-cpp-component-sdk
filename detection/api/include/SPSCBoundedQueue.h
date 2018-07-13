@@ -29,71 +29,90 @@
 #define SPSCBOUNDEDQUEUE_H
 #include <atomic>
 #include <vector>
+#include <iostream>
 
 #include <opencv2/core.hpp>
 
 namespace MPF { namespace COMPONENT {
 
+// A single producer, single consumer circular queue. The type of
+// objects to put into the queue must be default constructible, and
+// move assignable.
 template <typename T>
 class SPSCBoundedQueue {
   public:
-    SPSCBoundedQueue() = delete;
-    explicit SPSCBoundedQueue(uint32_t c) : capacity(c), buffer(c) {}
 
-    bool push(T &entry) {
-        // The tail is read-write here, but this function is the only
+    SPSCBoundedQueue() : head_(0), tail_(0), capacity_(0) {}
+    explicit SPSCBoundedQueue(size_t c) : head_(0), tail_(0), capacity_(c), buffer_(c) {}
+
+    SPSCBoundedQueue(SPSCBoundedQueue&&) = delete;
+    SPSCBoundedQueue(const SPSCBoundedQueue&) = delete;
+    SPSCBoundedQueue& operator=(const SPSCBoundedQueue&) = delete;
+    SPSCBoundedQueue& operator=(SPSCBoundedQueue&&) = delete;
+
+    void Init(size_t capacity) {
+        capacity_ = capacity;
+        for (int i = 0; i < capacity_; i++) {
+            buffer_.push_back(T());
+        }
+    }
+
+    bool empty() {
+        size_t current_tail = std::atomic_load(&tail_);
+        size_t current_head = std::atomic_load(&head_);
+        return(current_head == current_tail);
+    }
+
+    bool full() {
+        size_t current_tail = std::atomic_load(&tail_);
+        size_t current_head = std::atomic_load(&head_);
+        return((current_head+1)%capacity_ == current_tail);
+    }
+
+    //Writes to the head of the circular buffer
+    void push(T entry) {
+        // The head is read-write here, but this function is the only
         // place where it is written, and since there is only one
         // producer thread, we can use relaxed memory order to read
         // it, but must use release memory order to write it.
-        // We want to use acquire memory order here to read the head
+        // We want to use acquire memory order here to read the tail
         // to ensure proper memory ordering with respect to the write
         // by the consumer.
-        int current_tail = std::atomic_load_explicit(&tail, std::memory_order_relaxed);
-        int current_head = std::atomic_load_explicit(&head, std::memory_order_acquire);
+        size_t current_head = std::atomic_load_explicit(&head_, std::memory_order_relaxed);
+        size_t current_tail = std::atomic_load_explicit(&tail_, std::memory_order_acquire);
 
-        // No space available. Try again later.
-        if ((current_head+1)%capacity == current_tail) {
-            return false;
-        }
-        else {
-            // Move the entry into the buffer. Increment the tail index.
-            buffer[current_tail] = std::move(entry);
-            std::atomic_store_explicit(&tail, (current_tail+1)%capacity, std::memory_order_release);
-            return true;
-        }
+        // Move the entry into the buffer. Increment the head.
+        buffer_[current_head] = std::move(entry);
+        std::atomic_store_explicit(&head_, (current_head+1)%capacity_, std::memory_order_release);
+        return;
     }
 
-    bool pop(T &entry) {
-        int current_head;
-        int current_tail;
-        // The head is read-write here, but this function is the only
+    // Reads from the tail of the buffer
+    T pop() {
+        T entry;
+        size_t current_head;
+        size_t current_tail;
+        // The tail is read-write here, but this function is the only
         // place where it is written, and since there is only one
         // consumer thread, we can use relaxed memory order to read
         // it, but must use release memory order to write it.
-        // We want to use acquire memory order here to read the tail
+        // We want to use acquire memory order here to read the head
         // to ensure proper memory ordering with respect to the write
         // by the producer.
-        current_head = std::atomic_load_explicit(&head, std::memory_order_relaxed);
-        current_tail = std::atomic_load_explicit(&tail, std::memory_order_acquire);
+        current_tail = std::atomic_load_explicit(&tail_, std::memory_order_relaxed);
+        current_head = std::atomic_load_explicit(&head_, std::memory_order_acquire);
 
-        if (current_head == current_tail) {
-            // Queue is empty. Try again later.
-            return false;
-        }
-        else {
-            // Return a reference to the head entry in the queue, and
-            // increment the head index.
-            entry = buffer[current_head];
-            std::atomic_store_explicit(&head, (current_head+1)%capacity, std::memory_order_release);
-            return true;
-        }
+        // Move the tail entry out of the queue, and increment the tail index.
+        entry = std::move(buffer_[current_tail]);
+        std::atomic_store_explicit(&tail_, (current_tail+1)%capacity_, std::memory_order_release);
+        return std::move(entry);
     }
 
   private:
-    std::atomic<int> head{0};
-    std::atomic<int> tail{0};
-    int capacity;
-    std::vector<T> buffer;
+    std::atomic<size_t> head_;
+    std::atomic<size_t> tail_;
+    size_t capacity_;
+    std::vector<T> buffer_;
 
 
 };
