@@ -111,6 +111,12 @@ namespace MPF { namespace COMPONENT {
 
 
         std::string GetFullPath(const std::string &file_name, const std::string &common_models_dir) const {
+            if (file_name.empty()) {
+                throw MPFDetectionException(
+                        MPF_COULD_NOT_READ_DATAFILE,
+                        "Failed to load model because one of the fields in the models ini file was empty.");
+            }
+
             std::string expanded_file_name;
             std::string exp_error = Utils::expandFileName(file_name, expanded_file_name);
             if (!exp_error.empty()) {
@@ -118,6 +124,11 @@ namespace MPF { namespace COMPONENT {
                         MPF_COULD_NOT_READ_DATAFILE,
                         "Failed to load model because the expansion of \"" + file_name
                             + "\" failed due to: " + exp_error);
+            }
+            if (expanded_file_name.empty()) {
+                throw MPFDetectionException(
+                        MPF_COULD_NOT_READ_DATAFILE,
+                        "Failed to load model because \"" + file_name +  "\" expanded to the empty string.");
             }
 
             std::vector<std::string> possible_locations;
