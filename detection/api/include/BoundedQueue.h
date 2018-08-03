@@ -25,8 +25,8 @@
  ******************************************************************************/
 
 
-#ifndef SPSCBOUNDEDQUEUE_H
-#define SPSCBOUNDEDQUEUE_H
+#ifndef BOUNDEDQUEUE_H
+#define BOUNDEDQUEUE_H
 #include <queue>
 #include <mutex>
 #include <condition_variable>
@@ -36,10 +36,10 @@
 namespace MPF { namespace COMPONENT {
 
 template <typename T>
-class SPSCBoundedQueue {
+class BoundedQueue {
 
 public:
-    explicit SPSCBoundedQueue(int max_size=-1)
+    explicit BoundedQueue(int max_size=-1)
             : max_size_(max_size), halt_(false)
     {
     }
@@ -75,14 +75,18 @@ public:
         return result;
     }
 
-    void halt() { halt_ = true; }
+    void halt() {
+        std::lock_guard<std::mutex> lock(mutex_);
+        halt_ = true;
+        cond_.notify_all();
+    }
 
 private:
     int max_size_;
     std::queue<T> queue_;
     std::mutex mutex_;
     std::condition_variable cond_;
-    std::atomic<bool> halt_;
+    bool halt_;
 
     void await_non_empty(std::unique_lock<std::mutex> &lock) {
         cond_.wait(lock, [this] { return (halt_ || !queue_.empty()); });
@@ -92,6 +96,9 @@ private:
     }
 
     void await_free_space(std::unique_lock<std::mutex> &lock) {
+        if (halt_) {
+            throw std::runtime_error("Queue has been halted.");
+        }
         if (max_size_ > 0) {
             cond_.wait(lock, [this] { return (halt_ || queue_.size() < max_size_); });
             if (halt_) {
