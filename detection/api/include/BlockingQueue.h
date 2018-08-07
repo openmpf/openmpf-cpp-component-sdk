@@ -25,8 +25,8 @@
  ******************************************************************************/
 
 
-#ifndef BOUNDEDQUEUE_H
-#define BOUNDEDQUEUE_H
+#ifndef BLOCKING_QUEUE_H
+#define BLOCKING_QUEUE_H
 #include <queue>
 #include <mutex>
 #include <condition_variable>
@@ -36,10 +36,10 @@
 namespace MPF { namespace COMPONENT {
 
 template <typename T>
-class BoundedQueue {
+class BlockingQueue {
 
 public:
-    explicit BoundedQueue(int max_size=-1)
+    explicit BlockingQueue(int max_size=-1)
             : max_size_(max_size), halt_(false)
     {
     }
@@ -76,7 +76,7 @@ public:
     }
 
     void halt() {
-        std::lock_guard<std::mutex> lock(mutex_);
+        auto lock = acquire_lock();
         halt_ = true;
         cond_.notify_all();
     }
@@ -96,14 +96,11 @@ private:
     }
 
     void await_free_space(std::unique_lock<std::mutex> &lock) {
-        if (halt_) {
-            throw std::runtime_error("Queue has been halted.");
-        }
         if (max_size_ > 0) {
             cond_.wait(lock, [this] { return (halt_ || queue_.size() < max_size_); });
-            if (halt_) {
-                throw std::runtime_error("Queue has been halted.");
-            }
+        }
+        if (halt_) {
+            throw std::runtime_error("Queue has been halted.");
         }
     }
 
