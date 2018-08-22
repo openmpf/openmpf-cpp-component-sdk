@@ -36,6 +36,7 @@
 #include "frame_transformers/NoOpFrameTransformer.h"
 #include "IntervalFrameFilter.h"
 #include "KeyFrameFilter.h"
+#include "MPFDetectionException.h"
 
 #include "MPFVideoCapture.h"
 
@@ -47,10 +48,14 @@ namespace MPF { namespace COMPONENT {
 
     MPFVideoCapture::MPFVideoCapture(const MPFVideoJob &videoJob, bool enableFrameTransformers,
                                      bool enableFrameFiltering)
-        : cvVideoCapture_(videoJob.data_uri)
-        , frameFilter_(GetFrameFilter(enableFrameFiltering, videoJob, cvVideoCapture_))
-        , frameTransformer_(GetFrameTransformer(enableFrameTransformers, videoJob)) {
+            : cvVideoCapture_(videoJob.data_uri)
+            , frameFilter_(GetFrameFilter(enableFrameFiltering, videoJob, cvVideoCapture_))
+            , frameTransformer_(GetFrameTransformer(enableFrameTransformers, videoJob)) {
 
+        if (!cvVideoCapture_.isOpened()) {
+            throw MPFDetectionException(MPFDetectionError::MPF_COULD_NOT_OPEN_DATAFILE,
+                                        "Failed to open \"" + videoJob.data_uri + "\".");
+        }
         SetFramePosition(0);
     }
 
