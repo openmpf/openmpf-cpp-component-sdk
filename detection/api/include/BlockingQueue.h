@@ -27,13 +27,24 @@
 
 #ifndef BLOCKING_QUEUE_H
 #define BLOCKING_QUEUE_H
-#include <queue>
-#include <mutex>
+
 #include <condition_variable>
-#include <iostream>
+#include <mutex>
+#include <queue>
+#include <stdexcept>
 
 
 namespace MPF { namespace COMPONENT {
+
+
+class QueueHaltedException : public std::runtime_error {
+public:
+    QueueHaltedException()
+            : std::runtime_error("Queue has been halted.")
+    {
+    }
+};
+
 
 template <typename T>
 class BlockingQueue {
@@ -91,7 +102,7 @@ private:
     void await_non_empty(std::unique_lock<std::mutex> &lock) {
         cond_.wait(lock, [this] { return (halt_ || !queue_.empty()); });
         if (halt_) {
-            throw std::runtime_error("Queue has been halted.");
+            throw QueueHaltedException();
         }
     }
 
@@ -100,7 +111,7 @@ private:
             cond_.wait(lock, [this] { return (halt_ || queue_.size() < max_size_); });
         }
         if (halt_) {
-            throw std::runtime_error("Queue has been halted.");
+            throw QueueHaltedException();
         }
     }
 
@@ -108,7 +119,6 @@ private:
         return std::unique_lock<std::mutex>(mutex_);
     }
 };
-
 }}
 
 
