@@ -28,6 +28,10 @@ cmake_minimum_required(VERSION 3.6)
 
 include(GetPrerequisites)
 
+
+set(lock_file_name ${CMAKE_CURRENT_BINARY_DIR}/cmake_copy_deps.lock)
+file(LOCK ${lock_file_name})
+
 # List from http://refspecs.linuxfoundation.org/LSB_5.0.0/LSB-Common/LSB-Common/requirements.html#RLIBRARIES.
 set(linux_std_libs
     libc
@@ -119,3 +123,4 @@ foreach(dependency_file_relative ${DEPENDENCIES})
 endforeach()
 
 
+file(LOCK ${lock_file_name} RELEASE)
