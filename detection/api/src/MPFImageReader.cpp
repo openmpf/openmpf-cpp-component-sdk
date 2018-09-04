@@ -25,9 +25,10 @@
  ******************************************************************************/
 
 #include <opencv2/opencv.hpp>
-#include <opencv2/imgcodecs.hpp>
+#include <opencv2/videoio.hpp>
 
 #include "frame_transformers/FrameTransformerFactory.h"
+#include "MPFDetectionException.h"
 
 #include "MPFImageReader.h"
 
@@ -35,10 +36,20 @@
 namespace MPF { namespace COMPONENT {
 
     MPFImageReader::MPFImageReader(const MPFImageJob &job) {
-        image_ = cv::imread(job.data_uri, CV_LOAD_IMAGE_IGNORE_ORIENTATION + CV_LOAD_IMAGE_COLOR);
+        cv::VideoCapture video_cap(job.data_uri);
+        if (!video_cap.isOpened()) {
+            throw MPFDetectionException(MPFDetectionError::MPF_COULD_NOT_OPEN_DATAFILE,
+                                        "Failed to open \"" + job.data_uri + "\".");
+        }
+        bool was_read = video_cap.read(image_);
+        if (!was_read || image_.empty()) {
+            throw MPFDetectionException(MPFDetectionError::MPF_COULD_NOT_READ_DATAFILE,
+                                        "Failed to read image from \"" + job.data_uri + "\".");
+        }
         frameTransformer_ = GetFrameTransformer(job, image_);
         frameTransformer_->TransformFrame(image_, 0);
     }
+
 
     cv::Mat MPFImageReader::GetImage() const {
         return image_;

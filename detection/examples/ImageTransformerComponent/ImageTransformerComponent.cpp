@@ -70,8 +70,7 @@ MPFDetectionError ImageTransformerComponent::GetDetections(const MPFImageJob &jo
 
     // For illustration purposes only, we display the input image here
     // before applying the transformation.
-    cv::Mat original;
-    original = cv::imread(job.data_uri, CV_LOAD_IMAGE_IGNORE_ORIENTATION + CV_LOAD_IMAGE_COLOR);
+    cv::Mat original = MPFImageReader({"Test", job.data_uri, {}, {}}).GetImage();
     std::cout << "original image rows = " << original.rows << std::endl;
     std::cout << "original image cols = " << original.cols << std::endl;
     std::cout << std::endl << std::endl;
