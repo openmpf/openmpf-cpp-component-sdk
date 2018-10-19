@@ -51,6 +51,10 @@ set(linux_std_libs
     libstdc++
     libutil
     libz
+
+    # Known to cause compatibility issues.
+    # Should already be installed on any CentOS system since it is part of the glibc yum package.
+    libresolv
 )
 
 
