@@ -60,6 +60,12 @@ namespace MPF { namespace COMPONENT {
     }
 
 
+    MPFVideoCapture::MPFVideoCapture(const std::string &videoPath)
+        : MPFVideoCapture(MPFVideoJob("", videoPath, 0, -1, {}, {}), false, false)
+    {
+    }
+
+
     IFrameTransformer::Ptr MPFVideoCapture::GetFrameTransformer(bool enableFrameTransformers,
                                                                 const MPFVideoJob &job) const {
         if (enableFrameTransformers) {
