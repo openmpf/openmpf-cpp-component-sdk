@@ -36,6 +36,7 @@ find_package(OpenCV 3.3 EXACT REQUIRED PATHS /opt/opencv-3.3.0
 
 include_directories(include)
 set(SOURCE_FILES
+        include/MPFDetectionObjects.h
         include/MPFDetectionComponent.h
         include/MPFStreamingDetectionComponent.h
 
