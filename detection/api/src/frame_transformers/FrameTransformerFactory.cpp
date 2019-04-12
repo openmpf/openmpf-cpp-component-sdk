@@ -81,9 +81,11 @@ int GetPercentOfDimension(const std::string &percentString, const int dimension)
     std::istringstream ss(percentString.substr(0, percentString.find("%")));
     int percentNum;
     ss >> percentNum;
-    if ((percentNum < 0) || (percentNum > 100)) {
-        // What? Clamp to 0 or 100? Throw an exception?
-        std::cerr << "Percentage is out of range: " << percentNum << std::endl;
+    if (percentNum < 0) {
+        percentNum = 0;
+    }
+    if (percentNum > 100) {
+        percentNum = 100;
     }
     return ((percentNum/100.0) * dimension);
 }
