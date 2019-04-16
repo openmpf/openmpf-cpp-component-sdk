@@ -24,7 +24,6 @@
  * limitations under the License.                                             *
  ******************************************************************************/
 
-#include <iostream>
 #include <sstream>
 #include <string>
 #include <utility>
@@ -45,94 +44,79 @@ namespace MPF { namespace COMPONENT { namespace FrameTransformerFactory {
 
 namespace {
 
-cv::Rect GetSearchRegionAsPosition(const Properties &jobProperties, const cv::Size &frameSize) {
-
-    int regionTopLeftXPos = DetectionComponentUtils::GetProperty(
-        jobProperties, "SEARCH_REGION_TOP_LEFT_X_DETECTION", -1);
-    if (regionTopLeftXPos < 0) {
-        regionTopLeftXPos = 0;
-    }
-
-    int regionTopLeftYPos = DetectionComponentUtils::GetProperty(
-        jobProperties, "SEARCH_REGION_TOP_LEFT_Y_DETECTION", -1);
-    if (regionTopLeftYPos < 0) {
-        regionTopLeftYPos = 0;
-    }
-
-    cv::Point topLeft(regionTopLeftXPos, regionTopLeftYPos);
-
-    int regionBottomRightXPos = DetectionComponentUtils::GetProperty(
-        jobProperties, "SEARCH_REGION_BOTTOM_RIGHT_X_DETECTION", -1);
-    if (regionBottomRightXPos <= 0) {
-        regionBottomRightXPos = frameSize.width;
-    }
-
-    int regionBottomRightYPos = DetectionComponentUtils::GetProperty(
-        jobProperties, "SEARCH_REGION_BOTTOM_RIGHT_Y_DETECTION", -1);
-    if (regionBottomRightYPos <= 0) {
-        regionBottomRightYPos = frameSize.height;
-    }
-    cv::Point bottomRight(regionBottomRightXPos, regionBottomRightYPos);
-
-    return cv::Rect(topLeft, bottomRight);
-}
-
 int GetPercentOfDimension(const std::string &percentString, const int dimension) {
-    std::istringstream ss(percentString.substr(0, percentString.find("%")));
-    int percentNum;
+    std::istringstream ss(percentString);
+    float percentNum;
     ss >> percentNum;
-    if (percentNum < 0) {
-        percentNum = 0;
+    if (percentNum < 0.0) {
+        percentNum = 0.0;
     }
-    if (percentNum > 100) {
-        percentNum = 100;
+    else if (percentNum > 100.0) {
+        percentNum = 100.0;
     }
     return ((percentNum/100.0) * dimension);
 }
 
-cv::Rect GetSearchRegionAsPercentage(const Properties &jobProperties, const cv::Size &frameSize) {
 
-    string percentString = DetectionComponentUtils::GetProperty<string>(
-        jobProperties, "SEARCH_REGION_TOP_LEFT_X_DETECTION", "0%");
-    int regionTopLeftXPos = GetPercentOfDimension(percentString, frameSize.width);
-
-    percentString = DetectionComponentUtils::GetProperty<string>(
-        jobProperties, "SEARCH_REGION_TOP_LEFT_Y_DETECTION", "0%");
-    int regionTopLeftYPos = GetPercentOfDimension(percentString, frameSize.height);
-
-    cv::Point topLeft(regionTopLeftXPos, regionTopLeftYPos);
-
-    percentString = DetectionComponentUtils::GetProperty<string>(
-        jobProperties, "SEARCH_REGION_BOTTOM_RIGHT_X_DETECTION", "100%");
-    int regionBottomRightXPos = GetPercentOfDimension(percentString, frameSize.width);
-
-    percentString = DetectionComponentUtils::GetProperty<string>(
-        jobProperties, "SEARCH_REGION_BOTTOM_RIGHT_Y_DETECTION", "100%");
-    int regionBottomRightYPos = GetPercentOfDimension(percentString, frameSize.height);
-
-    cv::Point bottomRight(regionBottomRightXPos, regionBottomRightYPos);
-
-    return cv::Rect(topLeft, bottomRight);
+int GetPixelPosition(const std::string &positionString) {
+    std::istringstream ss(positionString);
+    int position;
+    ss >> position;
+    return (position < 0) ? 0 : position;
 }
 
 
 cv::Rect GetSearchRegion(const Properties &jobProperties, const cv::Size &frameSize) {
 
-    string topLeft = DetectionComponentUtils::GetProperty<string>(
-                    jobProperties, "SEARCH_REGION_TOP_LEFT_X_DETECTION", "-1");
-
-    if (topLeft.find("%") == string::npos) {
-        return GetSearchRegionAsPosition(jobProperties, frameSize);
+    string topLeftX = jobProperties.at("SEARCH_REGION_TOP_LEFT_X_DETECTION");
+    int regionTopLeftXPos;
+    size_t idx = topLeftX.find("%");
+    if (idx != string::npos) {
+        regionTopLeftXPos = GetPercentOfDimension(topLeftX.substr(0, idx), frameSize.width);
     }
     else {
-        return GetSearchRegionAsPercentage(jobProperties, frameSize);
+        regionTopLeftXPos = GetPixelPosition(topLeftX);
     }
+    string topLeftY = jobProperties.at("SEARCH_REGION_TOP_LEFT_Y_DETECTION");
+    int regionTopLeftYPos;
+    idx = topLeftY.find("%");
+    if (idx != string::npos) {
+        regionTopLeftYPos = GetPercentOfDimension(topLeftY.substr(0, idx), frameSize.height);
+    }
+    else {
+        regionTopLeftYPos = GetPixelPosition(topLeftY);
+    }
+
+    cv::Point topLeft(regionTopLeftXPos, regionTopLeftYPos);
+
+    string bottomRightX = jobProperties.at("SEARCH_REGION_BOTTOM_RIGHT_X_DETECTION");
+    int regionBottomRightXPos;
+    idx = bottomRightX.find("%");
+    if (idx != string::npos) {
+        regionBottomRightXPos = GetPercentOfDimension(bottomRightX.substr(0, idx), frameSize.width);
+    }
+    else {
+        regionBottomRightXPos = GetPixelPosition(bottomRightX);
+    }
+    string bottomRightY = jobProperties.at("SEARCH_REGION_BOTTOM_RIGHT_Y_DETECTION");
+    int regionBottomRightYPos;
+    idx = bottomRightY.find("%");
+    if (idx != string::npos) {
+        regionBottomRightYPos = GetPercentOfDimension(bottomRightY.substr(0, idx), frameSize.height);
+    }
+    else {
+        regionBottomRightYPos = GetPixelPosition(bottomRightY);
+    }
+
+    cv::Point bottomRight(regionBottomRightXPos, regionBottomRightYPos);
+
+    return cv::Rect(topLeft, bottomRight);
 }
 
 
-        cv::Rect toRect(const MPFImageLocation &imageLocation) {
-            return {imageLocation.x_left_upper, imageLocation.y_left_upper, imageLocation.width, imageLocation.height};
-        }
+cv::Rect toRect(const MPFImageLocation &imageLocation) {
+    return {imageLocation.x_left_upper, imageLocation.y_left_upper, imageLocation.width, imageLocation.height};
+}
 
 
         /**
