@@ -39,6 +39,7 @@
 
 
 using std::string;
+using DetectionComponentUtils::GetProperty;
 
 namespace MPF { namespace COMPONENT { namespace FrameTransformerFactory {
 
@@ -49,20 +50,19 @@ int GetPercentOfDimension(const std::string &percentString, const int dimension)
     float percentNum;
     std::istringstream(percentString) >> percentNum;
     if (percentNum < 0.0) {
-        percentNum = 0.0;
+        return 0;
     }
     else if (percentNum > 100.0) {
-        percentNum = 100.0;
+        return dimension;
     }
-    return ((percentNum/100.0) * dimension);
+    return (percentNum*dimension)/100.0;
 }
 
 
 cv::Rect GetSearchRegion(const Properties &jobProperties, const cv::Size &frameSize) {
 
     int position;
-
-    string topLeftX = jobProperties.at("SEARCH_REGION_TOP_LEFT_X_DETECTION");
+    string topLeftX = GetProperty(jobProperties, "SEARCH_REGION_TOP_LEFT_X_DETECTION", string("-1"));
     int regionTopLeftXPos;
     size_t idx = topLeftX.find("%");
     if (idx != string::npos) {
@@ -73,7 +73,7 @@ cv::Rect GetSearchRegion(const Properties &jobProperties, const cv::Size &frameS
         regionTopLeftXPos = (position < 0) ? 0 : position;
     }
 
-    string topLeftY = jobProperties.at("SEARCH_REGION_TOP_LEFT_Y_DETECTION");
+    string topLeftY = GetProperty(jobProperties, "SEARCH_REGION_TOP_LEFT_Y_DETECTION", string("-1"));
     int regionTopLeftYPos;
     idx = topLeftY.find("%");
     if (idx != string::npos) {
@@ -86,7 +86,7 @@ cv::Rect GetSearchRegion(const Properties &jobProperties, const cv::Size &frameS
 
     cv::Point topLeft(regionTopLeftXPos, regionTopLeftYPos);
 
-    string bottomRightX = jobProperties.at("SEARCH_REGION_BOTTOM_RIGHT_X_DETECTION");
+    string bottomRightX = GetProperty(jobProperties, "SEARCH_REGION_BOTTOM_RIGHT_X_DETECTION", string("-1"));
     int regionBottomRightXPos;
     idx = bottomRightX.find("%");
     if (idx != string::npos) {
@@ -97,7 +97,7 @@ cv::Rect GetSearchRegion(const Properties &jobProperties, const cv::Size &frameS
         regionBottomRightXPos = (position <= 0) ? frameSize.width : position;
     }
 
-    string bottomRightY = jobProperties.at("SEARCH_REGION_BOTTOM_RIGHT_Y_DETECTION");
+    string bottomRightY = GetProperty(jobProperties, "SEARCH_REGION_BOTTOM_RIGHT_Y_DETECTION", string("-1"));
     int regionBottomRightYPos;
     idx = bottomRightY.find("%");
     if (idx != string::npos) {
@@ -119,166 +119,166 @@ cv::Rect toRect(const MPFImageLocation &imageLocation) {
 }
 
 
-        /**
-         *
-         * @param feedForwardTrackLocations
-         * @return The minimum area rectangle that contains all detections listed in feedForwardTrackLocations
-         */
-        cv::Rect GetSupersetRegion(const std::map<int, MPFImageLocation> &feedForwardTrackLocations) {
-            if (feedForwardTrackLocations.empty()) {
-                throw std::length_error(
-                        "FEED_FORWARD_TYPE: SUPERSET_REGION is enabled, but feed forward track was empty.");
-            }
+/**
+ *
+ * @param feedForwardTrackLocations
+ * @return The minimum area rectangle that contains all detections listed in feedForwardTrackLocations
+ */
+cv::Rect GetSupersetRegion(const std::map<int, MPFImageLocation> &feedForwardTrackLocations) {
+    if (feedForwardTrackLocations.empty()) {
+        throw std::length_error(
+            "FEED_FORWARD_TYPE: SUPERSET_REGION is enabled, but feed forward track was empty.");
+    }
 
-            auto it = feedForwardTrackLocations.begin();
-            cv::Rect region = toRect(it->second);
-            it++;
+    auto it = feedForwardTrackLocations.begin();
+    cv::Rect region = toRect(it->second);
+    it++;
 
-            for (; it != feedForwardTrackLocations.end(); it++) {
-                region |= toRect(it->second);
-            }
-            return region;
-        }
-
-
-        bool FeedForwardSupersetRegionIsEnabled(const Properties &jobProperties) {
-            return "SUPERSET_REGION" ==
-                    DetectionComponentUtils::GetProperty(jobProperties, "FEED_FORWARD_TYPE", string());
-        }
+    for (; it != feedForwardTrackLocations.end(); it++) {
+        region |= toRect(it->second);
+    }
+    return region;
+}
 
 
-        bool FeedForwardExactRegionIsEnabled(const Properties &jobProperties) {
-            return "REGION" == DetectionComponentUtils::GetProperty(jobProperties, "FEED_FORWARD_TYPE", string());
-        }
+bool FeedForwardSupersetRegionIsEnabled(const Properties &jobProperties) {
+    return "SUPERSET_REGION" ==
+            DetectionComponentUtils::GetProperty(jobProperties, "FEED_FORWARD_TYPE", string());
+}
 
 
-        bool SearchRegionCroppingIsEnabled(const Properties &jobProperties) {
-            return DetectionComponentUtils::GetProperty(jobProperties, "SEARCH_REGION_ENABLE_DETECTION", false);
-        }
+bool FeedForwardExactRegionIsEnabled(const Properties &jobProperties) {
+    return "REGION" == DetectionComponentUtils::GetProperty(jobProperties, "FEED_FORWARD_TYPE", string());
+}
 
 
-        void AddFlipperIfNeeded(const Properties &jobProperties, const Properties &mediaProperties,
-                                IFrameTransformer::Ptr &currentTransformer) {
-            bool shouldFlip;
-            if (DetectionComponentUtils::GetProperty(jobProperties, "AUTO_FLIP", false)) {
-                shouldFlip = DetectionComponentUtils::GetProperty(mediaProperties, "HORIZONTAL_FLIP", false);
-            }
-            else {
-                shouldFlip = DetectionComponentUtils::GetProperty(jobProperties, "HORIZONTAL_FLIP", false);
-            }
-
-            if (shouldFlip) {
-                currentTransformer = IFrameTransformer::Ptr(new FrameFlipper(std::move(currentTransformer)));
-            }
-        }
+bool SearchRegionCroppingIsEnabled(const Properties &jobProperties) {
+    return DetectionComponentUtils::GetProperty(jobProperties, "SEARCH_REGION_ENABLE_DETECTION", false);
+}
 
 
-        void AddRotatorIfNeeded(const Properties &jobProperties, const Properties &mediaProperties,
-                                IFrameTransformer::Ptr &currentTransformer) {
-            string rotationKey = "ROTATION";
-            int rotation = 0;
-            if (DetectionComponentUtils::GetProperty(jobProperties, "AUTO_ROTATE", false)) {
-                rotation = DetectionComponentUtils::GetProperty(mediaProperties, rotationKey, 0);
-            }
-            else {
-                rotation = DetectionComponentUtils::GetProperty(jobProperties, rotationKey, 0);
-            }
+void AddFlipperIfNeeded(const Properties &jobProperties, const Properties &mediaProperties,
+                        IFrameTransformer::Ptr &currentTransformer) {
+    bool shouldFlip;
+    if (DetectionComponentUtils::GetProperty(jobProperties, "AUTO_FLIP", false)) {
+        shouldFlip = DetectionComponentUtils::GetProperty(mediaProperties, "HORIZONTAL_FLIP", false);
+    }
+    else {
+        shouldFlip = DetectionComponentUtils::GetProperty(jobProperties, "HORIZONTAL_FLIP", false);
+    }
 
-            if (rotation != 0 && rotation != 90 && rotation != 180 && rotation != 270) {
-                throw MPFInvalidPropertyException(rotationKey,
-                                                  "Rotation degrees must be 0, 90, 180, or 270.",
-                                                  MPF_INVALID_ROTATION);
-            }
-
-            if (rotation != 0) {
-                currentTransformer = IFrameTransformer::Ptr(new FrameRotator(std::move(currentTransformer), rotation));
-            }
-        }
+    if (shouldFlip) {
+        currentTransformer = IFrameTransformer::Ptr(new FrameFlipper(std::move(currentTransformer)));
+    }
+}
 
 
-        void AddCropperIfNeeded(const cv::Rect &regionOfInterest, const cv::Size &inputVideoSize,
-                                IFrameTransformer::Ptr &currentTransformer) {
+void AddRotatorIfNeeded(const Properties &jobProperties, const Properties &mediaProperties,
+                        IFrameTransformer::Ptr &currentTransformer) {
+    string rotationKey = "ROTATION";
+    int rotation = 0;
+    if (DetectionComponentUtils::GetProperty(jobProperties, "AUTO_ROTATE", false)) {
+        rotation = DetectionComponentUtils::GetProperty(mediaProperties, rotationKey, 0);
+    }
+    else {
+        rotation = DetectionComponentUtils::GetProperty(jobProperties, rotationKey, 0);
+    }
 
-            bool regionOfInterestIsEntireFrame = cv::Rect({0, 0}, inputVideoSize) == regionOfInterest;
-            if (!regionOfInterestIsEntireFrame) {
-                currentTransformer = IFrameTransformer::Ptr(
-                        new SearchRegionFrameCropper(std::move(currentTransformer), regionOfInterest));
-            }
-        }
+    if (rotation != 0 && rotation != 90 && rotation != 180 && rotation != 270) {
+        throw MPFInvalidPropertyException(rotationKey,
+                                          "Rotation degrees must be 0, 90, 180, or 270.",
+                                          MPF_INVALID_ROTATION);
+    }
 
-
-        void AddCropperIfNeeded(const MPFJob &job, const cv::Size &inputVideoSize,
-                                const std::map<int, MPFImageLocation> &trackLocations,
-                                IFrameTransformer::Ptr &currentTransformer) {
-
-            bool exactRegionCroppingEnabled = FeedForwardExactRegionIsEnabled(job.job_properties);
-            bool supersetRegionCroppingEnabled = FeedForwardSupersetRegionIsEnabled(job.job_properties);
-            bool searchRegionCroppingEnabled = SearchRegionCroppingIsEnabled(job.job_properties);
-
-            if (!exactRegionCroppingEnabled && !supersetRegionCroppingEnabled && !searchRegionCroppingEnabled) {
-                return;
-            }
-
-            if ((exactRegionCroppingEnabled || supersetRegionCroppingEnabled) && searchRegionCroppingEnabled) {
-                std::cerr << "Both feed forward cropping and search region cropping properties were provided. "
-                          << "Only feed forward cropping will occur." << std::endl;
-            }
+    if (rotation != 0) {
+        currentTransformer = IFrameTransformer::Ptr(new FrameRotator(std::move(currentTransformer), rotation));
+    }
+}
 
 
-            if (exactRegionCroppingEnabled) {
-                currentTransformer = IFrameTransformer::Ptr(
-                        new FeedForwardFrameCropper(std::move(currentTransformer), trackLocations));
-                return;
-            }
+void AddCropperIfNeeded(const cv::Rect &regionOfInterest, const cv::Size &inputVideoSize,
+                        IFrameTransformer::Ptr &currentTransformer) {
+
+    bool regionOfInterestIsEntireFrame = cv::Rect({0, 0}, inputVideoSize) == regionOfInterest;
+    if (!regionOfInterestIsEntireFrame) {
+        currentTransformer = IFrameTransformer::Ptr(
+            new SearchRegionFrameCropper(std::move(currentTransformer), regionOfInterest));
+    }
+}
 
 
-            cv::Rect regionOfInterest;
-            if (supersetRegionCroppingEnabled) {
-                regionOfInterest = GetSupersetRegion(trackLocations);
-            }
-            else {
-                regionOfInterest = GetSearchRegion(job.job_properties, inputVideoSize);
-            }
-            AddCropperIfNeeded(regionOfInterest, inputVideoSize, currentTransformer);
-        }
+void AddCropperIfNeeded(const MPFJob &job, const cv::Size &inputVideoSize,
+                        const std::map<int, MPFImageLocation> &trackLocations,
+                        IFrameTransformer::Ptr &currentTransformer) {
 
+    bool exactRegionCroppingEnabled = FeedForwardExactRegionIsEnabled(job.job_properties);
+    bool supersetRegionCroppingEnabled = FeedForwardSupersetRegionIsEnabled(job.job_properties);
+    bool searchRegionCroppingEnabled = SearchRegionCroppingIsEnabled(job.job_properties);
 
-        IFrameTransformer::Ptr GetTransformer(const MPFJob &job, const cv::Size &inputVideoSize,
-                                              const std::map<int, MPFImageLocation> &trackLocations) {
+    if (!exactRegionCroppingEnabled && !supersetRegionCroppingEnabled && !searchRegionCroppingEnabled) {
+        return;
+    }
 
-            IFrameTransformer::Ptr transformer(new NoOpFrameTransformer(inputVideoSize));
-
-            AddRotatorIfNeeded(job.job_properties, job.media_properties, transformer);
-            AddFlipperIfNeeded(job.job_properties, job.media_properties, transformer);
-            AddCropperIfNeeded(job, inputVideoSize, trackLocations, transformer);
-
-            return transformer;
-        }
+    if ((exactRegionCroppingEnabled || supersetRegionCroppingEnabled) && searchRegionCroppingEnabled) {
+        std::cerr << "Both feed forward cropping and search region cropping properties were provided. "
+                  << "Only feed forward cropping will occur." << std::endl;
     }
 
 
-
-    IFrameTransformer::Ptr GetTransformer(const MPFVideoJob &job, const cv::Size &inputVideoSize) {
-        return GetTransformer(job, inputVideoSize, job.feed_forward_track.frame_locations);
+    if (exactRegionCroppingEnabled) {
+        currentTransformer = IFrameTransformer::Ptr(
+            new FeedForwardFrameCropper(std::move(currentTransformer), trackLocations));
+        return;
     }
 
 
-    IFrameTransformer::Ptr GetTransformer(const MPFImageJob &job, const cv::Size &inputVideoSize) {
-        return GetTransformer(job, inputVideoSize, { { 0, job.feed_forward_location } });
+    cv::Rect regionOfInterest;
+    if (supersetRegionCroppingEnabled) {
+        regionOfInterest = GetSupersetRegion(trackLocations);
     }
-
-
-    IFrameTransformer::Ptr GetTransformer(const MPFStreamingVideoJob &job, const cv::Size &inputVideoSize) {
-
-        IFrameTransformer::Ptr transformer(new NoOpFrameTransformer(inputVideoSize));
-
-        AddRotatorIfNeeded(job.job_properties, job.media_properties, transformer);
-        AddFlipperIfNeeded(job.job_properties, job.media_properties, transformer);
-
-        if (SearchRegionCroppingIsEnabled(job.job_properties)) {
-            AddCropperIfNeeded(GetSearchRegion(job.job_properties, inputVideoSize),
-                               inputVideoSize, transformer);
-        }
-        return transformer;
+    else {
+        regionOfInterest = GetSearchRegion(job.job_properties, inputVideoSize);
     }
+    AddCropperIfNeeded(regionOfInterest, inputVideoSize, currentTransformer);
+}
+
+
+IFrameTransformer::Ptr GetTransformer(const MPFJob &job, const cv::Size &inputVideoSize,
+                                      const std::map<int, MPFImageLocation> &trackLocations) {
+
+    IFrameTransformer::Ptr transformer(new NoOpFrameTransformer(inputVideoSize));
+
+    AddRotatorIfNeeded(job.job_properties, job.media_properties, transformer);
+    AddFlipperIfNeeded(job.job_properties, job.media_properties, transformer);
+    AddCropperIfNeeded(job, inputVideoSize, trackLocations, transformer);
+
+    return transformer;
+}
+}
+
+
+
+IFrameTransformer::Ptr GetTransformer(const MPFVideoJob &job, const cv::Size &inputVideoSize) {
+    return GetTransformer(job, inputVideoSize, job.feed_forward_track.frame_locations);
+}
+
+
+IFrameTransformer::Ptr GetTransformer(const MPFImageJob &job, const cv::Size &inputVideoSize) {
+    return GetTransformer(job, inputVideoSize, { { 0, job.feed_forward_location } });
+}
+
+
+IFrameTransformer::Ptr GetTransformer(const MPFStreamingVideoJob &job, const cv::Size &inputVideoSize) {
+
+    IFrameTransformer::Ptr transformer(new NoOpFrameTransformer(inputVideoSize));
+
+    AddRotatorIfNeeded(job.job_properties, job.media_properties, transformer);
+    AddFlipperIfNeeded(job.job_properties, job.media_properties, transformer);
+
+    if (SearchRegionCroppingIsEnabled(job.job_properties)) {
+        AddCropperIfNeeded(GetSearchRegion(job.job_properties, inputVideoSize),
+                           inputVideoSize, transformer);
+    }
+    return transformer;
+}
 }}}
