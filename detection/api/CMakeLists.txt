@@ -31,7 +31,7 @@ project(openmpf-cpp-component-api)
 set(CMAKE_CXX_STANDARD 11)
 
 find_package(OpenCV 3.3 EXACT REQUIRED PATHS /opt/opencv-3.3.0
-    COMPONENTS opencv_core opencv_imgcodecs opencv_imgproc opencv_videoio)
+    COMPONENTS opencv_core opencv_imgcodecs opencv_imgproc opencv_videoio opencv_highgui)
 
 
 include_directories(include)
@@ -61,12 +61,6 @@ set(SOURCE_FILES
         include/frame_transformers/BaseDecoratedTransformer.h
         src/frame_transformers/BaseDecoratedTransformer.cpp
 
-        include/frame_transformers/FrameCropper.h
-        src/frame_transformers/FrameCropper.cpp
-
-        include/frame_transformers/FrameFlipper.h
-        src/frame_transformers/FrameFlipper.cpp
-
         include/frame_transformers/FrameRotator.h
         src/frame_transformers/FrameRotator.cpp
 
@@ -75,6 +69,9 @@ set(SOURCE_FILES
 
         include/frame_transformers/FrameTransformerFactory.h
         src/frame_transformers/FrameTransformerFactory.cpp
+
+        include/frame_transformers/AffineFrameTransformer.h
+        src/frame_transformers/AffineFrameTransformer.cpp
 
         include/adapters/MPFAudioAndVideoDetectionComponentAdapter.h
         include/adapters/MPFAudioDetectionComponentAdapter.h

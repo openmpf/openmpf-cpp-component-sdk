@@ -28,6 +28,13 @@
 #include <vector>
 
 #include <opencv2/video.hpp>
+#include <opencv2/opencv.hpp>
+#include <frame_transformers/NoOpFrameTransformer.h>
+#include <detectionComponentUtils.h>
+#include <frame_transformers/FrameTransformerFactory.h>
+#include <MPFImageReader.h>
+#include <frame_transformers/AffineFrameTransformer.h>
+#include <frame_transformers/FrameRotator.h>
 
 #include "KeyFrameFilter.h"
 #include "FeedForwardFrameFilter.h"
@@ -965,8 +972,8 @@ TEST(FeedForwardFrameCropperTest, CanCropToExactRegion) {
 
     ASSERT_EQ(outputTrack.frame_locations.size(), feedForwardTrack.frame_locations.size());
 
-    assertDetectionLocationsMatch(outputTrack.frame_locations.at(4), outputTrack.frame_locations.at(4));
-    assertDetectionLocationsMatch(outputTrack.frame_locations.at(15), outputTrack.frame_locations.at(15));
+    assertDetectionLocationsMatch(outputTrack.frame_locations.at(4), feedForwardTrack.frame_locations.at(4));
+    assertDetectionLocationsMatch(outputTrack.frame_locations.at(15), feedForwardTrack.frame_locations.at(15));
 
     const auto &lastDetection = outputTrack.frame_locations.at(29);
     ASSERT_EQ(lastDetection.x_left_upper, 75);
@@ -974,3 +981,281 @@ TEST(FeedForwardFrameCropperTest, CanCropToExactRegion) {
     ASSERT_EQ(lastDetection.width, 15);
     ASSERT_EQ(lastDetection.height, 60);
 }
+
+
+
+
+
+
+
+
+void draw_point(cv::Mat &img, const cv::Point2f &point, const cv::Scalar &color={0, 0, 255}) {
+    cv::rectangle(img, point - cv::Point2f(1, 1), point + cv::Point2f(1, 1), color, 2);
+}
+
+
+/*
+
+void draw_rotated_location(const MPFImageLocation &loc, cv::Mat &frame, const cv::Scalar& color = {255, 0, 0}) {
+    const cv::Point2f top_left(loc.x_left_upper, loc.y_left_upper);
+    cv::Point2f center = top_left + cv::Point2f(loc.width, loc.height) / 2.0;
+    double angle = DetectionComponentUtils::GetProperty(loc.detection_properties, "ROTATION", 0.0);
+    cv::RotatedRect rrect(center, cv::Size2d(loc.width, loc.height), 360 - angle);
+
+    cv::Point2f corners[4];
+    rrect.points(corners);
+    draw_point(frame, center);
+
+    cv::line(frame, corners[0], corners[1], color, 2);
+    cv::line(frame, corners[1], corners[2], color, 2);
+    cv::line(frame, corners[2], corners[3], color, 2);
+    cv::line(frame, corners[3], corners[0], color, 2);
+
+    draw_point(frame, top_left, {255, 255, 0});
+}
+
+
+
+
+
+
+
+double fix_angle(double angle) {
+    return DetectionComponentUtils::NormalizeAngle(angle);
+}
+
+TEST(kfjlas, kjltk) {
+    double angle1 = 20.5;
+    double angle2 = 380.5;
+    double angle3 = -339.5;
+    double angle4 = -699.5;
+    double angle5 = -1059.5;
+
+    std::cout << "\nx: " << std::fmod(-1059.5, 360) << std::endl;
+
+    ASSERT_DOUBLE_EQ(angle1, fix_angle(angle1));
+    ASSERT_DOUBLE_EQ(angle1, fix_angle(angle2));
+    ASSERT_DOUBLE_EQ(angle1, fix_angle(angle3));
+    ASSERT_DOUBLE_EQ(angle1, fix_angle(angle4));
+    ASSERT_DOUBLE_EQ(angle1, fix_angle(angle5));
+
+    ASSERT_DOUBLE_EQ(0, fix_angle(0));
+    ASSERT_DOUBLE_EQ(0, fix_angle(360));
+
+    std::cout << "\n: " << fix_angle(angle2) << std::endl;
+}
+
+
+IFrameTransformer::Ptr getNoOp(const cv::Size &sz) {
+    return IFrameTransformer::Ptr(new NoOpFrameTransformer(sz));
+}
+
+
+IFrameTransformer::Ptr getNoOp(const cv::Mat &img) {
+    return getNoOp(img.size());
+}
+
+
+
+
+
+TEST(asdf, rotation_with_xformers2) {
+
+    // input data from track
+//    std::string test_file = "/home/mpf/sample-data/text-rotation/helloworld-small.png";
+//    MPFImageLocation detection(158, 105, 175, 48, -1, { {"ROTATION", "-340"} });
+
+    // input data from track
+//    std::string test_file = "/home/mpf/sample-data/text-rotation/helloworld-cutoff.png";
+//    MPFImageLocation detection(-57, -7, 175, 48, -1, { {"ROTATION", "20"} });
+
+
+    // input data from track
+//    std::string test_file = "/home/mpf/sample-data/text-rotation/helloworld-corner.png";
+//    MPFImageLocation detection(4, 29, 175, 48, -1, { {"ROTATION", "20"} });
+
+
+    // full frame 90deg
+//    std::string test_file = "/home/mpf/sample-data/text-rotation/helloworld-small.png";
+//    MPFImageLocation detection(0, 0, 596, 324, -1, { {"ROTATION", "90"} });
+
+    // full frame 20deg
+//    std::string test_file = "/home/mpf/sample-data/text-rotation/helloworld-small.png";
+//    MPFImageLocation detection(0, 0, 596, 324, -1, { {"ROTATION", "20"} });
+
+    // full frame
+    std::string test_file = "/home/mpf/sample-data/text-rotation/helloworld-small.png";
+    MPFImageLocation detection(0, 0, 596, 324, -1, { {"ROTATION", "0"} });
+
+
+    cv::Mat img = cv::imread(test_file);
+    cv::Mat original = img.clone();
+    {
+        cv::Mat temp = img.clone();
+        cv::imshow("1. original", temp);
+    }
+
+//    FrameRotator2 xformer2(IFrameTransformer::Ptr(new NoOpFrameTransformer(img.size())),
+//                           std::stod(detection.detection_properties.at("ROTATION")),
+//                           cv::Rect(detection.x_left_upper, detection.y_left_upper, detection.width, detection.height));
+
+//    SearchRegionRotator xformer2(
+//            IFrameTransformer::Ptr(new NoOpFrameTransformer(img.size())), {}, { {0, detection} } );
+    AffineFrameTransformer xformer(
+            cv::Rect(detection.x_left_upper, detection.y_left_upper, detection.width, detection.height),
+            std::stod(detection.detection_properties.at("ROTATION")),
+            false,
+            getNoOp(img));
+
+
+    xformer.TransformFrame(img, 0);
+    {
+        cv::Mat temp = img.clone();
+        std::cout << "transformed size: " << img.size() << std::endl;
+        cv::imshow("2. transformed", temp);
+    }
+
+    MPFImageLocation downstream_detection(10, 8, 22, 30);
+    {
+        cv::Mat temp = img.clone();
+        cv::Rect downstream_rect(downstream_detection.x_left_upper, downstream_detection.y_left_upper,
+                                 downstream_detection.width, downstream_detection.height);
+        cv::rectangle(temp, downstream_rect, {255, 0, 0}, 2);
+        draw_point(temp, downstream_rect.tl() + cv::Point(downstream_rect.size() / 2));
+        draw_point(temp, cv::Point2f(downstream_rect.tl()), {255, 255 , 0});
+        cv::imshow("-2. transformed", temp);
+    }
+
+    {
+        cv::Mat temp = original.clone();
+        xformer.ReverseTransform(downstream_detection, 0);
+        draw_rotated_location(downstream_detection, temp);
+        draw_point(temp, cv::Point2f(downstream_detection.x_left_upper, downstream_detection.y_left_upper), {255, 255 , 0});
+        cv::imshow("-1. original", temp);
+    }
+
+    cv::waitKey();
+}
+
+TEST(affine, test_affine_flip2) {
+    std::cout << "\n" << std::endl;
+
+    // [864 x 582]
+//    std::string test_file = "/home/mpf/sample-data/Obama_Biden.jpg";
+//    int rotation = 0;
+
+    std::string test_file = "/home/mpf/openmpf-projects/openmpf/trunk/mpf-system-tests/src/test/resources/samples/face/meds-aa-S001-01-exif-rotation.jpg";
+    int rotation = 90;
+
+    cv::Mat img = cv::imread(test_file, cv::IMREAD_IGNORE_ORIENTATION + cv::IMREAD_COLOR);
+
+    AffineFrameTransformer xformer(cv::Rect(cv::Point(0, 0), img.size()), rotation, true, getNoOp(img));
+    std::cout << "img size: " << img.size() << std::endl;
+
+    MPFImageLocation detection(10, 20, 400, 200);
+    cv::Rect detectionRect(detection.x_left_upper, detection.y_left_upper, detection.width, detection.height);
+
+    cv::Mat xformed = img.clone();
+    xformer.TransformFrame(xformed, 0);
+    MPFImageLocation xformed_detection = detection;
+    xformer.ReverseTransform(xformed_detection, 0);
+    cv::Rect xformedDetectionRect(detection.x_left_upper, detection.y_left_upper, detection.width, detection.height);
+
+    draw_rotated_location(detection, xformed);
+//    cv::rectangle(xformed, detectionRect, {0, 0, 255});
+    draw_rotated_location(xformed_detection, img);
+//    cv::rectangle(img, xformedDetectionRect, {0, 0, 255});
+
+    cv::imshow("original", img);
+    cv::imshow("xformed", xformed);
+
+
+    cv::waitKey();
+}
+
+cv::Rect toRect(const MPFImageLocation &il) {
+    return cv::Rect(il.x_left_upper, il.y_left_upper, il.width, il.height);
+}
+
+
+void print_corners(const std::string &msg, const cv::Rect &r) {
+    std::cout << msg << ": " <<  std::endl;
+
+    std::cout << "top left: " << r.tl() << std::endl;
+
+    cv::Point topRight(r.x + r.width, r.y);
+    std::cout << "top right: " << topRight << std::endl;
+
+    std::cout << "bottom right: " << r.br() << std::endl;
+
+    cv::Point bottomLeft(r.x, r.y + r.height);
+
+    std::cout << "bottom left: " << bottomLeft << std::endl;
+
+}
+*/
+
+
+
+
+
+/*
+
+TEST(rotation, compare_rotation_methods) {
+    std::cout << "\n" << std::endl;
+
+//    MPFImageLocation orginal(10, 20, 100, 300);
+//    MPFImageLocation orginal(0, 0, 100, 200);
+    MPFImageLocation orginal(1, 2, 150, 250);
+    cv::Size frameSize(640, 480);
+    cv::Rect frameRect(cv::Point(0, 0), frameSize);
+    double angle = 90;
+//    double angle = 270;
+
+
+    AffineFrameTransformer xformer(frameRect, angle, false, getNoOp(frameSize));
+
+    FrameRotator rotator(getNoOp(frameSize), angle);
+
+    cv::Mat originalImg(frameSize, CV_8UC3, {0, 0, 0});
+
+
+    cv::Rect affineRect;
+    {
+        MPFImageLocation temp = orginal;
+        xformer.ReverseTransform(temp, 0);
+        affineRect = toRect(temp);
+        std::cout << "affine: " << affineRect << std::endl;
+
+        cv::Mat tmpImg = originalImg.clone();
+        draw_rotated_location(temp, tmpImg);
+
+        temp.detection_properties["ROTATION"] = "";
+        draw_rotated_location(temp, tmpImg);
+
+        cv::imshow("affine", tmpImg);
+    }
+
+    cv::Rect rotatorRect;
+    {
+        MPFImageLocation temp = orginal;
+        rotator.ReverseTransform(temp, 0);
+        rotatorRect = toRect(temp);
+        std::cout << "rotator: " << rotatorRect << std::endl;
+
+        cv::Mat tmpImg = originalImg.clone();
+        draw_rotated_location(temp, tmpImg);
+        cv::imshow("rotator", tmpImg);
+    }
+    cv::waitKey();
+
+    print_corners("affine", affineRect);
+    ASSERT_EQ(affineRect.x, rotatorRect.x);
+    ASSERT_EQ(affineRect.y, rotatorRect.y);
+    ASSERT_EQ(affineRect.width, rotatorRect.width);
+    ASSERT_EQ(affineRect.height, rotatorRect.height);
+
+}
+
+*/
+
