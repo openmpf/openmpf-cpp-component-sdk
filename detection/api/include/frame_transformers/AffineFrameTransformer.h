@@ -63,10 +63,25 @@ namespace MPF { namespace COMPONENT {
         static cv::Size2d GetSizeAfterRotation(double rotationDegrees, const cv::Rect &region,
                                                const cv::Size &frameSize);
 
+        static cv::Point2d GetCenter(const cv::Rect &region, double rotationDegrees);
+
         static cv::Matx23d GetTransformationMatrix(const cv::Rect &region, double rotationDegrees, bool flip,
                                                    const cv::Size2d &sizeAfterRotation);
+        static cv::Matx23d GetTransformationMatrix2(const cv::Rect &region, double rotationDegrees, bool flip,
+                                                   const cv::Size2d &sizeAfterRotation);
+
+        static cv::Matx23d GetTransformationMatrix3(const cv::Rect &region, double rotationDegrees, bool flip,
+                                                    const cv::Size2d &sizeAfterRotation);
 
         static cv::Matx23d GetReverseTransformationMatrix(const cv::Matx23d &transformationMatrix);
+
+
+        static cv::Matx33d GetRotationMatrix(const cv::Point2d &center, double rotationDegrees);
+
+        static cv::Matx33d GetHorizontalFlipMatrix();
+
+        static cv::Matx33d GetTranslationMatrix(const cv::Vec2d &distance);
+
     };
 
 

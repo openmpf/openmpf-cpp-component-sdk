@@ -215,14 +215,14 @@ namespace {
         }
 
         bool hasJobLevelRotation;
-        double jobRotation = 0;
+        double jobLevelRotation = 0;
         {
             bool autoRotate = DetectionComponentUtils::GetProperty(jobProperties, "AUTO_ROTATE", false);
             const auto &props = autoRotate ? mediaProperties : jobProperties;
             auto rotationIter = props.find("ROTATION");
             hasJobLevelRotation = rotationIter != props.end();
             if (hasJobLevelRotation) {
-                jobRotation = DetectionComponentUtils::NormalizeAngle(std::stod(rotationIter->second));
+                jobLevelRotation = DetectionComponentUtils::NormalizeAngle(std::stod(rotationIter->second));
             }
         }
 
@@ -274,7 +274,7 @@ namespace {
                 rotation = trackRotation;
             }
             else if (hasJobLevelRotation) {
-                rotation = jobRotation;
+                rotation = jobLevelRotation;
             }
 
             bool hasDetectionLevelFlip = detection.detection_properties.count("HORIZONTAL_FLIP");
@@ -298,9 +298,9 @@ namespace {
                     new FeedForwardAffineTransformer(transformInfo, std::move(currentTransformer)));
         }
         else {
-            cv::Rect supersetRegion = GetSupersetRegion(jobRotation, jobLevelFlip, transformInfo);
+            cv::Rect supersetRegion = GetSupersetRegion(jobLevelRotation, jobLevelFlip, transformInfo);
             currentTransformer = IFrameTransformer::Ptr(
-                    new AffineFrameTransformer(supersetRegion, jobRotation, jobLevelFlip,
+                    new AffineFrameTransformer(supersetRegion, jobLevelRotation, jobLevelFlip,
                                                std::move(currentTransformer)));
 
         }

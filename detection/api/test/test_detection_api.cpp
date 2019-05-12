@@ -986,6 +986,106 @@ TEST(FeedForwardFrameCropperTest, CanCropToExactRegion) {
 
 
 
+bool allPixelsEqualTo(const cv::Mat &actualImg, const cv::Vec<uint8_t, 3> &color, int width, int height) {
+    cv::Mat expectedImg(cv::Size(width, height), CV_8UC3, color);
+    return 0 == cv::countNonZero(actualImg != expectedImg);
+}
+
+
+//bool allPixelsEqualTo(const cv::Mat &actualImg, const cv::Vec<uint8_t, 3> &color, int width, int height) {
+//    cv::Mat expectedImg(cv::Size(width, height), CV_8UC3, color);
+//    cv::Mat diff = cv::abs(actualImg - expectedImg);
+//    int numWrong = cv::countNonZero(diff > 6);
+//    return 0 == numWrong;
+//}
+
+
+//bool allPixelsEqualTo(const cv::Mat &actualImg, const cv::Vec<uint8_t, 3> &color, int width, int height) {
+//    cv::Mat expectedImg(cv::Size(width - 1, height - 1), CV_8UC3, color);
+//
+//    cv::Mat cropped = actualImg(cv::Rect(1, 1, width - 1, height - 1));
+//    return 0 == cv::countNonZero(cropped != expectedImg);
+//}
+
+
+//bool allPixelsEqualTo(const cv::Mat &actualImg, const cv::Vec<uint8_t, 3> &color, int width, int height) {
+//    using Pixel = cv::Vec<uint8_t, 3>;
+//
+//    for (int row = 0; row < actualImg.rows; row++) {
+//        for (int col = 0; col < actualImg.cols; col++) {
+//            const auto& actualColor = actualImg.at<Pixel>(row, col);
+//            if (actualColor != color) {
+//                std::cout << "wrong: " << col << ", " << row << ": " << actualColor << std::endl;
+//            }
+//
+//        }
+//    }
+//
+//    return true;
+//}
+
+
+void verifyCorrectlyRotated(const std::string &fileName,  const MPFImageLocation &feedForwardDetection) {
+//    MPFImageJob job("Test", "test/test_imgs/rotation/" + fileName, feedForwardDetection,
+//                    { { "FEED_FORWARD_TYPE", "REGION" } }, {});
+
+    MPFImageJob job("Test", "/home/mpf/openmpf-projects/openmpf-cpp-component-sdk/detection/api/test/test_imgs/rotation/" + fileName, feedForwardDetection,
+                    { { "FEED_FORWARD_TYPE", "REGION" } }, {});
+
+    MPFImageReader imageReader(job);
+
+    cv::Mat img = imageReader.GetImage();
+    ASSERT_EQ(feedForwardDetection.width, img.cols);
+    ASSERT_EQ(feedForwardDetection.height, img.rows);
+    cv::imshow("test", img);
+    cv::waitKey();
+
+
+    using Pixel = cv::Vec<uint8_t, 3>;
+
+    for (int col = 1; col < img.cols; col++) {
+        for (int row = 1; row < img.rows; row++)  {
+            ASSERT_EQ(Pixel(255, 0, 0), img.at<Pixel>(row, col)) << "row = " << row << ", col = " << col;
+        }
+    }
+
+
+
+//    ASSERT_TRUE(allPixelsEqualTo(actualImg, {255, 0, 0}, feedForwardDetection.width, feedForwardDetection.height));
+}
+
+
+TEST(AffineFrameTransformerTest, CanHandleRotatedDetectionNearMiddle) {
+//    verifyCorrectlyRotated("20deg-bounding-box.png",
+//                           MPFImageLocation(120, 200, 100, 40, -1, { { "ROTATION", "20" } }));
+    verifyCorrectlyRotated("20deg-bounding-box.png",
+                           MPFImageLocation(116, 218, 100, 40, -1, { { "ROTATION", "20" } }));
+}
+
+
+TEST(AffineFrameTransformerTest, CanHandleRotatedDetectionTouchingCorner) {
+    verifyCorrectlyRotated("30deg-bounding-box-top-left-corner.png",
+                           MPFImageLocation(3, 23, 100, 40, -1, { { "ROTATION", "30.5" } }));
+
+    verifyCorrectlyRotated("60deg-bounding-box-top-left-corner.png",
+                           MPFImageLocation(-8, 33, 100, 40, -1, { { "ROTATION", "60" } }));
+
+    verifyCorrectlyRotated("200deg-bounding-box-top-left-corner.png",
+                           MPFImageLocation(4, 16, 100, 40, -1, { { "ROTATION", "200" } }));
+
+    verifyCorrectlyRotated("20deg-bounding-box-bottom-left-corner.png",
+                           MPFImageLocation(20, 358, 30, 120, -1, { { "ROTATION", "20" } }));
+
+    verifyCorrectlyRotated("160deg-bounding-box-bottom-right-corner.png",
+                           MPFImageLocation(590, 358, 30, 120, -1, { { "ROTATION", "160" } }));
+
+    verifyCorrectlyRotated("260deg-bounding-box-top-right-corner.png",
+                           MPFImageLocation(563, -35, 30, 120, -1, { { "ROTATION", "260" } }));
+
+    verifyCorrectlyRotated("270deg-bounding-box-top-right-corner.png",
+                           MPFImageLocation(565, -45, 30, 120, -1, { { "ROTATION", "270" } }));
+}
+
 
 
 
@@ -994,11 +1094,26 @@ void draw_point(cv::Mat &img, const cv::Point2f &point, const cv::Scalar &color=
 }
 
 
-/*
+cv::Point2d getCenter(const MPFImageLocation &loc) {
+    double degrees = DetectionComponentUtils::GetProperty(loc.detection_properties, "ROTATION", 0.0);
+    double radians = degrees * M_PI / 180.0;
+
+    double sin_val = std::sin(radians);
+    double cos_val = std::cos(radians);
+
+    double center_x = loc.x_left_upper + loc.width / 2.0 * cos_val + loc.height / 2.0 * sin_val;
+    double center_y = loc.y_left_upper - loc.width / 2.0 * sin_val + loc.height / 2.0 * cos_val;
+
+    return cv::Point(cv::saturate_cast<int>(center_x), cv::saturate_cast<int>(center_y));
+}
+
 
 void draw_rotated_location(const MPFImageLocation &loc, cv::Mat &frame, const cv::Scalar& color = {255, 0, 0}) {
     const cv::Point2f top_left(loc.x_left_upper, loc.y_left_upper);
-    cv::Point2f center = top_left + cv::Point2f(loc.width, loc.height) / 2.0;
+//    cv::Point2f center = top_left + cv::Point2f(loc.width, loc.height) / 2.0;
+    cv::Point2d center = getCenter(loc);
+
+
     double angle = DetectionComponentUtils::GetProperty(loc.detection_properties, "ROTATION", 0.0);
     cv::RotatedRect rrect(center, cv::Size2d(loc.width, loc.height), 360 - angle);
 
@@ -1057,13 +1172,41 @@ IFrameTransformer::Ptr getNoOp(const cv::Mat &img) {
 
 
 
+MPFImageLocation getFullFrameDetection(const std::string &imagePath, double rotation) {
+//    rotation = 360 - rotation;
+    cv::Mat img = cv::imread(imagePath);
+
+    cv::Vec2d frameSize(img.cols, img.rows);
+
+    cv::Point2d center = frameSize / 2.0;
+    cv::Matx23d M = cv::getRotationMatrix2D(center, rotation, 1);
+
+    cv::Vec2d newPosition = M * cv::Vec3d(0, 0, 1);
+
+    std::cout << newPosition << std::endl;
+
+    double radians = rotation * M_PI / 180.0;
+    double sin_val = std::abs(std::sin(radians));
+    double cos_val = std::abs(std::cos(radians));
+
+    double newWidth = std::abs(frameSize[0] * cos_val + frameSize[1] * sin_val);
+    double newHeight = std::abs(frameSize[0] * sin_val + frameSize[1] * cos_val);
+
+    MPFImageLocation loc(
+            cv::saturate_cast<int>(newPosition[0]),
+            cv::saturate_cast<int>(newPosition[1]),
+            cv::saturate_cast<int>(newWidth),
+            cv::saturate_cast<int>(newHeight), -1, { { "ROTATION", std::to_string(rotation)} });
+    return loc;
+}
+
 
 
 TEST(asdf, rotation_with_xformers2) {
 
     // input data from track
 //    std::string test_file = "/home/mpf/sample-data/text-rotation/helloworld-small.png";
-//    MPFImageLocation detection(158, 105, 175, 48, -1, { {"ROTATION", "-340"} });
+//    MPFImageLocation detection(156, 138, 175, 45, -1, { {"ROTATION", "-340"} });
 
     // input data from track
 //    std::string test_file = "/home/mpf/sample-data/text-rotation/helloworld-cutoff.png";
@@ -1072,20 +1215,28 @@ TEST(asdf, rotation_with_xformers2) {
 
     // input data from track
 //    std::string test_file = "/home/mpf/sample-data/text-rotation/helloworld-corner.png";
-//    MPFImageLocation detection(4, 29, 175, 48, -1, { {"ROTATION", "20"} });
+//    MPFImageLocation detection(0, 61, 170, 45, -1, { {"ROTATION", "20"} });
 
 
-    // full frame 90deg
-//    std::string test_file = "/home/mpf/sample-data/text-rotation/helloworld-small.png";
-//    MPFImageLocation detection(0, 0, 596, 324, -1, { {"ROTATION", "90"} });
+//    // full frame 90deg
+//    std::string test_file = "/home/mpf/sample-data/text-rotation/90deg-text.png";
+//    MPFImageLocation detection(0, 480, 480, 640, -1, { {"ROTATION", "90"} });
+//    getFullFrameDetection(test_file, 90);
+
+    // full frame 270deg (upside down)
+//    std::string test_file = "/home/mpf/sample-data/text-rotation/90deg-text.png";
+//    MPFImageLocation detection(640, 0, 480, 640, -1, { {"ROTATION", "270"} });
 
     // full frame 20deg
-//    std::string test_file = "/home/mpf/sample-data/text-rotation/helloworld-small.png";
-//    MPFImageLocation detection(0, 0, 596, 324, -1, { {"ROTATION", "20"} });
+    std::string test_file = "/home/mpf/sample-data/text-rotation/helloworld-small.png";
+//    MPFImageLocation detection(-37, 112, 596, 324, -1, { {"ROTATION", "20"} });
+//    MPFImageLocation detection(-37, 112, 671, 508, -1, { {"ROTATION", "20"} });
+    MPFImageLocation detection2(-103, 38, 671, 508, -1, { {"ROTATION", "20"} });
+    MPFImageLocation detection = getFullFrameDetection(test_file, 20);
 
     // full frame
-    std::string test_file = "/home/mpf/sample-data/text-rotation/helloworld-small.png";
-    MPFImageLocation detection(0, 0, 596, 324, -1, { {"ROTATION", "0"} });
+//    std::string test_file = "/home/mpf/sample-data/text-rotation/helloworld-small.png";
+//    MPFImageLocation detection(0, 0, 596, 324, -1, { {"ROTATION", "0"} });
 
 
     cv::Mat img = cv::imread(test_file);
@@ -1095,12 +1246,6 @@ TEST(asdf, rotation_with_xformers2) {
         cv::imshow("1. original", temp);
     }
 
-//    FrameRotator2 xformer2(IFrameTransformer::Ptr(new NoOpFrameTransformer(img.size())),
-//                           std::stod(detection.detection_properties.at("ROTATION")),
-//                           cv::Rect(detection.x_left_upper, detection.y_left_upper, detection.width, detection.height));
-
-//    SearchRegionRotator xformer2(
-//            IFrameTransformer::Ptr(new NoOpFrameTransformer(img.size())), {}, { {0, detection} } );
     AffineFrameTransformer xformer(
             cv::Rect(detection.x_left_upper, detection.y_left_upper, detection.width, detection.height),
             std::stod(detection.detection_properties.at("ROTATION")),
@@ -1193,10 +1338,140 @@ void print_corners(const std::string &msg, const cv::Rect &r) {
     std::cout << "bottom left: " << bottomLeft << std::endl;
 
 }
+
+
+TEST(diagram, diagram_co_ords) {
+    std::cout << "" << std::endl;
+    cv::Size frameSize(4, 4);
+    cv::Matx23d rotationMat = cv::getRotationMatrix2D(cv::Point2f(2, 2), 360 - 90, 1);
+
+    rotationMat(0, 2) -= 1;
+    rotationMat(1, 2) -= 1;
+
+//    cv::Matx<char, 4, 4> mat('A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P');
+
+    cv::Matx<char, 4, 4> mat('X', 'X', 'X', 'X',
+                             'X', 'A', 'B', 'C',
+                             'X', 'D', 'E', 'F',
+                             'X', 'G', 'H', 'I' );
+
+    std::cout << mat << std::endl;
+
+    for (int i = 0; i < 4; i++) {
+        for (int j = 0; j < 4; j++) {
+            std::cout << mat(i, j) << " ";
+        }
+        std::cout << "\n";
+    }
+
+
+    cv::Matx<char, 4, 4> result;
+    for (int i = 0; i < 4; i++) {
+        for (int j = 0; j < 4; j++) {
+            result(i, j) = '?';
+        }
+    }
+
+    for (int i = 0; i < 4; i++) {
+        for (int j = 0; j < 4; j++) {
+            cv::Vec2i newLocation = rotationMat * cv::Vec3d(i, j, 1);
+            if (newLocation[0] >= 0 && newLocation[0] < 4 && newLocation[1] >= 0 && newLocation[1] < 4) {
+                result(newLocation[0], newLocation[1]) = mat(i, j);
+            }
+        }
+        std::cout << "\n";
+    }
+
+    for (int i = 0; i < 4; i++) {
+        for (int j = 0; j < 4; j++) {
+            std::cout << result(i, j) << " ";
+        }
+        std::cout << "\n";
+    }
+}
+
+/*
+
+std::array<cv::Point, 4> draw_detection_filled_in(cv::Mat &img, const MPFImageLocation &loc) {
+    cv::Point2d top_left(loc.x_left_upper, loc.y_left_upper);
+    cv::Point2d center = top_left + cv::Point2d(loc.width, loc.height) / 2.0;
+    double angle = DetectionComponentUtils::GetProperty(loc.detection_properties, "ROTATION", 0.0);
+
+    int padding = 0;
+    cv::RotatedRect rrectToDraw(center, cv::Size2d(loc.width + padding, loc.height + padding), 360 - angle);
+
+    cv::Point2f pointsToDraw2f[4];
+    rrectToDraw.points(pointsToDraw2f);
+
+    std::array<cv::Point, 4> pointsToDraw;
+    for (int i = 0; i < 4; i++) {
+        pointsToDraw[i] = pointsToDraw2f[i];
+    }
+
+//    cv::fillConvexPoly(img, pointsToDraw, cv::Scalar(255, 0, 0));
+    cv::fillConvexPoly(img, pointsToDraw, cv::Scalar(255, 0, 0), cv::LINE_4);
+
+
+    cv::RotatedRect actualRect(center, cv::Size2d(loc.width, loc.height), 360 - angle);
+    cv::Point2f tempPoints[4];
+    actualRect.points(tempPoints);
+
+    std::array<cv::Point, 4> resultPoints;
+    for (int i = 0; i < 4; i++) {
+        resultPoints[i] = tempPoints[i];
+    }
+
+    return resultPoints;
+}
+
+std::string get_corners_string(const std::array<cv::Point, 4> &points) {
+    std::stringstream ss;
+    ss << "Corners: ";
+    ss << "(" << points[0].x << ", " << points[0].y << "), ";
+    ss << "(" << points[1].x << ", " << points[1].y << "), ";
+    ss << "(" << points[2].x << ", " << points[2].y << "), ";
+    ss << "(" << points[3].x << ", " << points[3].y << ")";
+
+    return ss.str();
+}
+
+
+TEST(generate_test_media, create_media) {
+    std::cout << "\n" << std::endl;
+
+    cv::Mat img(cv::Size(640, 480), CV_8UC3, cv::Scalar(255, 255, 255));
+
+//    MPFImageLocation detection(-8, 33, 100, 40, -1, { { "ROTATION", "60" } });
+    MPFImageLocation detection(0, 86, 100, 40, -1, { { "ROTATION", "60" } });
+
+    std::array<cv::Point, 4> points = draw_detection_filled_in(img, detection);
+
+    std::stringstream det_ss;
+    det_ss << "MPFImageLocation(" << detection.x_left_upper << ", " << detection.y_left_upper << ", "
+            << detection.width << ", " << detection.height << ", " << detection.confidence
+            << ", { { \"ROTATION\", \"" << detection.detection_properties["ROTATION"] << "\" } })"; // NOLINT(modernize-raw-string-literal)
+
+
+    cv::Point text_point(30, 120);
+    cv::putText(img, det_ss.str(), text_point,
+                cv::HersheyFonts::FONT_HERSHEY_DUPLEX, .5, {0, 0, 0}, 1, cv::LINE_AA);
+
+
+    std::string corners_str = get_corners_string(points);
+    std::cout << corners_str << std::endl;
+
+
+    cv::putText(img, corners_str, cv::Point(text_point.x, text_point.y + 30),
+                cv::HersheyFonts::FONT_HERSHEY_DUPLEX, .5, {0, 0, 0}, 1, cv::LINE_AA);
+
+
+//    std::string filename = "x270deg-bounding-box-top-right-corner.png";
+//    cv::imwrite("/home/mpf/openmpf-projects/openmpf-cpp-component-sdk/detection/api/test/test_imgs/rotation/" + filename, img);
+
+    cv::imshow("Test", img);
+    cv::waitKey();
+}
 */
-
-
-
 
 
 /*

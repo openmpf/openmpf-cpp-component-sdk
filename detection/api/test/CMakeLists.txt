@@ -33,12 +33,21 @@ set(CMAKE_CXX_STANDARD 11)
 find_package(GTest)
 if (${GTEST_FOUND})
     enable_testing()
+#    add_executable(DetectionApiTest test_detection_api.cpp test_rotation.cpp)
     add_executable(DetectionApiTest test_detection_api.cpp)
     target_link_libraries(DetectionApiTest GTest::GTest GTest::Main mpfDetectionComponentApi)
 
     add_test(NAME DetectionApiTest COMMAND DetectionApiTest)
 
+    add_executable(RotationTest test_rotation.cpp)
+    target_link_libraries(RotationTest GTest::GTest GTest::Main mpfDetectionComponentApi)
+    add_test(NAME RotationTest COMMAND RotationTest)
+
+
     file(GLOB TEST_VIDEOS test_vids/*)
     file(COPY ${TEST_VIDEOS} DESTINATION test/test_vids)
+
+    file(GLOB TEST_IMAGES test_imgs/*)
+    file(COPY ${TEST_IMAGES} DESTINATION test/test_imgs)
 
 endif()
