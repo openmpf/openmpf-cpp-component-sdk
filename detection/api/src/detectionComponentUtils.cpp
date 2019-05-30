@@ -26,6 +26,7 @@
 
 #include <algorithm>
 #include <cctype>
+#include <cmath>
 #include <exception>
 
 #include <opencv2/core.hpp>
@@ -112,6 +113,23 @@ namespace DetectionComponentUtils {
                 "An unknown error occurred while trying to get detections from " + dataTypeName + "."
             };
         }
+    }
+
+
+    double NormalizeAngle(double angle) {
+        if (0 <= angle && angle < 360) {
+            return angle;
+        }
+        angle = std::fmod(angle, 360);
+        if (angle >= 0) {
+            return angle;
+        }
+        return 360 + angle;
+    }
+
+
+    bool RotationAngleEquals(double a1, double a2, double epsilon) {
+        return std::abs(NormalizeAngle(a1) - NormalizeAngle(a2)) < epsilon;
     }
 }
  

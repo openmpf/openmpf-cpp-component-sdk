@@ -82,6 +82,10 @@ namespace DetectionComponentUtils {
     std::pair<MPF::COMPONENT::MPFDetectionError, std::string>
     HandleDetectionException(MPF::COMPONENT::MPFDetectionDataType dataType);
 
+
+    double NormalizeAngle(double angle);
+
+    bool RotationAngleEquals(double a1, double a2, double epsilon = 0.1);
 }
 
 

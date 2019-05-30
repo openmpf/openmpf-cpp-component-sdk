@@ -24,16 +24,27 @@
  * limitations under the License.                                             *
  ******************************************************************************/
 
-#include <gtest/gtest.h>
+#include <cmath>
+#include <map>
+#include <string>
 #include <vector>
 
-#include <opencv2/video.hpp>
+#include <gtest/gtest.h>
 
-#include "KeyFrameFilter.h"
+#include <opencv2/video.hpp>
+#include <opencv2/opencv.hpp>
+
+
+#include "detectionComponentUtils.h"
 #include "FeedForwardFrameFilter.h"
+#include "frame_transformers/AffineFrameTransformer.h"
+#include "frame_transformers/NoOpFrameTransformer.h"
+#include "FrameFilter.h"
+#include "KeyFrameFilter.h"
+#include "MPFImageReader.h"
 #include "MPFVideoCapture.h"
 #include "IntervalFrameFilter.h"
-#include "FrameFilter.h"
+
 
 using namespace MPF::COMPONENT;
 using namespace std;
@@ -965,12 +976,158 @@ TEST(FeedForwardFrameCropperTest, CanCropToExactRegion) {
 
     ASSERT_EQ(outputTrack.frame_locations.size(), feedForwardTrack.frame_locations.size());
 
-    assertDetectionLocationsMatch(outputTrack.frame_locations.at(4), outputTrack.frame_locations.at(4));
-    assertDetectionLocationsMatch(outputTrack.frame_locations.at(15), outputTrack.frame_locations.at(15));
+    assertDetectionLocationsMatch(outputTrack.frame_locations.at(4), feedForwardTrack.frame_locations.at(4));
+    assertDetectionLocationsMatch(outputTrack.frame_locations.at(15), feedForwardTrack.frame_locations.at(15));
 
     const auto &lastDetection = outputTrack.frame_locations.at(29);
     ASSERT_EQ(lastDetection.x_left_upper, 75);
     ASSERT_EQ(lastDetection.y_left_upper, 40);
     ASSERT_EQ(lastDetection.width, 15);
     ASSERT_EQ(lastDetection.height, 60);
+}
+
+
+
+cv::Vec<uint8_t, 3> closestColor(const cv::Vec<uint8_t, 3> &sample) {
+    using Pixel = cv::Vec<uint8_t, 3>;
+
+    std::vector<Pixel> colors {
+            { 0, 0, 0 },
+            { 255, 255, 255},
+            { 255, 0, 0},
+            { 0, 255, 0},
+            { 0, 0, 255}
+    };
+
+    int s1 = sample[0];
+    int s2 = sample[1];
+    int s3 = sample[2];
+
+    double minDist = 255 * 255 * 255 + 1;
+    Pixel closestColor;
+
+    for (const auto &color : colors) {
+        int c1 = color[0];
+        int c2 = color[1];
+        int c3 = color[2];
+
+        double distSquared = (c1 - s1) * (c1 - s1) + (c2 - s2) * (c2 - s2) + (c3 - s3) * (c3 - s3);
+
+        double dist = std::sqrt(distSquared);
+
+        if (dist < minDist) {
+            minDist = dist;
+            closestColor = color;
+        }
+    }
+    return closestColor;
+}
+
+
+void verifyCorrectlyRotated(const std::string &fileName,  const MPFImageLocation &feedForwardDetection) {
+    MPFImageJob job("Test", "test/test_imgs/rotation/" + fileName, feedForwardDetection,
+                    { { "FEED_FORWARD_TYPE", "REGION" } }, {});
+
+    MPFImageReader imageReader(job);
+
+    cv::Mat img = imageReader.GetImage();
+    ASSERT_EQ(feedForwardDetection.width, img.cols);
+    ASSERT_EQ(feedForwardDetection.height, img.rows);
+
+    using Pixel = cv::Vec<uint8_t, 3>;
+
+    for (int col = 1; col < img.cols; col++) {
+        for (int row = 1; row < img.rows; row++)  {
+            ASSERT_EQ(closestColor(img.at<Pixel>(row, col)), Pixel(255, 0, 0)) << "row = " << row << ", col = " << col;
+        }
+    }
+}
+
+
+TEST(AffineFrameTransformerTest, CanHandleRotatedDetectionNearMiddle) {
+    verifyCorrectlyRotated("20deg-bounding-box.png",
+                           MPFImageLocation(116, 218, 100, 40, -1, { { "ROTATION", "20" } }));
+}
+
+
+TEST(AffineFrameTransformerTest, CanHandleRotatedDetectionTouchingCorner) {
+    verifyCorrectlyRotated("30deg-bounding-box-top-left-corner.png",
+                           MPFImageLocation(0, 51, 100, 40, -1, { { "ROTATION", "30.5" } }));
+
+    verifyCorrectlyRotated("60deg-bounding-box-top-left-corner.png",
+                           MPFImageLocation(0, 86, 100, 40, -1, { { "ROTATION", "60" } }));
+
+    verifyCorrectlyRotated("200deg-bounding-box-top-left-corner.png",
+                           MPFImageLocation(108, 38, 100, 40, -1, { { "ROTATION", "200" } }));
+
+    verifyCorrectlyRotated("20deg-bounding-box-bottom-left-corner.png",
+                           MPFImageLocation(0, 367, 30, 120, -1, { { "ROTATION", "20" } }));
+
+    verifyCorrectlyRotated("160deg-bounding-box-bottom-right-corner.png",
+                           MPFImageLocation(599, 480, 30, 120, -1, { { "ROTATION", "160" } }));
+
+    verifyCorrectlyRotated("260deg-bounding-box-top-right-corner.png",
+                           MPFImageLocation(640, 21, 30, 120, -1, { { "ROTATION", "260" } }));
+
+    verifyCorrectlyRotated("270deg-bounding-box-top-right-corner.png",
+                           MPFImageLocation(640, 0, 30, 120, -1, { { "ROTATION", "270" } }));
+}
+
+
+TEST(AffineFrameTransformerTest, FullFrameRotationNonOrthogonal) {
+    using Pixel = cv::Vec<uint8_t, 3>;
+    Pixel white(255, 255, 255);
+
+    cv::Size size(640, 480);
+    cv::Mat img(size, CV_8UC3, white);
+
+    AffineFrameTransformer transformer(20, false, IFrameTransformer::Ptr(new NoOpFrameTransformer(size)));
+
+    transformer.TransformFrame(img, 0);
+
+    int numWhite = std::count(img.begin<Pixel>(), img.end<Pixel>(), white);
+
+    ASSERT_GE(numWhite, size.area() - size.width - size.height);
+    ASSERT_LE(numWhite, size.area());
+}
+
+
+
+TEST(AffineFrameTransformerTest, FullFrameRotationOrthogonal) {
+    using Pixel = cv::Vec<uint8_t, 3>;
+    Pixel white(255, 255, 255);
+
+    cv::Size size(640, 480);
+    cv::Mat img(size, CV_8UC3, white);
+
+    AffineFrameTransformer transformer(90, false, IFrameTransformer::Ptr(new NoOpFrameTransformer(size)));
+
+    transformer.TransformFrame(img, 0);
+
+    int numWhite = std::count(img.begin<Pixel>(), img.end<Pixel>(), white);
+
+    ASSERT_GE(numWhite, size.area() - size.width - size.height);
+    ASSERT_LE(numWhite, size.area());
+}
+
+
+
+TEST(NormalizeAngle, TestNormalizeAngle) {
+    using DetectionComponentUtils::NormalizeAngle;
+
+    double angle1 = 20.5;
+    double angle2 = 380.5;
+    double angle3 = -339.5;
+    double angle4 = -699.5;
+    double angle5 = -1059.5;
+
+    ASSERT_DOUBLE_EQ(angle1, NormalizeAngle(angle1));
+    ASSERT_DOUBLE_EQ(angle1, NormalizeAngle(angle2));
+    ASSERT_DOUBLE_EQ(angle1, NormalizeAngle(angle3));
+    ASSERT_DOUBLE_EQ(angle1, NormalizeAngle(angle4));
+    ASSERT_DOUBLE_EQ(angle1, NormalizeAngle(angle5));
+
+    ASSERT_DOUBLE_EQ(0, NormalizeAngle(0));
+    ASSERT_DOUBLE_EQ(0, NormalizeAngle(360));
+
 }

@@ -41,4 +41,7 @@ if (${GTEST_FOUND})
     file(GLOB TEST_VIDEOS test_vids/*)
     file(COPY ${TEST_VIDEOS} DESTINATION test/test_vids)
 
+    file(GLOB TEST_IMAGES test_imgs/*)
+    file(COPY ${TEST_IMAGES} DESTINATION test/test_imgs)
+
 endif()

@@ -61,20 +61,14 @@ set(SOURCE_FILES
         include/frame_transformers/BaseDecoratedTransformer.h
         src/frame_transformers/BaseDecoratedTransformer.cpp
 
-        include/frame_transformers/FrameCropper.h
-        src/frame_transformers/FrameCropper.cpp
-
-        include/frame_transformers/FrameFlipper.h
-        src/frame_transformers/FrameFlipper.cpp
-
-        include/frame_transformers/FrameRotator.h
-        src/frame_transformers/FrameRotator.cpp
-
         include/frame_transformers/NoOpFrameTransformer.h
         src/frame_transformers/NoOpFrameTransformer.cpp
 
         include/frame_transformers/FrameTransformerFactory.h
         src/frame_transformers/FrameTransformerFactory.cpp
+
+        include/frame_transformers/AffineFrameTransformer.h
+        src/frame_transformers/AffineFrameTransformer.cpp
 
         include/adapters/MPFAudioAndVideoDetectionComponentAdapter.h
         include/adapters/MPFAudioDetectionComponentAdapter.h
