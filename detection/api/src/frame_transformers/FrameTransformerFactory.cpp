@@ -40,6 +40,7 @@
 #include "detectionComponentUtils.h"
 #include "frame_transformers/AffineFrameTransformer.h"
 #include "frame_transformers/NoOpFrameTransformer.h"
+#include "frame_transformers/FrameCropper.h"
 #include "MPFDetectionObjects.h"
 #include "MPFInvalidPropertyException.h"
 
@@ -148,8 +149,8 @@ namespace {
 
 
 
-    void AddAffineIfNeeded(const Properties &jobProperties, const Properties &mediaProperties,
-                           const cv::Size &inputVideoSize, IFrameTransformer::Ptr &currentTransformer) {
+    void AddTransformersIfNeeded(const Properties &jobProperties, const Properties &mediaProperties,
+                                 const cv::Size &inputVideoSize, IFrameTransformer::Ptr &currentTransformer) {
         static const string rotationKey = "ROTATION";
 
         double rotation = 0;
@@ -188,8 +189,14 @@ namespace {
 
 
         if (cropRequired) {
-            currentTransformer = IFrameTransformer::Ptr(
-                    new AffineFrameTransformer(region, rotation, flipRequired, std::move(currentTransformer)));
+            if (flipRequired || rotationRequired) {
+                currentTransformer = IFrameTransformer::Ptr(
+                        new AffineFrameTransformer(region, rotation, flipRequired, std::move(currentTransformer)));
+            }
+            else {
+                currentTransformer = IFrameTransformer::Ptr(
+                        new SearchRegionFrameCropper(region, std::move(currentTransformer)));
+            }
         }
         else {
             currentTransformer = IFrameTransformer::Ptr(
@@ -247,11 +254,10 @@ namespace {
     }
 
 
-    void AddFeedForwardAffineIfNeeded(const Properties &jobProperties, const Properties &mediaProperties,
-                                      const cv::Size &inputVideoSize, const Properties &trackProperties,
-                                      const std::map<int, MPFImageLocation> &detections,
-                                      IFrameTransformer::Ptr &currentTransformer) {
-
+    void AddFeedForwardTransformsIfNeeded(const Properties &jobProperties, const Properties &mediaProperties,
+                                          const cv::Size &inputVideoSize, const Properties &trackProperties,
+                                          const std::map<int, MPFImageLocation> &detections,
+                                          IFrameTransformer::Ptr &currentTransformer) {
         if (SearchRegionCroppingIsEnabled(jobProperties)) {
             std::cerr << "Both feed forward cropping and search region cropping properties were provided. "
                       << "Only feed forward cropping will occur." << std::endl;
@@ -300,6 +306,7 @@ namespace {
             }
         }
 
+        bool requiresRotationOrFlip = false;
 
         std::vector<std::tuple<cv::Rect, double, bool>> transformInfo;
         transformInfo.reserve(detections.size());
@@ -333,19 +340,34 @@ namespace {
                 flip = jobLevelFlip;
             }
 
+            if (flip || !DetectionComponentUtils::RotationAngleEquals(0, rotation)) {
+                requiresRotationOrFlip = true;
+            }
+
             transformInfo.emplace_back(ToRect(detection), rotation, flip);
         }
 
         if (FeedForwardExactRegionIsEnabled(jobProperties)) {
-            currentTransformer = IFrameTransformer::Ptr(
-                    new FeedForwardAffineTransformer(transformInfo, std::move(currentTransformer)));
+            if (requiresRotationOrFlip) {
+                currentTransformer = IFrameTransformer::Ptr(
+                        new FeedForwardAffineTransformer(transformInfo, std::move(currentTransformer)));
+            }
+            else {
+                currentTransformer = IFrameTransformer::Ptr(
+                        new FeedForwardFrameCropper(detections, std::move(currentTransformer)));
+            }
         }
         else {
             cv::Rect supersetRegion = GetSupersetRegion(transformInfo);
-            currentTransformer = IFrameTransformer::Ptr(
-                    new AffineFrameTransformer(supersetRegion, jobLevelRotation, jobLevelFlip,
-                                               std::move(currentTransformer)));
-
+            if (requiresRotationOrFlip) {
+                currentTransformer = IFrameTransformer::Ptr(
+                        new AffineFrameTransformer(supersetRegion, jobLevelRotation, jobLevelFlip,
+                                                   std::move(currentTransformer)));
+            }
+            else {
+                currentTransformer = IFrameTransformer::Ptr(
+                        new SearchRegionFrameCropper(supersetRegion, std::move(currentTransformer)));
+            }
         }
     }
 
@@ -357,13 +379,12 @@ namespace {
         IFrameTransformer::Ptr transformer(new NoOpFrameTransformer(inputVideoSize));
 
         if (FeedForwardIsEnabled(job.job_properties)) {
-            AddFeedForwardAffineIfNeeded(job.job_properties, job.media_properties, inputVideoSize,
-                                                    trackProperties, trackLocations, transformer);
+            AddFeedForwardTransformsIfNeeded(job.job_properties, job.media_properties, inputVideoSize,
+                                             trackProperties, trackLocations, transformer);
         }
         else {
-            AddAffineIfNeeded(job.job_properties, job.media_properties, inputVideoSize, transformer);
+            AddTransformersIfNeeded(job.job_properties, job.media_properties, inputVideoSize, transformer);
         }
-
 
         return transformer;
     }
@@ -385,7 +406,7 @@ IFrameTransformer::Ptr GetTransformer(const MPFImageJob &job, const cv::Size &in
 IFrameTransformer::Ptr GetTransformer(const MPFStreamingVideoJob &job, const cv::Size &inputVideoSize) {
 
     IFrameTransformer::Ptr transformer(new NoOpFrameTransformer(inputVideoSize));
-    AddAffineIfNeeded(job.job_properties, job.media_properties, inputVideoSize, transformer);
+    AddTransformersIfNeeded(job.job_properties, job.media_properties, inputVideoSize, transformer);
     return transformer;
 }
 }}} // End MPF::COMPONENT::FrameTransformerFactory

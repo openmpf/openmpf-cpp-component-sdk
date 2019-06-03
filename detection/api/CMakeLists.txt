@@ -70,6 +70,9 @@ set(SOURCE_FILES
         include/frame_transformers/AffineFrameTransformer.h
         src/frame_transformers/AffineFrameTransformer.cpp
 
+        include/frame_transformers/FrameCropper.h
+        src/frame_transformers/FrameCropper.cpp
+
         include/adapters/MPFAudioAndVideoDetectionComponentAdapter.h
         include/adapters/MPFAudioDetectionComponentAdapter.h
         include/adapters/MPFImageAndVideoDetectionComponentAdapter.h

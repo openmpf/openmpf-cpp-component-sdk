@@ -144,6 +144,11 @@ namespace MPF { namespace COMPONENT {
 
 
     cv::Matx33d AffineTransformation::GetRotationMatrix(const cv::Point2d &center, double rotationDegrees) {
+        if (DetectionComponentUtils::RotationAngleEquals(0, rotationDegrees)) {
+            // When rotation angle is 0 some matrix elements that should
+            // have been 0 were actually 1e-17 due to rounding issues.
+            return cv::Matx33d::eye();
+        }
         // The rotation matrix from is a 2x3 matrix, but to combine transformations it must be converted to a
         // 3x3 matrix by adding [0, 0, 1] as the bottom row.
         // cv::getRotationMatrix2D rotates in the counter-clockwise direction.
