@@ -26,8 +26,11 @@
 
 #include "frame_transformers/AffineFrameTransformer.h"
 
-#include <utility>
 #include <cmath>
+#include <sstream>
+#include <stdexcept>
+#include <string>
+#include <utility>
 
 #include <opencv2/imgproc.hpp>
 
@@ -36,24 +39,138 @@
 
 namespace MPF { namespace COMPONENT {
 
+    namespace {
+        cv::Mat_<double> GetAllCorners(const std::vector<std::tuple<cv::Rect, double, bool>> &regions) {
+            cv::Mat_<double> corners(2, 4 * regions.size());
+            auto x_iter = corners.begin();
+            auto y_iter = corners.row(1).begin();
 
-    AffineTransformation::AffineTransformation(const cv::Rect &region, double rotationDegrees, bool flip)
-            : regionSize(region.size())
-            , rotationDegrees_(rotationDegrees)
-            , flip_(flip)
-            , reverseTransformationMatrix_(GetReverseTransformationMatrix(
-                    regionSize, GetRotatedRegionCenter(region, rotationDegrees), rotationDegrees, flip))
+            for (const auto &detection : regions) {
+                const cv::Rect& region = std::get<0>(detection);
+                double rotation = std::get<1>(detection);
+
+                *(x_iter++) = region.x;
+                *(y_iter++) = region.y;
+
+                double radians = rotation * M_PI / 180.0;
+                double sinVal = std::sin(radians);
+                double cosVal = std::cos(radians);
+
+                double corner2X = region.x + region.width * cosVal;
+                double corner2Y = region.y - region.width * sinVal;
+                *(x_iter++) = corner2X;
+                *(y_iter++) = corner2Y;
+
+                *(x_iter++) = corner2X + region.height * sinVal;
+                *(y_iter++) = corner2Y + region.height * cosVal;
+
+                *(x_iter++) = region.x + region.height * sinVal;
+                *(y_iter++) = region.y + region.height * cosVal;
+            }
+            return corners;
+        }
+
+        cv::Rect2d GetMappedBoundingRect(
+                const std::vector<std::tuple<cv::Rect, double, bool>> &regions,
+                const cv::Matx33d &frameRotMat) {
+
+            // Since we are working with 2d points and we aren't doing any translation here,
+            // we can drop the last row and column to save some work.
+            cv::Mat_<double> simpleRotation = cv::Mat_<double>(frameRotMat, false)({0, 0, 2, 2});
+            cv::Mat_<double> mappedCorners = simpleRotation * GetAllCorners(regions);
+
+            double minX = -1;
+            double maxX = -1;
+            cv::minMaxLoc(mappedCorners.row(0), &minX, &maxX);
+
+            double minY = -1;
+            double maxY = -1;
+            cv::minMaxLoc(mappedCorners.row(1), &minY, &maxY);
+
+            return cv::Rect2d(cv::Point2d(minX, minY), cv::Point2d(maxX, maxY));
+        }
+
+        std::vector<std::tuple<cv::Rect, double, bool>> singleRegion(const cv::Rect &region, double rotation,
+                                                                     bool flip) {
+            return { std::make_tuple(region, rotation, flip) };
+        }
+
+
+        namespace IndividualXForms {
+            // All transformation matrices are from https://en.wikipedia.org/wiki/Affine_transformation#Image_transformation
+
+            cv::Matx33d Rotation(double rotationDegrees) {
+                if (DetectionComponentUtils::RotationAngleEquals(0, rotationDegrees)) {
+                    // When rotation angle is 0 some matrix elements that should
+                    // have been 0 were actually 1e-16 due to rounding issues.
+                    return cv::Matx33d::eye();
+                }
+
+                double radians = rotationDegrees * M_PI / 180.0;
+                double sinVal = std::sin(radians);
+                double cosVal = std::cos(radians);
+                return {
+                    cosVal,  sinVal, 0,
+                    -sinVal, cosVal, 0,
+                    0,       0,      1
+                };
+            }
+
+            cv::Matx33d HorizontalFlip() {
+                return {
+                    -1, 0, 0,
+                     0, 1, 0,
+                     0, 0, 1
+                };
+            }
+
+            cv::Matx33d Translation(double xDistance, double yDistance) {
+                return {
+                    1, 0, xDistance,
+                    0, 1, yDistance,
+                    0, 0, 1
+                };
+            }
+        } // End IndividualXForms
+    } // End anonymous namespace
+
+
+
+    AffineTransformation::AffineTransformation(const std::vector<std::tuple<cv::Rect, double, bool>> &regions,
+                                               double frameRotationDegrees, bool flip)
     {
-    }
+        rotationDegrees_ = frameRotationDegrees;
+        flip_ = flip;
 
+        cv::Matx33d rotationMat = IndividualXForms::Rotation(360 - frameRotationDegrees);
+        cv::Rect mappedBoundingRect = GetMappedBoundingRect(regions, rotationMat);
+        regionSize_ = mappedBoundingRect.size();
 
-    AffineTransformation::AffineTransformation(const cv::Size &frameSize, double rotationDegrees, bool flip)
-            : regionSize(GetRotatedFrameSize(frameSize, rotationDegrees))
-            , rotationDegrees_(rotationDegrees)
-            , flip_(flip)
-            , reverseTransformationMatrix_(GetReverseTransformationMatrix(
-                    regionSize, cv::Point2d(frameSize) / 2.0, rotationDegrees, flip))
-    {
+        cv::Matx33d moveRoiToOrigin = IndividualXForms::Translation(-mappedBoundingRect.x, -mappedBoundingRect.y);
+
+        cv::Matx33d combinedTransform;
+        if (flip) {
+            /*
+                        -x     x=0     +x
+              initial: [     ] | [ a b ]
+              flipped: [ b a ] | [     ]
+              shift:   [     ] | [ b a ]
+            */
+            cv::Matx33d flipMat = IndividualXForms::HorizontalFlip();
+            cv::Matx33d flipShiftCorrection = IndividualXForms::Translation(regionSize_.width, 0);
+            // Transformations are applied from right to left, so rotation occurs first.
+            combinedTransform = flipShiftCorrection * flipMat * moveRoiToOrigin * rotationMat;
+        }
+        else {
+            // Transformations are applied from right to left, so rotation occurs first.
+            combinedTransform = moveRoiToOrigin * rotationMat;
+        }
+
+        // When combining transformations the 3d version must be used,
+        // but when mapping 2d points the last row of the matrix can be dropped.
+        cv::Matx23d combined2dTransform = combinedTransform.get_minor<2, 3>(0, 0);
+
+        cv::invertAffineTransform(combined2dTransform, reverseTransformationMatrix_);
     }
 
 
@@ -64,7 +181,12 @@ namespace MPF { namespace COMPONENT {
         // WARP_INVERSE_MAP is set. Otherwise, the transformation is first inverted with cv::invertAffineTransform
         // From OpenCV's Geometric Image Transformations module documentation:
         // To avoid sampling artifacts, the mapping is done in the reverse order, from destination to the source.
-        cv::warpAffine(frame, frame, reverseTransformationMatrix_, regionSize,
+
+        // Using INTER_CUBIC, because according to
+        // https://en.wikipedia.org/wiki/Affine_transformation#Image_transformation
+        // "This transform relocates pixels requiring intensity interpolation to approximate the value of moved pixels,
+        // bicubic interpolation is the standard for image transformations in image processing applications."
+        cv::warpAffine(frame, frame, reverseTransformationMatrix_, regionSize_,
                        cv::InterpolationFlags::WARP_INVERSE_MAP | cv::InterpolationFlags::INTER_CUBIC);
 
     }
@@ -102,99 +224,10 @@ namespace MPF { namespace COMPONENT {
     }
 
 
-
-    cv::Matx23d AffineTransformation::GetReverseTransformationMatrix(
-            const cv::Size2d &regionSize, const cv::Point2d &center, double rotationDegrees, bool flip) {
-
-        // rotationDegrees indicates the region's rotation in the counter-clockwise direction,
-        // so in order correctly orient the image we need to rotate in the opposite direction;
-        cv::Matx33d rotationMat = GetRotationMatrix(center, 360 - rotationDegrees);
-
-        cv::Matx33d moveRoiToOrigin = GetTranslationMatrix(regionSize.width / 2.0 - center.x,
-                                                           regionSize.height / 2.0 - center.y);
-
-        cv::Matx33d combinedTransform;
-        if (flip) {
-            /*
-                        -x     x=0     +x
-               initial: [     ] | [ a b ]
-               flipped: [ b a ] | [     ]
-               shift:   [     ] | [ b a ]
-             */
-            cv::Matx33d flipMat = GetHorizontalFlipMatrix();
-            cv::Matx33d flipShiftCorrection = GetTranslationMatrix(regionSize.width, 0);
-            // Transformations are applied from right to left, so rotation occurs first.
-            combinedTransform = flipShiftCorrection * flipMat * moveRoiToOrigin * rotationMat;
-        }
-        else {
-            // Transformations are applied from right to left, so rotation occurs first.
-            combinedTransform = moveRoiToOrigin * rotationMat;
-        }
-
-
-        // When combining transformations the 3d version must be used,
-        // but when mapping 2d points the last row of the matrix can be dropped.
-        cv::Matx23d combined2dTransform = combinedTransform.get_minor<2, 3>(0, 0);
-        cv::Matx23d reverseTransform;
-        cv::invertAffineTransform(combined2dTransform, reverseTransform);
-        return reverseTransform;
+    cv::Size2d AffineTransformation::GetRegionSize() const {
+        return regionSize_;
     }
 
-
-
-
-    cv::Matx33d AffineTransformation::GetRotationMatrix(const cv::Point2d &center, double rotationDegrees) {
-        if (DetectionComponentUtils::RotationAngleEquals(0, rotationDegrees)) {
-            // When rotation angle is 0 some matrix elements that should
-            // have been 0 were actually 1e-17 due to rounding issues.
-            return cv::Matx33d::eye();
-        }
-        // The rotation matrix from is a 2x3 matrix, but to combine transformations it must be converted to a
-        // 3x3 matrix by adding [0, 0, 1] as the bottom row.
-        // cv::getRotationMatrix2D rotates in the counter-clockwise direction.
-        cv::Mat ocvRotationMat = cv::getRotationMatrix2D(center, rotationDegrees, 1);
-        cv::Matx33d rotationMatrix;
-
-        cv::vconcat(ocvRotationMat,
-                    cv::Matx13d(0, 0, 1), rotationMatrix);
-        return rotationMatrix;
-    }
-
-
-    cv::Matx33d AffineTransformation::GetHorizontalFlipMatrix() {
-        return { -1, 0, 0,
-                  0, 1, 0,
-                  0, 0, 1 };
-    }
-
-    cv::Matx33d AffineTransformation::GetTranslationMatrix(double xDistance, double yDistance) {
-        return { 1, 0, xDistance,
-                 0, 1, yDistance,
-                 0, 0, 1 };
-    }
-
-
-    cv::Point2d AffineTransformation::GetRotatedRegionCenter(const cv::Rect &region, double rotationDegrees) {
-        double radians = rotationDegrees * M_PI / 180.0;
-        double sinVal = std::sin(radians);
-        double cosVal = std::cos(radians);
-
-        double centerX = region.x + region.width / 2.0 * cosVal + region.height / 2.0 * sinVal;
-        double centerY = region.y - region.width / 2.0 * sinVal + region.height / 2.0 * cosVal;
-        return cv::Point2d(centerX, centerY);
-    }
-
-
-    cv::Size2d AffineTransformation::GetRotatedFrameSize(const cv::Size &frameSize, double rotationDegrees) {
-        double correctionDegrees = 360 - rotationDegrees;
-        double correctionRadians = correctionDegrees * M_PI / 180.0;
-        double sinVal = std::abs(std::sin(correctionRadians));
-        double cosVal = std::abs(std::cos(correctionRadians));
-
-        double newWidth = frameSize.height * sinVal + frameSize.width * cosVal;
-        double newHeight = frameSize.height * cosVal + frameSize.width * sinVal;
-        return cv::Size2d(newWidth, newHeight);
-    }
 
 
 
@@ -203,7 +236,8 @@ namespace MPF { namespace COMPONENT {
                                                    bool flip,
                                                    IFrameTransformer::Ptr innerTransform)
             : BaseDecoratedTransformer(std::move(innerTransform))
-            , transform_(region, rotation, flip)
+            // Pass in rotation twice since the region is rotated and so is the frame.
+            , transform_(singleRegion(region, rotation, flip), rotation, flip)
     {
     }
 
@@ -211,14 +245,22 @@ namespace MPF { namespace COMPONENT {
                                                    bool flip,
                                                    IFrameTransformer::Ptr innerTransform)
             : BaseDecoratedTransformer(std::move(innerTransform))
-            , transform_(GetInnerFrameSize(0), rotation, flip)
+            , transform_(singleRegion(cv::Rect(cv::Point(0, 0), GetInnerFrameSize(0)), 0, false), rotation, flip)
     {
     }
 
 
+    AffineFrameTransformer::AffineFrameTransformer(const std::vector<std::tuple<cv::Rect, double, bool>> &regions,
+                                                   double frameRotation, bool frameFlip,
+                                                   IFrameTransformer::Ptr innerTransform)
+            : BaseDecoratedTransformer(std::move(innerTransform))
+            , transform_(regions, frameRotation, frameFlip)
+    {
+    }
+
 
     cv::Size AffineFrameTransformer::GetFrameSize(int frameIndex) {
-        return transform_.regionSize;
+        return transform_.GetRegionSize();
     }
 
 
@@ -235,35 +277,34 @@ namespace MPF { namespace COMPONENT {
 
 
     FeedForwardAffineTransformer::FeedForwardAffineTransformer(
-                const std::vector<std::tuple<cv::Rect, double, bool>> &transformInfo,
+                const std::vector<std::tuple<cv::Rect, double, bool>> &regions,
                 IFrameTransformer::Ptr innerTransform)
             : BaseDecoratedTransformer(std::move(innerTransform))
-            , frameTransforms_(GetTransformations(transformInfo))
+            , frameTransforms_(GetTransformations(regions))
     {
     }
 
 
     cv::Size FeedForwardAffineTransformer::GetFrameSize(int frameIndex) {
-        return GetTransform(frameIndex).regionSize;
+        return GetTransform(frameIndex).GetRegionSize();
     }
 
 
-    std::vector<AffineTransformation>
-    FeedForwardAffineTransformer::GetTransformations(
-            const std::vector<std::tuple<cv::Rect, double, bool>> &transformInfos) {
+    std::vector<AffineTransformation> FeedForwardAffineTransformer::GetTransformations(
+            const std::vector<std::tuple<cv::Rect, double, bool>> &regions) {
 
         std::vector<AffineTransformation> transforms;
-        transforms.reserve(transformInfos.size());
+        transforms.reserve(regions.size());
 
-        int count = -1;
-        for (const auto& transformInfo : transformInfos) {
-            count++;
-            transforms.emplace_back(std::get<0>(transformInfo), std::get<1>(transformInfo), std::get<2>(transformInfo));
+        for (const auto& region : regions) {
+            transforms.emplace_back(std::vector<std::tuple<cv::Rect, double, bool>>{ region },
+                                    std::get<1>(region), std::get<2>(region));
         }
         return transforms;
     }
 
-    const AffineTransformation &FeedForwardAffineTransformer::GetTransform(int frameIndex) {
+
+    const AffineTransformation &FeedForwardAffineTransformer::GetTransform(int frameIndex) const {
         try {
             return frameTransforms_.at(frameIndex);
         }
@@ -282,5 +323,4 @@ namespace MPF { namespace COMPONENT {
     void FeedForwardAffineTransformer::DoReverseTransform(MPFImageLocation &imageLocation, int frameIndex) {
         GetTransform(frameIndex).ApplyReverse(imageLocation);
     }
-
 }}

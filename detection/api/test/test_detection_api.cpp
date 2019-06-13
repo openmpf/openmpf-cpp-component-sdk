@@ -33,6 +33,7 @@
 
 #include <opencv2/video.hpp>
 #include <opencv2/opencv.hpp>
+#include <frame_transformers/FrameTransformerFactory.h>
 
 
 #include "detectionComponentUtils.h"
@@ -48,6 +49,8 @@
 
 using namespace MPF::COMPONENT;
 using namespace std;
+
+using Pixel = cv::Vec<uint8_t, 3>;
 
 
 const char frameFilterTestVideo[] = "test/test_vids/frame_filter_test.mp4";
@@ -988,9 +991,7 @@ TEST(FeedForwardFrameCropperTest, CanCropToExactRegion) {
 
 
 
-cv::Vec<uint8_t, 3> closestColor(const cv::Vec<uint8_t, 3> &sample) {
-    using Pixel = cv::Vec<uint8_t, 3>;
-
+Pixel closestColor(const Pixel &sample) {
     std::vector<Pixel> colors {
             { 0, 0, 0 },
             { 255, 255, 255},
@@ -1003,7 +1004,7 @@ cv::Vec<uint8_t, 3> closestColor(const cv::Vec<uint8_t, 3> &sample) {
     int s2 = sample[1];
     int s3 = sample[2];
 
-    double minDist = 255 * 255 * 255 + 1;
+    double minDist = 255 * 3;
     Pixel closestColor;
 
     for (const auto &color : colors) {
@@ -1023,6 +1024,22 @@ cv::Vec<uint8_t, 3> closestColor(const cv::Vec<uint8_t, 3> &sample) {
     return closestColor;
 }
 
+void assertImageColor(const cv::Mat &img, const Pixel &expectedColor) {
+    for (int col = 1; col < img.cols; col++) {
+        for (int row = 1; row < img.rows; row++)  {
+            ASSERT_EQ(closestColor(img.at<Pixel>(row, col)), Pixel(255, 0, 0)) << "row = " << row << ", col = " << col;
+        }
+    }
+}
+
+
+void assertDetectionsSameLocation(const MPFImageLocation &il1, const MPFImageLocation &il2) {
+    ASSERT_NEAR(il1.x_left_upper, il2.x_left_upper, 1);
+    ASSERT_NEAR(il1.y_left_upper, il2.y_left_upper, 1);
+    ASSERT_NEAR(il1.width, il2.width, 1);
+    ASSERT_NEAR(il1.height, il2.height, 1);
+}
+
 
 void verifyCorrectlyRotated(const std::string &fileName,  const MPFImageLocation &feedForwardDetection) {
     MPFImageJob job("Test", "test/test_imgs/rotation/" + fileName, feedForwardDetection,
@@ -1031,16 +1048,17 @@ void verifyCorrectlyRotated(const std::string &fileName,  const MPFImageLocation
     MPFImageReader imageReader(job);
 
     cv::Mat img = imageReader.GetImage();
+    
+
     ASSERT_EQ(feedForwardDetection.width, img.cols);
     ASSERT_EQ(feedForwardDetection.height, img.rows);
 
-    using Pixel = cv::Vec<uint8_t, 3>;
+    assertImageColor(img, Pixel(255, 0, 0));
 
-    for (int col = 1; col < img.cols; col++) {
-        for (int row = 1; row < img.rows; row++)  {
-            ASSERT_EQ(closestColor(img.at<Pixel>(row, col)), Pixel(255, 0, 0)) << "row = " << row << ", col = " << col;
-        }
-    }
+    MPFImageLocation detection(0, 0, img.size().width, img.size().height);
+    imageReader.ReverseTransform(detection);
+
+    assertDetectionsSameLocation(detection, feedForwardDetection);
 }
 
 
@@ -1075,7 +1093,6 @@ TEST(AffineFrameTransformerTest, CanHandleRotatedDetectionTouchingCorner) {
 
 
 TEST(AffineFrameTransformerTest, FullFrameRotationNonOrthogonal) {
-    using Pixel = cv::Vec<uint8_t, 3>;
     Pixel white(255, 255, 255);
 
     cv::Size size(640, 480);
@@ -1089,12 +1106,12 @@ TEST(AffineFrameTransformerTest, FullFrameRotationNonOrthogonal) {
 
     ASSERT_GE(numWhite, size.area() - size.width - size.height);
     ASSERT_LE(numWhite, size.area());
+    ASSERT_EQ(cv::Size(766, 670), img.size());
 }
 
 
 
 TEST(AffineFrameTransformerTest, FullFrameRotationOrthogonal) {
-    using Pixel = cv::Vec<uint8_t, 3>;
     Pixel white(255, 255, 255);
 
     cv::Size size(640, 480);
@@ -1108,8 +1125,75 @@ TEST(AffineFrameTransformerTest, FullFrameRotationOrthogonal) {
 
     ASSERT_GE(numWhite, size.area() - size.width - size.height);
     ASSERT_LE(numWhite, size.area());
+    ASSERT_EQ(cv::Size(480, 640), img.size());
 }
 
+
+TEST(AffineFrameTransformerTest, TestFeedForwardExactRegion) {
+    MPFVideoTrack ffTrack(0, 2);
+    ffTrack.frame_locations.emplace(0, MPFImageLocation(60, 300, 100, 40, -1, { { "ROTATION", "260" } }));
+    ffTrack.frame_locations.emplace(1, MPFImageLocation(160, 350, 130, 20, -1, { { "ROTATION", "60" } }));
+    ffTrack.frame_locations.emplace(2, MPFImageLocation(260, 340, 60, 60, -1, { { "ROTATION", "20" } }));
+
+    MPFVideoJob job("Test", "test/test_imgs/rotation/feed-forward-rotation-test.png",
+                    ffTrack.start_frame, ffTrack.stop_frame, ffTrack,
+                    { {"FEED_FORWARD_TYPE", "REGION"} }, {});
+
+    const cv::Mat testImg = cv::imread(job.data_uri);
+
+    IFrameTransformer::Ptr transformer = FrameTransformerFactory::GetTransformer(job, testImg.size());
+
+    for (const auto &pair : ffTrack.frame_locations) {
+        int frameNumber = pair.first;
+        const auto &ffDetection = pair.second;
+
+        cv::Mat frame = testImg.clone();
+        transformer->TransformFrame(frame, frameNumber);
+        ASSERT_EQ(frame.size(), cv::Size(ffDetection.width, ffDetection.height));
+
+        assertImageColor(frame, Pixel(255, 0, 0));
+
+        MPFImageLocation newDetection(0, 0, frame.size().width, frame.size().height);
+        transformer->ReverseTransform(newDetection, frameNumber);
+        assertDetectionsSameLocation(newDetection, ffDetection);
+    }
+}
+
+
+TEST(AffineFrameTransformerTest, TestFeedForwardSupersetRegion) {
+    MPFVideoTrack ffTrack(0, 2);
+    ffTrack.frame_locations.emplace(0, MPFImageLocation(60, 300, 100, 40, -1, { { "ROTATION", "260" } }));
+    ffTrack.frame_locations.emplace(1, MPFImageLocation(160, 350, 130, 20, -1, { { "ROTATION", "60" } }));
+    ffTrack.frame_locations.emplace(2, MPFImageLocation(260, 340, 60, 60, -1, { { "ROTATION", "20" } }));
+
+
+    for (int i = 0; i <= 18; i++) {
+        double rotation = i * 20;
+
+        MPFVideoJob job("Test", "test/test_imgs/rotation/feed-forward-rotation-test.png",
+                        ffTrack.start_frame, ffTrack.stop_frame, ffTrack,
+                        { {"FEED_FORWARD_TYPE", "SUPERSET_REGION" }, { "ROTATION", std::to_string(rotation) } }, {});
+
+        int expectedMinNumBlue = 0;
+        int expectedMaxNumBlue = 0;
+        for (const auto &pair : ffTrack.frame_locations) {
+            int area = pair.second.height * pair.second.width;
+            int perimeter = 2 * pair.second.height + 2 * pair.second.width;
+            expectedMinNumBlue += area - perimeter;
+            expectedMaxNumBlue += area + perimeter;
+        }
+
+        MPFVideoCapture cap(job);
+
+        cv::Mat img;
+        cap.Read(img);
+
+        int actualNumBlue = std::count(img.begin<Pixel>(), img.end<Pixel>(), Pixel(255, 0, 0));
+
+        ASSERT_LE(actualNumBlue, expectedMaxNumBlue);
+        ASSERT_GE(actualNumBlue, expectedMinNumBlue);
+    }
+}
 
 
 TEST(NormalizeAngle, TestNormalizeAngle) {
@@ -1129,5 +1213,5 @@ TEST(NormalizeAngle, TestNormalizeAngle) {
 
     ASSERT_DOUBLE_EQ(0, NormalizeAngle(0));
     ASSERT_DOUBLE_EQ(0, NormalizeAngle(360));
-
 }
+

@@ -39,23 +39,29 @@
 
 namespace DetectionComponentUtils {
 
+
+    template <typename T>
+    using t_unless_char_ptr_then_string
+        = typename std::conditional<
+                std::is_same<T, const char*>::value,
+                std::string,
+                T
+          >::type;
+
     template<typename T>
-    T GetProperty(const MPF::COMPONENT::Properties &props,
-                  const std::string &key,
-                  const T defaultValue) {
+    t_unless_char_ptr_then_string<T> GetProperty(const MPF::COMPONENT::Properties &props,
+                                                 const std::string &key,
+                                                 const T defaultValue) {
         auto iter = props.find(key);
         if (iter == props.end()) {
             return defaultValue;
         }
-        else {
-            T tmp;
-            try {
-                tmp = boost::lexical_cast<T>(iter->second);
-            }
-            catch (const boost::bad_lexical_cast &e) {
-                return defaultValue;
-            }
-            return tmp;
+
+        try {
+            return boost::lexical_cast<t_unless_char_ptr_then_string<T>>(iter->second);
+        }
+        catch (const boost::bad_lexical_cast &e) {
+            return defaultValue;
         }
     }
 

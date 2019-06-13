@@ -26,10 +26,9 @@
 
 #include "frame_transformers/FrameTransformerFactory.h"
 
-#include <algorithm>
-#include <initializer_list>
 #include <map>
 #include <sstream>
+#include <stdexcept>
 #include <string>
 #include <tuple>
 #include <utility>
@@ -39,17 +38,17 @@
 
 #include "detectionComponentUtils.h"
 #include "frame_transformers/AffineFrameTransformer.h"
-#include "frame_transformers/NoOpFrameTransformer.h"
 #include "frame_transformers/FrameCropper.h"
+#include "frame_transformers/NoOpFrameTransformer.h"
+#include "frame_transformers/IFrameTransformer.h"
 #include "MPFDetectionObjects.h"
-#include "MPFInvalidPropertyException.h"
 
 
 
-using std::string;
 using DetectionComponentUtils::GetProperty;
 
 namespace MPF { namespace COMPONENT { namespace FrameTransformerFactory {
+
 
 namespace {
 
@@ -69,10 +68,10 @@ namespace {
     cv::Rect GetSearchRegion(const Properties &jobProperties, const cv::Size &frameSize) {
 
         int position;
-        string topLeftX = GetProperty(jobProperties, "SEARCH_REGION_TOP_LEFT_X_DETECTION", string("-1"));
+        std::string topLeftX = GetProperty(jobProperties, "SEARCH_REGION_TOP_LEFT_X_DETECTION","-1");
         int regionTopLeftXPos;
         size_t idx = topLeftX.find('%');
-        if (idx != string::npos) {
+        if (idx != std::string::npos) {
             regionTopLeftXPos = GetPercentOfDimension(topLeftX.substr(0, idx), frameSize.width);
         }
         else {
@@ -80,10 +79,10 @@ namespace {
             regionTopLeftXPos = (position < 0) ? 0 : position;
         }
 
-        string topLeftY = GetProperty(jobProperties, "SEARCH_REGION_TOP_LEFT_Y_DETECTION", string("-1"));
+        std::string topLeftY = GetProperty(jobProperties, "SEARCH_REGION_TOP_LEFT_Y_DETECTION", "-1");
         int regionTopLeftYPos;
         idx = topLeftY.find('%');
-        if (idx != string::npos) {
+        if (idx != std::string::npos) {
             regionTopLeftYPos = GetPercentOfDimension(topLeftY.substr(0, idx), frameSize.height);
         }
         else {
@@ -93,10 +92,10 @@ namespace {
 
         cv::Point topLeft(regionTopLeftXPos, regionTopLeftYPos);
 
-        string bottomRightX = GetProperty(jobProperties, "SEARCH_REGION_BOTTOM_RIGHT_X_DETECTION", string("-1"));
+        std::string bottomRightX = GetProperty(jobProperties, "SEARCH_REGION_BOTTOM_RIGHT_X_DETECTION", "-1");
         int regionBottomRightXPos;
         idx = bottomRightX.find('%');
-        if (idx != string::npos) {
+        if (idx != std::string::npos) {
             regionBottomRightXPos = GetPercentOfDimension(bottomRightX.substr(0, idx), frameSize.width);
         }
         else {
@@ -104,10 +103,10 @@ namespace {
             regionBottomRightXPos = (position <= 0) ? frameSize.width : position;
         }
 
-        string bottomRightY = GetProperty(jobProperties, "SEARCH_REGION_BOTTOM_RIGHT_Y_DETECTION", string("-1"));
+        std::string bottomRightY = GetProperty(jobProperties, "SEARCH_REGION_BOTTOM_RIGHT_Y_DETECTION", "-1");
         int regionBottomRightYPos;
         idx = bottomRightY.find('%');
-        if (idx != string::npos) {
+        if (idx != std::string::npos) {
             regionBottomRightYPos = GetPercentOfDimension(bottomRightY.substr(0, idx), frameSize.height);
         }
         else {
@@ -130,12 +129,12 @@ namespace {
 
     bool FeedForwardSupersetRegionIsEnabled(const Properties &jobProperties) {
         return "SUPERSET_REGION" ==
-                DetectionComponentUtils::GetProperty(jobProperties, "FEED_FORWARD_TYPE", string());
+                DetectionComponentUtils::GetProperty(jobProperties, "FEED_FORWARD_TYPE", "");
     }
 
 
     bool FeedForwardExactRegionIsEnabled(const Properties &jobProperties) {
-        return "REGION" == DetectionComponentUtils::GetProperty(jobProperties, "FEED_FORWARD_TYPE", string());
+        return "REGION" == DetectionComponentUtils::GetProperty(jobProperties, "FEED_FORWARD_TYPE", "");
     }
 
 
@@ -151,7 +150,7 @@ namespace {
 
     void AddTransformersIfNeeded(const Properties &jobProperties, const Properties &mediaProperties,
                                  const cv::Size &inputVideoSize, IFrameTransformer::Ptr &currentTransformer) {
-        static const string rotationKey = "ROTATION";
+        static const std::string rotationKey = "ROTATION";
 
         double rotation = 0;
         if (DetectionComponentUtils::GetProperty(jobProperties, "AUTO_ROTATE", false)) {
@@ -205,50 +204,19 @@ namespace {
     }
 
 
-    cv::Rect2d ToBoundingRect(const cv::Rect &region, double rotationDegrees) {
-        int x = region.x;
-        int y = region.y;
-        int width = region.width;
-        int height = region.height;
 
-        double radians = rotationDegrees * M_PI / 180.0;
-        double sinVal = std::sin(radians);
-        double cosVal = std::cos(radians);
-
-        double corner2X = x + width * cosVal;
-        double corner2Y = y - width * sinVal;
-
-        double corner3X = corner2X + height * sinVal;
-        double corner3Y = corner2Y + height * cosVal;
-
-        double corner4X = x + height * sinVal;
-        double corner4Y = y + height * cosVal;
-
-        std::initializer_list<double> xValues { static_cast<double>(x), corner2X, corner3X, corner4X };
-        double minX = std::min(xValues);
-        double maxX = std::max(xValues);
-
-        std::initializer_list<double> yValues { static_cast<double>(y), corner2Y, corner3Y, corner4Y };
-        double minY = std::min(yValues);
-        double maxY = std::max(yValues);
-
-        return cv::Rect2d(cv::Point2d(minX, minY), cv::Point2d(maxX, maxY));
-    }
-
-
-
-    cv::Rect GetSupersetRegion(const std::vector<std::tuple<cv::Rect, double, bool>> &transformInfo) {
+    cv::Rect GetSupersetRegionNoRotation(const std::vector<std::tuple<cv::Rect, double, bool>> &transformInfo) {
         if (transformInfo.empty()) {
             throw std::length_error(
                     "FEED_FORWARD_TYPE: SUPERSET_REGION is enabled, but feed forward track was empty.");
         }
 
         auto it = transformInfo.begin();
-        cv::Rect2d region = ToBoundingRect(std::get<0>(*it), std::get<1>(*it));
-        it++;
+        cv::Rect region = std::get<0>(*it);
+        ++it;
 
-        for (; it != transformInfo.end(); it++) {
-            region |= ToBoundingRect(std::get<0>(*it), std::get<1>(*it));
+        for (; it != transformInfo.end(); ++it) {
+            region |= std::get<0>(*it);
         }
         return region;
     }
@@ -307,6 +275,7 @@ namespace {
         }
 
         bool requiresRotationOrFlip = false;
+        bool isExactRegionMode = FeedForwardExactRegionIsEnabled(jobProperties);
 
         std::vector<std::tuple<cv::Rect, double, bool>> transformInfo;
         transformInfo.reserve(detections.size());
@@ -323,7 +292,7 @@ namespace {
             else if (hasTrackLevelRotation) {
                 rotation = trackRotation;
             }
-            else if (hasJobLevelRotation) {
+            else if (hasJobLevelRotation && isExactRegionMode) {
                 rotation = jobLevelRotation;
             }
 
@@ -336,7 +305,7 @@ namespace {
             else if (hasTrackLevelFlip) {
                 flip = trackLevelFlip;
             }
-            else if (hasJobLevelFlip) {
+            else if (hasJobLevelFlip && isExactRegionMode) {
                 flip = jobLevelFlip;
             }
 
@@ -347,7 +316,7 @@ namespace {
             transformInfo.emplace_back(ToRect(detection), rotation, flip);
         }
 
-        if (FeedForwardExactRegionIsEnabled(jobProperties)) {
+        if (isExactRegionMode) {
             if (requiresRotationOrFlip) {
                 currentTransformer = IFrameTransformer::Ptr(
                         new FeedForwardAffineTransformer(transformInfo, std::move(currentTransformer)));
@@ -358,13 +327,13 @@ namespace {
             }
         }
         else {
-            cv::Rect supersetRegion = GetSupersetRegion(transformInfo);
             if (requiresRotationOrFlip) {
                 currentTransformer = IFrameTransformer::Ptr(
-                        new AffineFrameTransformer(supersetRegion, jobLevelRotation, jobLevelFlip,
+                        new AffineFrameTransformer(transformInfo, jobLevelRotation, jobLevelFlip,
                                                    std::move(currentTransformer)));
             }
             else {
+                cv::Rect supersetRegion = GetSupersetRegionNoRotation(transformInfo);
                 currentTransformer = IFrameTransformer::Ptr(
                         new SearchRegionFrameCropper(supersetRegion, std::move(currentTransformer)));
             }
@@ -379,6 +348,10 @@ namespace {
         IFrameTransformer::Ptr transformer(new NoOpFrameTransformer(inputVideoSize));
 
         if (FeedForwardIsEnabled(job.job_properties)) {
+            if (trackLocations.empty()) {
+                throw std::length_error(
+                        "Feed forward is enabled, but feed forward track was empty.");
+            }
             AddFeedForwardTransformsIfNeeded(job.job_properties, job.media_properties, inputVideoSize,
                                              trackProperties, trackLocations, transformer);
         }

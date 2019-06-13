@@ -27,15 +27,14 @@
 #ifndef OPENMPF_CPP_COMPONENT_SDK_AFFINEFRAMETRANSFORMER_H
 #define OPENMPF_CPP_COMPONENT_SDK_AFFINEFRAMETRANSFORMER_H
 
-#include <vector>
 #include <tuple>
+#include <vector>
 
 #include <opencv2/core.hpp>
 
-#include <MPFDetectionObjects.h>
-
 #include "BaseDecoratedTransformer.h"
 #include "IFrameTransformer.h"
+#include "MPFDetectionObjects.h"
 
 
 namespace MPF { namespace COMPONENT {
@@ -43,38 +42,27 @@ namespace MPF { namespace COMPONENT {
 
     class AffineTransformation {
     public:
-        AffineTransformation(const cv::Rect &region, double rotationDegrees, bool flip);
-
-        AffineTransformation(const cv::Size &frameSize, double rotationDegrees, bool flip);
+        AffineTransformation(
+                const std::vector<std::tuple<cv::Rect, double, bool>> &regions,
+                double frameRotationDegrees, bool flip);
 
         void Apply(cv::Mat &frame) const;
 
         void ApplyReverse(MPFImageLocation &imageLocation) const;
 
-        const cv::Size2d regionSize;
+        cv::Size2d GetRegionSize() const;
 
     private:
-        const double rotationDegrees_;
+        double rotationDegrees_;
 
-        const bool flip_;
+        bool flip_;
+
+        cv::Size2d regionSize_;
+
 
         // OpenCV does the mapping is done in the reverse order (from destination to the source)
         // to avoid sampling artifacts.
-        const cv::Matx23d reverseTransformationMatrix_;
-
-        static cv::Matx23d GetReverseTransformationMatrix(const cv::Size2d &regionSize, const cv::Point2d &center,
-                                                          double rotationDegrees, bool flip);
-
-
-        static cv::Matx33d GetRotationMatrix(const cv::Point2d &center, double rotationDegrees);
-
-        static cv::Matx33d GetHorizontalFlipMatrix();
-
-        static cv::Matx33d GetTranslationMatrix(double xDistance, double yDistance);
-
-        static cv::Point2d GetRotatedRegionCenter(const cv::Rect &region, double rotationDegrees);
-
-        static cv::Size2d GetRotatedFrameSize(const cv::Size &frameSize, double rotationDegrees);
+        cv::Matx23d reverseTransformationMatrix_;
     };
 
 
@@ -82,10 +70,17 @@ namespace MPF { namespace COMPONENT {
     class AffineFrameTransformer : public BaseDecoratedTransformer {
 
     public:
+        // Rotated search region frame cropping constructor.
         AffineFrameTransformer(const cv::Rect &region, double rotation, bool flip,
                                IFrameTransformer::Ptr innerTransform);
 
+        // Rotate full frame full frame constructor.
         AffineFrameTransformer(double rotation, bool flip,
+                               IFrameTransformer::Ptr innerTransform);
+
+        // Feed forward superset region constructor
+        AffineFrameTransformer(const std::vector<std::tuple<cv::Rect, double, bool>> &regions,
+                               double frameRotation, bool frameFlip,
                                IFrameTransformer::Ptr innerTransform);
 
         cv::Size GetFrameSize(int frameIndex) override;
@@ -105,6 +100,7 @@ namespace MPF { namespace COMPONENT {
     class FeedForwardAffineTransformer : public BaseDecoratedTransformer {
 
     public:
+        // Feed forward exact region constructor
         FeedForwardAffineTransformer(const std::vector<std::tuple<cv::Rect, double, bool>> &transformInfo,
                                      IFrameTransformer::Ptr innerTransform);
 
@@ -119,10 +115,10 @@ namespace MPF { namespace COMPONENT {
     private:
         const std::vector<AffineTransformation> frameTransforms_;
 
-        const AffineTransformation& GetTransform(int frameIndex);
+        const AffineTransformation& GetTransform(int frameIndex) const;
 
         static std::vector<AffineTransformation> GetTransformations(
-                const std::vector<std::tuple<cv::Rect, double, bool>> &transformInfo);
+                const std::vector<std::tuple<cv::Rect, double, bool>> &regions);
 
     };
 }}
