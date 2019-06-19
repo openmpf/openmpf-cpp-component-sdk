@@ -74,7 +74,7 @@ namespace MPF { namespace COMPONENT {
         AffineFrameTransformer(const cv::Rect &region, double rotation, bool flip,
                                IFrameTransformer::Ptr innerTransform);
 
-        // Rotate full frame full frame constructor.
+        // Rotate full frame constructor.
         AffineFrameTransformer(double rotation, bool flip,
                                IFrameTransformer::Ptr innerTransform);
 
@@ -97,12 +97,12 @@ namespace MPF { namespace COMPONENT {
 
 
 
-    class FeedForwardAffineTransformer : public BaseDecoratedTransformer {
+    class FeedForwardExactRegionAffineTransformer : public BaseDecoratedTransformer {
 
     public:
         // Feed forward exact region constructor
-        FeedForwardAffineTransformer(const std::vector<std::tuple<cv::Rect, double, bool>> &transformInfo,
-                                     IFrameTransformer::Ptr innerTransform);
+        FeedForwardExactRegionAffineTransformer(const std::vector<std::tuple<cv::Rect, double, bool>> &regions,
+                                                IFrameTransformer::Ptr innerTransform);
 
         cv::Size GetFrameSize(int frameIndex) override;
 

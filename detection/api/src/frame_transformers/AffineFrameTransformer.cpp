@@ -41,34 +41,41 @@ namespace MPF { namespace COMPONENT {
 
     namespace {
         cv::Mat_<double> GetAllCorners(const std::vector<std::tuple<cv::Rect, double, bool>> &regions) {
+            // Matrix containing each regions 4 corners. First row is x coordinate and second row is y coordinate.
             cv::Mat_<double> corners(2, 4 * regions.size());
             auto x_iter = corners.begin();
             auto y_iter = corners.row(1).begin();
 
-            for (const auto &detection : regions) {
-                const cv::Rect& region = std::get<0>(detection);
-                double rotation = std::get<1>(detection);
+            for (const auto &region : regions) {
+                const cv::Rect& rect = std::get<0>(region);
+                double rotation = std::get<1>(region);
 
-                *(x_iter++) = region.x;
-                *(y_iter++) = region.y;
+                *(x_iter++) = rect.x;
+                *(y_iter++) = rect.y;
 
                 double radians = rotation * M_PI / 180.0;
                 double sinVal = std::sin(radians);
                 double cosVal = std::cos(radians);
 
-                double corner2X = region.x + region.width * cosVal;
-                double corner2Y = region.y - region.width * sinVal;
+                // Need to subtract one because if you have a Rect(x=0, y=0, width=10, height=10),
+                // the bottom right corner is (9, 9) not (10, 10)
+                double width = rect.width - 1;
+                double height = rect.height - 1;
+
+                double corner2X = rect.x + width * cosVal;
+                double corner2Y = rect.y - width * sinVal;
                 *(x_iter++) = corner2X;
                 *(y_iter++) = corner2Y;
 
-                *(x_iter++) = corner2X + region.height * sinVal;
-                *(y_iter++) = corner2Y + region.height * cosVal;
+                *(x_iter++) = corner2X + height * sinVal;
+                *(y_iter++) = corner2Y + height * cosVal;
 
-                *(x_iter++) = region.x + region.height * sinVal;
-                *(y_iter++) = region.y + region.height * cosVal;
+                *(x_iter++) = rect.x + height * sinVal;
+                *(y_iter++) = rect.y + height * cosVal;
             }
             return corners;
         }
+
 
         cv::Rect2d GetMappedBoundingRect(
                 const std::vector<std::tuple<cv::Rect, double, bool>> &regions,
@@ -79,16 +86,16 @@ namespace MPF { namespace COMPONENT {
             cv::Mat_<double> simpleRotation = cv::Mat_<double>(frameRotMat, false)({0, 0, 2, 2});
             cv::Mat_<double> mappedCorners = simpleRotation * GetAllCorners(regions);
 
-            double minX = -1;
-            double maxX = -1;
+            double minX, maxX, minY, maxY;
             cv::minMaxLoc(mappedCorners.row(0), &minX, &maxX);
-
-            double minY = -1;
-            double maxY = -1;
             cv::minMaxLoc(mappedCorners.row(1), &minY, &maxY);
 
-            return cv::Rect2d(cv::Point2d(minX, minY), cv::Point2d(maxX, maxY));
+            double width = maxX - minX + 1;
+            double height = maxY - minY + 1;
+
+            return cv::Rect2d(cv::Point2d(minX, minY), cv::Size2d(width, height));
         }
+
 
         std::vector<std::tuple<cv::Rect, double, bool>> singleRegion(const cv::Rect &region, double rotation,
                                                                      bool flip) {
@@ -97,10 +104,11 @@ namespace MPF { namespace COMPONENT {
 
 
         namespace IndividualXForms {
-            // All transformation matrices are from https://en.wikipedia.org/wiki/Affine_transformation#Image_transformation
+            // All transformation matrices are from
+            // https://en.wikipedia.org/wiki/Affine_transformation#Image_transformation
 
             cv::Matx33d Rotation(double rotationDegrees) {
-                if (DetectionComponentUtils::RotationAngleEquals(0, rotationDegrees)) {
+                if (DetectionComponentUtils::RotationAnglesEqual(0, rotationDegrees)) {
                     // When rotation angle is 0 some matrix elements that should
                     // have been 0 were actually 1e-16 due to rounding issues.
                     return cv::Matx33d::eye();
@@ -138,9 +146,12 @@ namespace MPF { namespace COMPONENT {
 
     AffineTransformation::AffineTransformation(const std::vector<std::tuple<cv::Rect, double, bool>> &regions,
                                                double frameRotationDegrees, bool flip)
+            : rotationDegrees_(frameRotationDegrees)
+            , flip_(flip)
     {
-        rotationDegrees_ = frameRotationDegrees;
-        flip_ = flip;
+        if (regions.empty()) {
+            throw std::length_error("The \"regions\" parameter must contain at least one element, but it was empty.");
+        }
 
         cv::Matx33d rotationMat = IndividualXForms::Rotation(360 - frameRotationDegrees);
         cv::Rect mappedBoundingRect = GetMappedBoundingRect(regions, rotationMat);
@@ -204,7 +215,7 @@ namespace MPF { namespace COMPONENT {
         imageLocation.x_left_upper = cv::saturate_cast<int>(newTopLeft[0]);
         imageLocation.y_left_upper = cv::saturate_cast<int>(newTopLeft[1]);
 
-        if (!DetectionComponentUtils::RotationAngleEquals(rotationDegrees_, 0)) {
+        if (!DetectionComponentUtils::RotationAnglesEqual(rotationDegrees_, 0)) {
             double existingRotation
                     = DetectionComponentUtils::GetProperty(imageLocation.detection_properties, "ROTATION", 0.0);
             double newRotation = DetectionComponentUtils::NormalizeAngle(existingRotation + rotationDegrees_);
@@ -276,7 +287,7 @@ namespace MPF { namespace COMPONENT {
 
 
 
-    FeedForwardAffineTransformer::FeedForwardAffineTransformer(
+    FeedForwardExactRegionAffineTransformer::FeedForwardExactRegionAffineTransformer(
                 const std::vector<std::tuple<cv::Rect, double, bool>> &regions,
                 IFrameTransformer::Ptr innerTransform)
             : BaseDecoratedTransformer(std::move(innerTransform))
@@ -285,12 +296,12 @@ namespace MPF { namespace COMPONENT {
     }
 
 
-    cv::Size FeedForwardAffineTransformer::GetFrameSize(int frameIndex) {
+    cv::Size FeedForwardExactRegionAffineTransformer::GetFrameSize(int frameIndex) {
         return GetTransform(frameIndex).GetRegionSize();
     }
 
 
-    std::vector<AffineTransformation> FeedForwardAffineTransformer::GetTransformations(
+    std::vector<AffineTransformation> FeedForwardExactRegionAffineTransformer::GetTransformations(
             const std::vector<std::tuple<cv::Rect, double, bool>> &regions) {
 
         std::vector<AffineTransformation> transforms;
@@ -304,7 +315,7 @@ namespace MPF { namespace COMPONENT {
     }
 
 
-    const AffineTransformation &FeedForwardAffineTransformer::GetTransform(int frameIndex) const {
+    const AffineTransformation &FeedForwardExactRegionAffineTransformer::GetTransform(int frameIndex) const {
         try {
             return frameTransforms_.at(frameIndex);
         }
@@ -316,11 +327,11 @@ namespace MPF { namespace COMPONENT {
         }
     }
 
-    void FeedForwardAffineTransformer::DoFrameTransform(cv::Mat &frame, int frameIndex) {
+    void FeedForwardExactRegionAffineTransformer::DoFrameTransform(cv::Mat &frame, int frameIndex) {
         GetTransform(frameIndex).Apply(frame);
     }
 
-    void FeedForwardAffineTransformer::DoReverseTransform(MPFImageLocation &imageLocation, int frameIndex) {
+    void FeedForwardExactRegionAffineTransformer::DoReverseTransform(MPFImageLocation &imageLocation, int frameIndex) {
         GetTransform(frameIndex).ApplyReverse(imageLocation);
     }
 }}

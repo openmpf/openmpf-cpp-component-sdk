@@ -128,7 +128,7 @@ namespace DetectionComponentUtils {
     }
 
 
-    bool RotationAngleEquals(double a1, double a2, double epsilon) {
+    bool RotationAnglesEqual(double a1, double a2, double epsilon) {
         return std::abs(NormalizeAngle(a1) - NormalizeAngle(a2)) < epsilon;
     }
 }

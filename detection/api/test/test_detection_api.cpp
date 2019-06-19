@@ -1106,7 +1106,7 @@ TEST(AffineFrameTransformerTest, FullFrameRotationNonOrthogonal) {
 
     ASSERT_GE(numWhite, size.area() - size.width - size.height);
     ASSERT_LE(numWhite, size.area());
-    ASSERT_EQ(cv::Size(766, 670), img.size());
+    ASSERT_EQ(cv::Size(765, 670), img.size());
 }
 
 
@@ -1115,17 +1115,25 @@ TEST(AffineFrameTransformerTest, FullFrameRotationOrthogonal) {
     Pixel white(255, 255, 255);
 
     cv::Size size(640, 480);
-    cv::Mat img(size, CV_8UC3, white);
+    const cv::Mat img(size, CV_8UC3, white);
 
-    AffineFrameTransformer transformer(90, false, IFrameTransformer::Ptr(new NoOpFrameTransformer(size)));
+    for (int rotation : { 0, 90, 180, 270 }) {
+        AffineFrameTransformer transformer(rotation, false, IFrameTransformer::Ptr(new NoOpFrameTransformer(size)));
 
-    transformer.TransformFrame(img, 0);
+        cv::Mat transformed = img.clone();
+        transformer.TransformFrame(transformed, 0);
 
-    int numWhite = std::count(img.begin<Pixel>(), img.end<Pixel>(), white);
+        int numWhite = std::count(transformed.begin<Pixel>(), transformed.end<Pixel>(), white);
+        ASSERT_EQ(numWhite, size.area());
 
-    ASSERT_GE(numWhite, size.area() - size.width - size.height);
-    ASSERT_LE(numWhite, size.area());
-    ASSERT_EQ(cv::Size(480, 640), img.size());
+        if (rotation == 90 || rotation == 270) {
+            ASSERT_EQ(cv::Size(size.height, size.width), transformed.size());
+        }
+        else {
+            ASSERT_EQ(size, transformed.size());
+        }
+
+    }
 }
 
 
@@ -1167,9 +1175,7 @@ TEST(AffineFrameTransformerTest, TestFeedForwardSupersetRegion) {
     ffTrack.frame_locations.emplace(2, MPFImageLocation(260, 340, 60, 60, -1, { { "ROTATION", "20" } }));
 
 
-    for (int i = 0; i <= 18; i++) {
-        double rotation = i * 20;
-
+    for (int rotation = 0; rotation <= 360; rotation += 20) {
         MPFVideoJob job("Test", "test/test_imgs/rotation/feed-forward-rotation-test.png",
                         ffTrack.start_frame, ffTrack.stop_frame, ffTrack,
                         { {"FEED_FORWARD_TYPE", "SUPERSET_REGION" }, { "ROTATION", std::to_string(rotation) } }, {});

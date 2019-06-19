@@ -160,7 +160,7 @@ namespace {
             rotation = DetectionComponentUtils::GetProperty(jobProperties, rotationKey, 0.0);
         }
         rotation = DetectionComponentUtils::NormalizeAngle(rotation);
-        bool rotationRequired = !DetectionComponentUtils::RotationAngleEquals(rotation, 0);
+        bool rotationRequired = !DetectionComponentUtils::RotationAnglesEqual(rotation, 0);
 
         bool flipRequired;
         if (DetectionComponentUtils::GetProperty(jobProperties, "AUTO_FLIP", false)) {
@@ -205,17 +205,17 @@ namespace {
 
 
 
-    cv::Rect GetSupersetRegionNoRotation(const std::vector<std::tuple<cv::Rect, double, bool>> &transformInfo) {
-        if (transformInfo.empty()) {
+    cv::Rect GetSupersetRegionNoRotation(const std::vector<std::tuple<cv::Rect, double, bool>> &regions) {
+        if (regions.empty()) {
             throw std::length_error(
                     "FEED_FORWARD_TYPE: SUPERSET_REGION is enabled, but feed forward track was empty.");
         }
 
-        auto it = transformInfo.begin();
+        auto it = regions.begin();
         cv::Rect region = std::get<0>(*it);
         ++it;
 
-        for (; it != transformInfo.end(); ++it) {
+        for (; it != regions.end(); ++it) {
             region |= std::get<0>(*it);
         }
         return region;
@@ -223,7 +223,7 @@ namespace {
 
 
     void AddFeedForwardTransformsIfNeeded(const Properties &jobProperties, const Properties &mediaProperties,
-                                          const cv::Size &inputVideoSize, const Properties &trackProperties,
+                                          const Properties &trackProperties,
                                           const std::map<int, MPFImageLocation> &detections,
                                           IFrameTransformer::Ptr &currentTransformer) {
         if (SearchRegionCroppingIsEnabled(jobProperties)) {
@@ -277,8 +277,8 @@ namespace {
         bool requiresRotationOrFlip = false;
         bool isExactRegionMode = FeedForwardExactRegionIsEnabled(jobProperties);
 
-        std::vector<std::tuple<cv::Rect, double, bool>> transformInfo;
-        transformInfo.reserve(detections.size());
+        std::vector<std::tuple<cv::Rect, double, bool>> regions;
+        regions.reserve(detections.size());
 
         for (const auto &detectionPair : detections) {
             const auto &detection = detectionPair.second;
@@ -309,17 +309,17 @@ namespace {
                 flip = jobLevelFlip;
             }
 
-            if (flip || !DetectionComponentUtils::RotationAngleEquals(0, rotation)) {
+            if (flip || !DetectionComponentUtils::RotationAnglesEqual(0, rotation)) {
                 requiresRotationOrFlip = true;
             }
 
-            transformInfo.emplace_back(ToRect(detection), rotation, flip);
+            regions.emplace_back(ToRect(detection), rotation, flip);
         }
 
         if (isExactRegionMode) {
             if (requiresRotationOrFlip) {
                 currentTransformer = IFrameTransformer::Ptr(
-                        new FeedForwardAffineTransformer(transformInfo, std::move(currentTransformer)));
+                        new FeedForwardExactRegionAffineTransformer(regions, std::move(currentTransformer)));
             }
             else {
                 currentTransformer = IFrameTransformer::Ptr(
@@ -329,11 +329,11 @@ namespace {
         else {
             if (requiresRotationOrFlip) {
                 currentTransformer = IFrameTransformer::Ptr(
-                        new AffineFrameTransformer(transformInfo, jobLevelRotation, jobLevelFlip,
+                        new AffineFrameTransformer(regions, jobLevelRotation, jobLevelFlip,
                                                    std::move(currentTransformer)));
             }
             else {
-                cv::Rect supersetRegion = GetSupersetRegionNoRotation(transformInfo);
+                cv::Rect supersetRegion = GetSupersetRegionNoRotation(regions);
                 currentTransformer = IFrameTransformer::Ptr(
                         new SearchRegionFrameCropper(supersetRegion, std::move(currentTransformer)));
             }
@@ -352,7 +352,7 @@ namespace {
                 throw std::length_error(
                         "Feed forward is enabled, but feed forward track was empty.");
             }
-            AddFeedForwardTransformsIfNeeded(job.job_properties, job.media_properties, inputVideoSize,
+            AddFeedForwardTransformsIfNeeded(job.job_properties, job.media_properties,
                                              trackProperties, trackLocations, transformer);
         }
         else {

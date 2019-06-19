@@ -91,7 +91,7 @@ namespace DetectionComponentUtils {
 
     double NormalizeAngle(double angle);
 
-    bool RotationAngleEquals(double a1, double a2, double epsilon = 0.1);
+    bool RotationAnglesEqual(double a1, double a2, double epsilon = 0.1);
 }
 
 
