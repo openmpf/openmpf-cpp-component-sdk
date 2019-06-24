@@ -138,7 +138,7 @@ namespace {
     }
 
 
-    bool FeedForwardIsEnabled(const Properties &jobProperties) {
+    bool FeedForwardRegionIsEnabled(const Properties &jobProperties) {
         return FeedForwardSupersetRegionIsEnabled(jobProperties) || FeedForwardExactRegionIsEnabled(jobProperties);
     }
 
@@ -222,10 +222,10 @@ namespace {
     }
 
 
-    void AddFeedForwardTransformsIfNeeded(const Properties &jobProperties, const Properties &mediaProperties,
-                                          const Properties &trackProperties,
-                                          const std::map<int, MPFImageLocation> &detections,
-                                          IFrameTransformer::Ptr &currentTransformer) {
+    void AddFeedForwardTransformersIfNeeded(const Properties &jobProperties, const Properties &mediaProperties,
+                                            const Properties &trackProperties,
+                                            const std::map<int, MPFImageLocation> &detections,
+                                            IFrameTransformer::Ptr &currentTransformer) {
         if (SearchRegionCroppingIsEnabled(jobProperties)) {
             std::cerr << "Both feed forward cropping and search region cropping properties were provided. "
                       << "Only feed forward cropping will occur." << std::endl;
@@ -347,13 +347,13 @@ namespace {
 
         IFrameTransformer::Ptr transformer(new NoOpFrameTransformer(inputVideoSize));
 
-        if (FeedForwardIsEnabled(job.job_properties)) {
+        if (FeedForwardRegionIsEnabled(job.job_properties)) {
             if (trackLocations.empty()) {
                 throw std::length_error(
                         "Feed forward is enabled, but feed forward track was empty.");
             }
-            AddFeedForwardTransformsIfNeeded(job.job_properties, job.media_properties,
-                                             trackProperties, trackLocations, transformer);
+            AddFeedForwardTransformersIfNeeded(job.job_properties, job.media_properties,
+                                               trackProperties, trackLocations, transformer);
         }
         else {
             AddTransformersIfNeeded(job.job_properties, job.media_properties, inputVideoSize, transformer);

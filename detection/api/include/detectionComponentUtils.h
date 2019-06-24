@@ -40,6 +40,9 @@
 namespace DetectionComponentUtils {
 
 
+    // Allow string literals to be passed to GetProperty without wrapping them in an std::string.
+    // For example, instead of GetProperty(props, "KEY", std::string("default")) you can just use
+    // GetProperty(props, "KEY", "default")
     template <typename T>
     using t_unless_char_ptr_then_string
         = typename std::conditional<

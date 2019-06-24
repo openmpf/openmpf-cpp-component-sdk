@@ -1025,6 +1025,7 @@ Pixel closestColor(const Pixel &sample) {
 }
 
 void assertImageColor(const cv::Mat &img, const Pixel &expectedColor) {
+    // Color of pixels along edges gets blended with nearby pixels during interpolation.
     for (int col = 1; col < img.cols; col++) {
         for (int row = 1; row < img.rows; row++)  {
             ASSERT_EQ(closestColor(img.at<Pixel>(row, col)), Pixel(255, 0, 0)) << "row = " << row << ", col = " << col;
@@ -1104,6 +1105,7 @@ TEST(AffineFrameTransformerTest, FullFrameRotationNonOrthogonal) {
 
     int numWhite = std::count(img.begin<Pixel>(), img.end<Pixel>(), white);
 
+    // Color of pixels along edges gets blended with nearby pixels during interpolation.
     ASSERT_GE(numWhite, size.area() - size.width - size.height);
     ASSERT_LE(numWhite, size.area());
     ASSERT_EQ(cv::Size(765, 670), img.size());
@@ -1196,8 +1198,49 @@ TEST(AffineFrameTransformerTest, TestFeedForwardSupersetRegion) {
 
         int actualNumBlue = std::count(img.begin<Pixel>(), img.end<Pixel>(), Pixel(255, 0, 0));
 
+        // Color of pixels along edges gets blended with nearby pixels during interpolation.
         ASSERT_LE(actualNumBlue, expectedMaxNumBlue);
         ASSERT_GE(actualNumBlue, expectedMinNumBlue);
+    }
+}
+
+
+
+TEST(AffineFrameTransformerTest, ReverseTransformWithFlip) {
+    int frameWidth = 100;
+    int frameHeight = 200;
+
+    AffineTransformation transformation(
+            { std::make_tuple(cv::Rect(0, 0, frameWidth, frameHeight), 0, false) },
+            0, true);
+
+    {
+        // Test without existing flip.
+        MPFImageLocation detection(10, 20, 40, 50);
+        MPFImageLocation detectionReversed = detection;
+        transformation.ApplyReverse(detectionReversed);
+
+        ASSERT_EQ(frameWidth - detection.x_left_upper - detection.width, detectionReversed.x_left_upper);
+        ASSERT_EQ(detection.y_left_upper, detectionReversed.y_left_upper);
+        ASSERT_EQ(detection.width, detectionReversed.width);
+        ASSERT_EQ(detection.height, detectionReversed.height);
+        ASSERT_EQ(1, detectionReversed.detection_properties.count("HORIZONTAL_FLIP"));
+        ASSERT_TRUE(DetectionComponentUtils::GetProperty(detectionReversed.detection_properties,
+                                                         "HORIZONTAL_FLIP", false));
+    }
+
+
+    {
+        // Test with existing flip.
+        MPFImageLocation detection(10, 20, 40, 50, -1, { { "HORIZONTAL_FLIP", "true" } });
+        MPFImageLocation detectionReversed = detection;
+        transformation.ApplyReverse(detectionReversed);
+
+        ASSERT_EQ(frameWidth - detection.x_left_upper - detection.width, detectionReversed.x_left_upper);
+        ASSERT_EQ(detection.y_left_upper, detectionReversed.y_left_upper);
+        ASSERT_EQ(detection.width, detectionReversed.width);
+        ASSERT_EQ(detection.height, detectionReversed.height);
+        ASSERT_EQ(0, detectionReversed.detection_properties.count("HORIZONTAL_FLIP"));
     }
 }
 

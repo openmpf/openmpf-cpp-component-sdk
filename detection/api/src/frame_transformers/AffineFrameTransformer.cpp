@@ -5,11 +5,11 @@
  * under contract, and is subject to the Rights in Data-General Clause        *
  * 52.227-14, Alt. IV (DEC 2007).                                             *
  *                                                                            *
- * Copyright 2018 The MITRE Corporation. All Rights Reserved.                 *
+ * Copyright 2019 The MITRE Corporation. All Rights Reserved.                 *
  ******************************************************************************/
 
 /******************************************************************************
- * Copyright 2018 The MITRE Corporation                                       *
+ * Copyright 2019 The MITRE Corporation                                       *
  *                                                                            *
  * Licensed under the Apache License, Version 2.0 (the "License");            *
  * you may not use this file except in compliance with the License.           *
@@ -107,6 +107,7 @@ namespace MPF { namespace COMPONENT {
             // All transformation matrices are from
             // https://en.wikipedia.org/wiki/Affine_transformation#Image_transformation
 
+            // Returns a matrix that will rotate points the given number of degrees in the counter-clockwise direction.
             cv::Matx33d Rotation(double rotationDegrees) {
                 if (DetectionComponentUtils::RotationAnglesEqual(0, rotationDegrees)) {
                     // When rotation angle is 0 some matrix elements that should
@@ -189,7 +190,7 @@ namespace MPF { namespace COMPONENT {
     void AffineTransformation::Apply(cv::Mat &frame) const {
         // From cv::warpAffine docs:
         // The function warpAffine transforms the source image using the specified matrix when the flag
-        // WARP_INVERSE_MAP is set. Otherwise, the transformation is first inverted with cv::invertAffineTransform
+        // WARP_INVERSE_MAP is set. Otherwise, the transformation is first inverted with cv::invertAffineTransform.
         // From OpenCV's Geometric Image Transformations module documentation:
         // To avoid sampling artifacts, the mapping is done in the reverse order, from destination to the source.
 
@@ -247,8 +248,11 @@ namespace MPF { namespace COMPONENT {
                                                    bool flip,
                                                    IFrameTransformer::Ptr innerTransform)
             : BaseDecoratedTransformer(std::move(innerTransform))
-            // Pass in rotation twice since the region is rotated and so is the frame.
-            , transform_(singleRegion(region, rotation, flip), rotation, flip)
+            , transform_(
+                // Pass in rotation here since the bounding box itself is rotated.
+                singleRegion(region, rotation, flip),
+                // Pass in rotation here so that the frame will rotated so that the bounding box ends up being upright.
+                rotation, flip)
     {
     }
 
