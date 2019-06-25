@@ -56,8 +56,8 @@ namespace MPF { namespace COMPONENT {
 
 
 
-    SearchRegionFrameCropper::SearchRegionFrameCropper(IFrameTransformer::Ptr innerTransform,
-                                                       const cv::Rect &regionOfInterest)
+    SearchRegionFrameCropper::SearchRegionFrameCropper(const cv::Rect &regionOfInterest,
+                                                       IFrameTransformer::Ptr innerTransform)
         : FrameCropper(std::move(innerTransform))
         , searchRegion_(GetIntersectingRegion(regionOfInterest, 0)) {
     }
@@ -76,8 +76,8 @@ namespace MPF { namespace COMPONENT {
 
 
 
-    FeedForwardFrameCropper::FeedForwardFrameCropper(IFrameTransformer::Ptr innerTransform,
-                                                     const std::map<int, MPFImageLocation> &track)
+    FeedForwardFrameCropper::FeedForwardFrameCropper(const std::map<int, MPFImageLocation> &track,
+                                                     IFrameTransformer::Ptr innerTransform)
         : FrameCropper(std::move(innerTransform)) {
 
         fedForwardDetections_.reserve(track.size());

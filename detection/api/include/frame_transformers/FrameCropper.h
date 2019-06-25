@@ -60,7 +60,7 @@ namespace MPF { namespace COMPONENT {
 
     class SearchRegionFrameCropper : public FrameCropper {
     public:
-        SearchRegionFrameCropper(IFrameTransformer::Ptr innerTransform, const cv::Rect &regionOfInterest);
+        SearchRegionFrameCropper(const cv::Rect &regionOfInterest, IFrameTransformer::Ptr innerTransform);
 
     private:
         const cv::Rect searchRegion_;
@@ -75,7 +75,7 @@ namespace MPF { namespace COMPONENT {
 
     class FeedForwardFrameCropper : public FrameCropper {
     public:
-        FeedForwardFrameCropper(IFrameTransformer::Ptr innerTransform, const std::map<int, MPFImageLocation> &track);
+        FeedForwardFrameCropper(const std::map<int, MPFImageLocation> &track, IFrameTransformer::Ptr innerTransform);
 
     private:
         std::vector<cv::Rect> fedForwardDetections_;

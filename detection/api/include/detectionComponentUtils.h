@@ -39,23 +39,32 @@
 
 namespace DetectionComponentUtils {
 
+
+    // Allow string literals to be passed to GetProperty without wrapping them in an std::string.
+    // For example, instead of GetProperty(props, "KEY", std::string("default")) you can just use
+    // GetProperty(props, "KEY", "default")
+    template <typename T>
+    using t_unless_char_ptr_then_string
+        = typename std::conditional<
+                std::is_same<T, const char*>::value,
+                std::string,
+                T
+          >::type;
+
     template<typename T>
-    T GetProperty(const MPF::COMPONENT::Properties &props,
-                  const std::string &key,
-                  const T defaultValue) {
+    t_unless_char_ptr_then_string<T> GetProperty(const MPF::COMPONENT::Properties &props,
+                                                 const std::string &key,
+                                                 const T defaultValue) {
         auto iter = props.find(key);
         if (iter == props.end()) {
             return defaultValue;
         }
-        else {
-            T tmp;
-            try {
-                tmp = boost::lexical_cast<T>(iter->second);
-            }
-            catch (const boost::bad_lexical_cast &e) {
-                return defaultValue;
-            }
-            return tmp;
+
+        try {
+            return boost::lexical_cast<t_unless_char_ptr_then_string<T>>(iter->second);
+        }
+        catch (const boost::bad_lexical_cast &e) {
+            return defaultValue;
         }
     }
 
@@ -82,6 +91,10 @@ namespace DetectionComponentUtils {
     std::pair<MPF::COMPONENT::MPFDetectionError, std::string>
     HandleDetectionException(MPF::COMPONENT::MPFDetectionDataType dataType);
 
+
+    double NormalizeAngle(double angle);
+
+    bool RotationAnglesEqual(double a1, double a2, double epsilon = 0.1);
 }
 
 
