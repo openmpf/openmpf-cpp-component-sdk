@@ -35,6 +35,7 @@
 #include "BaseDecoratedTransformer.h"
 #include "IFrameTransformer.h"
 #include "MPFDetectionObjects.h"
+#include "SearchRegion.h"
 
 
 namespace MPF { namespace COMPONENT {
@@ -43,8 +44,9 @@ namespace MPF { namespace COMPONENT {
     class AffineTransformation {
     public:
         AffineTransformation(
-                const std::vector<std::tuple<cv::Rect, double, bool>> &regions,
-                double frameRotationDegrees, bool flip);
+                const std::vector<std::tuple<cv::Rect, double, bool>> &preTransformRegions,
+                double frameRotationDegrees, bool flip,
+                const SearchRegion &postTransformSearchRegion = {});
 
         void Apply(cv::Mat &frame) const;
 
@@ -59,7 +61,6 @@ namespace MPF { namespace COMPONENT {
 
         cv::Size2d regionSize_;
 
-
         // OpenCV does the mapping in the reverse order (from destination to the source) to avoid sampling artifacts.
         cv::Matx23d reverseTransformationMatrix_;
     };
@@ -69,8 +70,8 @@ namespace MPF { namespace COMPONENT {
     class AffineFrameTransformer : public BaseDecoratedTransformer {
 
     public:
-        // Rotated search region frame cropping constructor.
-        AffineFrameTransformer(const cv::Rect &region, double rotation, bool flip,
+        // Search region frame cropping on rotated frame constructor.
+        AffineFrameTransformer(double rotation, bool flip, const SearchRegion &searchRegion,
                                IFrameTransformer::Ptr innerTransform);
 
         // Rotate full frame constructor.

@@ -55,6 +55,8 @@ set(SOURCE_FILES
         include/VideoSegmentToFramesConverter.h
         src/VideoSegmentToFramesConverter.cpp
 
+        include/frame_transformers/SearchRegion.h
+        src/frame_transformers/SearchRegion.cpp
 
         include/frame_transformers/IFrameTransformer.h
 

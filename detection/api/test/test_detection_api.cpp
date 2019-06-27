@@ -40,6 +40,7 @@
 #include "FeedForwardFrameFilter.h"
 #include "frame_transformers/AffineFrameTransformer.h"
 #include "frame_transformers/NoOpFrameTransformer.h"
+#include <frame_transformers/SearchRegion.h>
 #include "FrameFilter.h"
 #include "KeyFrameFilter.h"
 #include "MPFImageReader.h"
@@ -1264,3 +1265,160 @@ TEST(NormalizeAngle, TestNormalizeAngle) {
     ASSERT_DOUBLE_EQ(0, NormalizeAngle(360));
 }
 
+
+TEST(AffineFrameTransformerTest, SearchRegionWithOrthogonalRotation) {
+
+    Properties absoluteProps {
+            {"SEARCH_REGION_ENABLE_DETECTION", "true"},
+            {"SEARCH_REGION_TOP_LEFT_X_DETECTION", "100"},
+            {"SEARCH_REGION_BOTTOM_RIGHT_Y_DETECTION", "50"}
+    };
+
+    Properties percentageProps {
+            {"SEARCH_REGION_ENABLE_DETECTION", "true"},
+            {"SEARCH_REGION_TOP_LEFT_X_DETECTION", "50%"},
+            {"SEARCH_REGION_BOTTOM_RIGHT_Y_DETECTION", "50%"}
+    };
+
+    Properties rotate90props {
+            {"ROTATION", "90"},
+            {"SEARCH_REGION_ENABLE_DETECTION", "true"},
+            {"SEARCH_REGION_TOP_LEFT_X_DETECTION", "50"},
+            {"SEARCH_REGION_TOP_LEFT_Y_DETECTION", "50%"},
+    };
+
+    Properties rotate180props {
+            {"ROTATION", "180"},
+            {"SEARCH_REGION_ENABLE_DETECTION", "true"},
+            {"SEARCH_REGION_BOTTOM_RIGHT_X_DETECTION", "50%"},
+            {"SEARCH_REGION_TOP_LEFT_Y_DETECTION", "50%"},
+    };
+
+    Properties rotate270Props {
+            {"ROTATION", "270"},
+            {"SEARCH_REGION_ENABLE_DETECTION", "true"},
+            {"SEARCH_REGION_BOTTOM_RIGHT_X_DETECTION", "50%"},
+            {"SEARCH_REGION_BOTTOM_RIGHT_Y_DETECTION", "50%"},
+    };
+
+
+    Properties flipProps {
+            {"HORIZONTAL_FLIP", "true"},
+            {"SEARCH_REGION_ENABLE_DETECTION", "true"},
+            {"SEARCH_REGION_BOTTOM_RIGHT_X_DETECTION", "50%"},
+            {"SEARCH_REGION_BOTTOM_RIGHT_Y_DETECTION", "50%"}
+    };
+
+
+    Properties rotate90AndFlipProps {
+            {"ROTATION", "90"},
+            {"HORIZONTAL_FLIP", "true"},
+            {"SEARCH_REGION_ENABLE_DETECTION", "true"},
+            {"SEARCH_REGION_BOTTOM_RIGHT_X_DETECTION", "50%"},
+            {"SEARCH_REGION_TOP_LEFT_Y_DETECTION", "50%"},
+    };
+
+    Properties rotate180AndFlipProps {
+            {"ROTATION", "180"},
+            {"HORIZONTAL_FLIP", "true"},
+            {"SEARCH_REGION_ENABLE_DETECTION", "true"},
+            {"SEARCH_REGION_TOP_LEFT_X_DETECTION", "50%"},
+            {"SEARCH_REGION_TOP_LEFT_Y_DETECTION", "50%"},
+    };
+
+    Properties rotate270AndFlipProps {
+            {"ROTATION", "270"},
+            {"HORIZONTAL_FLIP", "true"},
+            {"SEARCH_REGION_ENABLE_DETECTION", "true"},
+            {"SEARCH_REGION_TOP_LEFT_X_DETECTION", "50%"},
+            {"SEARCH_REGION_BOTTOM_RIGHT_Y_DETECTION", "50%"},
+    };
+
+    const auto propSets = {
+            absoluteProps, percentageProps, rotate90props, rotate270Props, rotate180props,
+            flipProps, rotate90AndFlipProps, rotate180AndFlipProps, rotate270AndFlipProps };
+
+    for (const auto &props : propSets) {
+        MPFImageJob job("Test", "test/test_imgs/rotation/search-region-test.png", props, {});
+        cv::Mat img = MPFImageReader(job).GetImage();
+
+        int numGreen = std::count(img.begin<Pixel>(), img.end<Pixel>(), Pixel(0, 255, 0));
+        ASSERT_EQ(5000, img.total());
+        ASSERT_EQ(5000, numGreen);
+    }
+}
+
+
+TEST(AffineFrameTransformerTest, SearchRegionWithNonOrthogonalRotation) {
+    MPFImageJob job("Test", "test/test_imgs/rotation/20deg-bounding-box.png",
+                    {
+                        {"ROTATION", "20"},
+                        {"SEARCH_REGION_ENABLE_DETECTION", "true"},
+                        {"SEARCH_REGION_TOP_LEFT_X_DETECTION", "199"},
+                        {"SEARCH_REGION_TOP_LEFT_Y_DETECTION", "245"},
+                        {"SEARCH_REGION_BOTTOM_RIGHT_X_DETECTION", "299"},
+                        {"SEARCH_REGION_BOTTOM_RIGHT_Y_DETECTION", "285"},
+                    }, {});
+
+    MPFImageReader imageReader(job);
+    auto img = imageReader.GetImage();
+    assertImageColor(img, {255, 0, 0});
+
+    MPFImageLocation il(0, 0, img.cols, img.rows);
+    imageReader.ReverseTransform(il);
+    ASSERT_EQ(117, il.x_left_upper);
+    ASSERT_EQ(218, il.y_left_upper);
+    ASSERT_EQ(100, il.width);
+    ASSERT_EQ(40, il.height);
+    double actualRotation = DetectionComponentUtils::GetProperty(il.detection_properties, "ROTATION", 0.0);
+    ASSERT_TRUE(DetectionComponentUtils::RotationAnglesEqual(20, actualRotation));
+}
+
+
+void assertSearchRegionMatchesRect(const cv::Rect &expectedRegion, const SearchRegion &searchRegion) {
+    ASSERT_EQ(expectedRegion, searchRegion.GetRect(cv::Size(50, 100)));
+}
+
+
+TEST(SearchRegion, TestSearchRegion) {
+
+    assertSearchRegionMatchesRect(
+            cv::Rect(0, 0, 50, 100),
+            { });
+
+    assertSearchRegionMatchesRect(
+            cv::Rect(0, 0, 50, 100),
+            {
+                RegionEdge::Percentage(-1),
+                RegionEdge::Absolute(-2),
+                RegionEdge::Percentage(-3),
+                RegionEdge::Absolute(-4),
+            });
+
+    assertSearchRegionMatchesRect(
+            cv::Rect(0, 10, 25, 90),
+            {
+                RegionEdge::Absolute(0),
+                RegionEdge::Absolute(10),
+                RegionEdge::Percentage(50),
+                RegionEdge::Default()
+            });
+
+    assertSearchRegionMatchesRect(
+            cv::Rect(0, 0, 50, 100),
+            {
+                RegionEdge::Absolute(0),
+                RegionEdge::Absolute(0),
+                RegionEdge::Absolute(10000),
+                RegionEdge::Absolute(10000)
+            });
+
+    assertSearchRegionMatchesRect(
+            cv::Rect(0, 0, 25, 100),
+            {
+                RegionEdge::Absolute(-1),
+                RegionEdge::Percentage(-10),
+                RegionEdge::Percentage(50),
+                RegionEdge::Default()
+            });
+}
