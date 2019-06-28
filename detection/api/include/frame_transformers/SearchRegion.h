@@ -35,10 +35,9 @@
 namespace MPF { namespace COMPONENT {
 
     /**
-     * Holds the information about a search region as described by job properties.
-     * Depending on whether or not a frame is going to be rotated we may not know what the actual frame size
-     * at the same time we are parsing the job properties. This class can be constructed when parsing the
-     * job properties, then when we know what the frame size is GetRect can be called.
+     * Holds the information about a search region as described by job properties. When a frame is going to be
+     * rotated the frame size is not known at the same time the job properties are parsed. This class can be
+     * constructed when parsing the job properties. Then, when the frame size is known, GetRect can be called.
      */
     class SearchRegion {
     public:
