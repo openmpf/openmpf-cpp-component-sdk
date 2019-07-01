@@ -27,7 +27,6 @@
 #include "frame_transformers/FrameTransformerFactory.h"
 
 #include <map>
-#include <sstream>
 #include <stdexcept>
 #include <string>
 #include <tuple>
@@ -41,6 +40,7 @@
 #include "frame_transformers/FrameCropper.h"
 #include "frame_transformers/NoOpFrameTransformer.h"
 #include "frame_transformers/IFrameTransformer.h"
+#include "frame_transformers/SearchRegion.h"
 #include "MPFDetectionObjects.h"
 
 
@@ -52,79 +52,43 @@ namespace MPF { namespace COMPONENT { namespace FrameTransformerFactory {
 
 namespace {
 
-    int GetPercentOfDimension(const std::string &percentString, const int dimension) {
-        float percentNum;
-        std::istringstream(percentString) >> percentNum;
-        if (percentNum < 0.0) {
-            return 0;
-        }
-        if (percentNum > 100.0) {
-            return dimension;
-        }
-        return static_cast<int>(percentNum * dimension / 100.0);
+    bool SearchRegionCroppingIsEnabled(const Properties &jobProperties) {
+        return DetectionComponentUtils::GetProperty(jobProperties, "SEARCH_REGION_ENABLE_DETECTION", false);
     }
 
 
-    cv::Rect GetSearchRegion(const Properties &jobProperties, const cv::Size &frameSize) {
+    RegionEdge::resolve_region_edge_t GetRegionEdge(const Properties &props, const std::string& property) {
+        try {
+            std::string propVal = GetProperty(props, property, "-1");
+            if (propVal.find('%') != std::string::npos) {
+                return RegionEdge::Percentage(std::stod(propVal));
+            }
+            return RegionEdge::Absolute(std::stoi(propVal));
+        }
+        catch (const std::invalid_argument&) {
+            // Failed to convert property to number
+            return RegionEdge::Default();
+        }
+    }
 
-        int position;
-        std::string topLeftX = GetProperty(jobProperties, "SEARCH_REGION_TOP_LEFT_X_DETECTION","-1");
-        int regionTopLeftXPos;
-        size_t idx = topLeftX.find('%');
-        if (idx != std::string::npos) {
-            regionTopLeftXPos = GetPercentOfDimension(topLeftX.substr(0, idx), frameSize.width);
-        }
-        else {
-            std::istringstream(topLeftX) >> position;
-            regionTopLeftXPos = (position < 0) ? 0 : position;
-        }
 
-        std::string topLeftY = GetProperty(jobProperties, "SEARCH_REGION_TOP_LEFT_Y_DETECTION", "-1");
-        int regionTopLeftYPos;
-        idx = topLeftY.find('%');
-        if (idx != std::string::npos) {
-            regionTopLeftYPos = GetPercentOfDimension(topLeftY.substr(0, idx), frameSize.height);
+    SearchRegion GetSearchRegion(const Properties &props) {
+        if (!SearchRegionCroppingIsEnabled(props)) {
+            return { };
         }
-        else {
-            std::istringstream(topLeftY) >> position;
-            regionTopLeftYPos = (position < 0) ? 0 : position;
-        }
+        return {
+                GetRegionEdge(props, "SEARCH_REGION_TOP_LEFT_X_DETECTION"),
+                GetRegionEdge(props, "SEARCH_REGION_TOP_LEFT_Y_DETECTION"),
+                GetRegionEdge(props, "SEARCH_REGION_BOTTOM_RIGHT_X_DETECTION"),
+                GetRegionEdge(props, "SEARCH_REGION_BOTTOM_RIGHT_Y_DETECTION"),
+        };
 
-        cv::Point topLeft(regionTopLeftXPos, regionTopLeftYPos);
-
-        std::string bottomRightX = GetProperty(jobProperties, "SEARCH_REGION_BOTTOM_RIGHT_X_DETECTION", "-1");
-        int regionBottomRightXPos;
-        idx = bottomRightX.find('%');
-        if (idx != std::string::npos) {
-            regionBottomRightXPos = GetPercentOfDimension(bottomRightX.substr(0, idx), frameSize.width);
-        }
-        else {
-            std::istringstream(bottomRightX) >> position;
-            regionBottomRightXPos = (position <= 0) ? frameSize.width : position;
-        }
-
-        std::string bottomRightY = GetProperty(jobProperties, "SEARCH_REGION_BOTTOM_RIGHT_Y_DETECTION", "-1");
-        int regionBottomRightYPos;
-        idx = bottomRightY.find('%');
-        if (idx != std::string::npos) {
-            regionBottomRightYPos = GetPercentOfDimension(bottomRightY.substr(0, idx), frameSize.height);
-        }
-        else {
-            std::istringstream(bottomRightY) >> position;
-            regionBottomRightYPos = (position <= 0) ? frameSize.height : position;
-        }
-
-        cv::Point bottomRight(regionBottomRightXPos, regionBottomRightYPos);
-
-        return cv::Rect(topLeft, bottomRight);
     }
 
 
     cv::Rect ToRect(const MPFImageLocation &imageLocation) {
         return {imageLocation.x_left_upper, imageLocation.y_left_upper, imageLocation.width, imageLocation.height};
     }
-
-
 
 
     bool FeedForwardSupersetRegionIsEnabled(const Properties &jobProperties) {
@@ -142,9 +106,6 @@ namespace {
         return FeedForwardSupersetRegionIsEnabled(jobProperties) || FeedForwardExactRegionIsEnabled(jobProperties);
     }
 
-    bool SearchRegionCroppingIsEnabled(const Properties &jobProperties) {
-        return DetectionComponentUtils::GetProperty(jobProperties, "SEARCH_REGION_ENABLE_DETECTION", false);
-    }
 
 
 
@@ -170,39 +131,23 @@ namespace {
             flipRequired = DetectionComponentUtils::GetProperty(jobProperties, "HORIZONTAL_FLIP", false);
         }
 
-        bool cropRequired;
-        cv::Rect region;
-        cv::Rect frameRect(cv::Point(0, 0), inputVideoSize);
-        if (SearchRegionCroppingIsEnabled(jobProperties)) {
-            region = GetSearchRegion(jobProperties, inputVideoSize);
-            cropRequired = region != frameRect;
-        }
-        else {
-            region = frameRect;
-            cropRequired = false;
-        }
 
-        if (!rotationRequired && !flipRequired && !cropRequired) {
-            return;
-        }
+        SearchRegion searchRegion = GetSearchRegion(jobProperties);
 
-
-        if (cropRequired) {
-            if (flipRequired || rotationRequired) {
-                currentTransformer = IFrameTransformer::Ptr(
-                        new AffineFrameTransformer(region, rotation, flipRequired, std::move(currentTransformer)));
-            }
-            else {
-                currentTransformer = IFrameTransformer::Ptr(
-                        new SearchRegionFrameCropper(region, std::move(currentTransformer)));
-            }
-        }
-        else {
+        if (rotationRequired || flipRequired) {
             currentTransformer = IFrameTransformer::Ptr(
-                    new AffineFrameTransformer(rotation, flipRequired, std::move(currentTransformer)));
+                    new AffineFrameTransformer(rotation, flipRequired, searchRegion, std::move(currentTransformer)));
+        }
+        else {
+            cv::Rect frameRect(cv::Point(0, 0), inputVideoSize);
+            cv::Rect searchRegionRect = searchRegion.GetRect(inputVideoSize);
+            if (frameRect != searchRegionRect) {
+                currentTransformer = IFrameTransformer::Ptr(
+                        new SearchRegionFrameCropper(searchRegionRect, std::move(currentTransformer)));
+            }
+
         }
     }
-
 
 
     cv::Rect GetSupersetRegionNoRotation(const std::vector<std::tuple<cv::Rect, double, bool>> &regions) {

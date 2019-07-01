@@ -97,9 +97,9 @@ namespace MPF { namespace COMPONENT {
         }
 
 
-        std::vector<std::tuple<cv::Rect, double, bool>> singleRegion(const cv::Rect &region, double rotation,
-                                                                     bool flip) {
-            return { std::make_tuple(region, rotation, flip) };
+        std::vector<std::tuple<cv::Rect, double, bool>> fullFrame(const cv::Size &frameSize) {
+            cv::Rect frameRect(cv::Point(0, 0), frameSize);
+            return { std::make_tuple(frameRect, 0, false) };
         }
 
 
@@ -145,37 +145,51 @@ namespace MPF { namespace COMPONENT {
 
 
 
-    AffineTransformation::AffineTransformation(const std::vector<std::tuple<cv::Rect, double, bool>> &regions,
-                                               double frameRotationDegrees, bool flip)
+    AffineTransformation::AffineTransformation(
+                const std::vector<std::tuple<cv::Rect, double, bool>> &preTransformRegions,
+                double frameRotationDegrees,
+                bool flip,
+                const SearchRegion &postTransformSearchRegion)
             : rotationDegrees_(frameRotationDegrees)
             , flip_(flip)
     {
-        if (regions.empty()) {
-            throw std::length_error("The \"regions\" parameter must contain at least one element, but it was empty.");
+        if (preTransformRegions.empty()) {
+            throw std::length_error(
+                    "The \"preTransformRegions\" parameter must contain at least one element, but it was empty.");
         }
 
+        // Rotating an image around the origin will move some or all of the pixels out of the frame.
         cv::Matx33d rotationMat = IndividualXForms::Rotation(360 - frameRotationDegrees);
-        cv::Rect mappedBoundingRect = GetMappedBoundingRect(regions, rotationMat);
-        regionSize_ = mappedBoundingRect.size();
-
+        // Use the rotation matrix to figure out where the pixels we are looking for ended up.
+        cv::Rect mappedBoundingRect = GetMappedBoundingRect(preTransformRegions, rotationMat);
+        // Shift the pixels we are looking for back in to the frame.
         cv::Matx33d moveRoiToOrigin = IndividualXForms::Translation(-mappedBoundingRect.x, -mappedBoundingRect.y);
+
+        // The search region is generally specified by a human, so for convenience the coordinates are relative to
+        // the correctly oriented image.
+        // searchRegionRect will either be the same as mappedBoundingRect or be contained within mappedBoundingRect.
+        cv::Rect searchRegionRect = postTransformSearchRegion.GetRect(mappedBoundingRect.size());
+        regionSize_ = searchRegionRect.size();
+        // When searchRegionRect is smaller than mappedBoundingRect, we need to move the searchRegionRect
+        // to the origin. This slides the pixels outside of the search region off of the frame.
+        cv::Matx33d moveSearchRegionToOrigin = IndividualXForms::Translation(-searchRegionRect.x, -searchRegionRect.y);
 
         cv::Matx33d combinedTransform;
         if (flip) {
             /*
-                        -x     x=0     +x
+                       -x     x=0     +x
               initial: [     ] | [ a b ]
               flipped: [ b a ] | [     ]
               shift:   [     ] | [ b a ]
             */
             cv::Matx33d flipMat = IndividualXForms::HorizontalFlip();
-            cv::Matx33d flipShiftCorrection = IndividualXForms::Translation(regionSize_.width, 0);
+            cv::Matx33d flipShiftCorrection = IndividualXForms::Translation(mappedBoundingRect.width - 1, 0);
             // Transformations are applied from right to left, so rotation occurs first.
-            combinedTransform = flipShiftCorrection * flipMat * moveRoiToOrigin * rotationMat;
+            combinedTransform = moveSearchRegionToOrigin * flipShiftCorrection * flipMat * moveRoiToOrigin * rotationMat;
         }
         else {
             // Transformations are applied from right to left, so rotation occurs first.
-            combinedTransform = moveRoiToOrigin * rotationMat;
+            combinedTransform = moveSearchRegionToOrigin * moveRoiToOrigin * rotationMat;
         }
 
         // When combining transformations the 3d version must be used,
@@ -200,7 +214,6 @@ namespace MPF { namespace COMPONENT {
         // bicubic interpolation is the standard for image transformations in image processing applications."
         cv::warpAffine(frame, frame, reverseTransformationMatrix_, regionSize_,
                        cv::InterpolationFlags::WARP_INVERSE_MAP | cv::InterpolationFlags::INTER_CUBIC);
-
     }
 
 
@@ -208,7 +221,7 @@ namespace MPF { namespace COMPONENT {
     void AffineTransformation::ApplyReverse(MPFImageLocation &imageLocation) const {
         cv::Vec3d topLeft(imageLocation.x_left_upper, imageLocation.y_left_upper, 1);
         if (flip_) {
-            topLeft[0] += imageLocation.width;
+            topLeft[0] += imageLocation.width - 1;
         }
 
         cv::Vec2d newTopLeft = reverseTransformationMatrix_ * topLeft;
@@ -243,28 +256,28 @@ namespace MPF { namespace COMPONENT {
 
 
 
-    AffineFrameTransformer::AffineFrameTransformer(const cv::Rect &region,
-                                                   double rotation,
+    // Search region frame cropping on rotated frame constructor.
+    AffineFrameTransformer::AffineFrameTransformer(double rotation,
                                                    bool flip,
+                                                   const SearchRegion &searchRegion,
                                                    IFrameTransformer::Ptr innerTransform)
             : BaseDecoratedTransformer(std::move(innerTransform))
-            , transform_(
-                // Pass in rotation here since the bounding box itself is rotated.
-                singleRegion(region, rotation, flip),
-                // Pass in rotation here so that the frame will rotated so that the bounding box ends up being upright.
-                rotation, flip)
+            , transform_(fullFrame(GetInnerFrameSize(0)), rotation, flip, searchRegion)
     {
     }
 
+
+    // Rotate full frame constructor.
     AffineFrameTransformer::AffineFrameTransformer(double rotation,
                                                    bool flip,
                                                    IFrameTransformer::Ptr innerTransform)
             : BaseDecoratedTransformer(std::move(innerTransform))
-            , transform_(singleRegion(cv::Rect(cv::Point(0, 0), GetInnerFrameSize(0)), 0, false), rotation, flip)
+            , transform_(fullFrame(GetInnerFrameSize(0)), rotation, flip)
     {
     }
 
 
+    // Feed forward superset region constructor
     AffineFrameTransformer::AffineFrameTransformer(const std::vector<std::tuple<cv::Rect, double, bool>> &regions,
                                                    double frameRotation, bool frameFlip,
                                                    IFrameTransformer::Ptr innerTransform)
