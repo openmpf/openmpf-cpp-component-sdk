@@ -1248,6 +1248,7 @@ TEST(AffineFrameTransformerTest, ReverseTransformWithFlip) {
 
 TEST(NormalizeAngle, TestNormalizeAngle) {
     using DetectionComponentUtils::NormalizeAngle;
+    using DetectionComponentUtils::RotationAnglesEqual;
 
     double angle1 = 20.5;
     double angle2 = 380.5;
@@ -1260,6 +1261,12 @@ TEST(NormalizeAngle, TestNormalizeAngle) {
     ASSERT_DOUBLE_EQ(angle1, NormalizeAngle(angle3));
     ASSERT_DOUBLE_EQ(angle1, NormalizeAngle(angle4));
     ASSERT_DOUBLE_EQ(angle1, NormalizeAngle(angle5));
+
+    ASSERT_TRUE(RotationAnglesEqual(angle1, angle1));
+    ASSERT_TRUE(RotationAnglesEqual(angle1, angle2));
+    ASSERT_TRUE(RotationAnglesEqual(angle1, angle3));
+    ASSERT_TRUE(RotationAnglesEqual(angle1, angle4));
+    ASSERT_TRUE(RotationAnglesEqual(angle1, angle5));
 
     ASSERT_DOUBLE_EQ(0, NormalizeAngle(0));
     ASSERT_DOUBLE_EQ(0, NormalizeAngle(360));
