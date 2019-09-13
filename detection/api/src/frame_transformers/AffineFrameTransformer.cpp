@@ -41,7 +41,7 @@ namespace MPF { namespace COMPONENT {
 
     namespace {
         cv::Mat_<double> GetAllCorners(const std::vector<std::tuple<cv::Rect, double, bool>> &regions) {
-            // Matrix containing each regions 4 corners. First row is x coordinate and second row is y coordinate.
+            // Matrix containing each region's 4 corners. First row is x coordinate and second row is y coordinate.
             cv::Mat_<double> corners(2, 4 * regions.size());
             auto x_iter = corners.begin();
             auto y_iter = corners.row(1).begin();
