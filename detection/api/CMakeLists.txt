@@ -30,7 +30,7 @@ project(openmpf-cpp-component-api)
 
 set(CMAKE_CXX_STANDARD 11)
 
-find_package(OpenCV 3.3 EXACT REQUIRED PATHS /opt/opencv-3.3.0
+find_package(OpenCV 3.3 EXACT REQUIRED PATHS /opt/opencv-3.3.1
     COMPONENTS opencv_core opencv_imgcodecs opencv_imgproc opencv_videoio)
 
 
