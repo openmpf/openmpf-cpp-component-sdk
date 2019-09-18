@@ -34,7 +34,7 @@ include(../ComponentSetup.cmake)
 
 find_package(mpfComponentInterface REQUIRED)
 find_package(mpfDetectionComponentApi REQUIRED)
-find_package(OpenCV 3.3.1 EXACT REQUIRED PATHS /opt/opencv-3.3.1 COMPONENTS opencv_core)
+find_package(OpenCV 3.4.7 EXACT REQUIRED PATHS /opt/opencv-3.4.7 COMPONENTS opencv_core)
 
 
 set(GENERIC_COMPONENT_SOURCES GenericComponent.cpp GenericComponent.h)
