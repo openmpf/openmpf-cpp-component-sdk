@@ -1,6 +1,6 @@
 # BUILD
 
-NOTE: To build and run this component, OpenCV 3.3.0
+NOTE: To build and run this component, OpenCV 3.4.7
       must be installed first.
 
 NOTE: You must build the MPF Component API library before
@@ -10,7 +10,7 @@ NOTE: You must build the MPF Component API library before
 
 Before you build, edit the src/CMakeLists.txt file, and change
 the "find_package" command so that the PATHS option specifies
-the root directory of your OpenCV 3.3.0 installation.
+the root directory of your OpenCV 3.4.7 installation.
 
 Run the following commands:
 ```
@@ -32,4 +32,4 @@ From within the build directory:
 # REGISTER PACKAGE
 
 As an admin user, upload GenericComponent.tar.gz
-to the Component Registration page. 
+to the Component Registration page.
