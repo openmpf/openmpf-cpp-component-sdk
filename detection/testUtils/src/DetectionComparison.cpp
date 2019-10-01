@@ -38,24 +38,36 @@ using std::vector;
 namespace MPF { namespace COMPONENT { namespace DetectionComparison {
 
     namespace {
+        bool CompareDetections(const MPFImageLocation &query_detection, const MPFImageLocation found_known_detection, bool log) {
+            cv::Rect found_known_detection_rect = Utils::ImageLocationToCvRect(found_known_detection);
+            cv::Rect query_detection_rect = Utils::ImageLocationToCvRect(query_detection);
+            cv::Rect intersection = found_known_detection_rect & query_detection_rect;
+            int target_intersection_area = static_cast<int>(floor(
+                    static_cast<float>(found_known_detection_rect.area()) * 0.1));
+            int intersection_area = intersection.area();
+            bool same = intersection_area > target_intersection_area;
+            if (log && !same) {
+                printf("\tThe intersection was %d of %d which is %f\n",
+                       intersection_area,
+                       target_intersection_area,
+                       static_cast<float>(intersection_area) / static_cast<float>(target_intersection_area));
+            }
+            return same;
+        }
+
+
         MPFVideoTrack FindTrack(const MPFVideoTrack &query_track, const vector<MPFVideoTrack> &tracks_to_search,
-                                int &found_index) {
+                                int frame_diff, int &found_index) {
             found_index = -1;
-
             MPFImageLocation first_query_detection = query_track.frame_locations.begin()->second;
-
-            cv::Rect first_query_rect = Utils::ImageLocationToCvRect(first_query_detection);
 
             for (unsigned int i = 0; i < tracks_to_search.size(); i++) {
                 MPFVideoTrack known_track = tracks_to_search[i];
 
-                if (abs(query_track.start_frame - known_track.start_frame) <= 5) {
+                if (abs(query_track.start_frame - known_track.start_frame) == frame_diff) {
                     for (const auto &pair : known_track.frame_locations) {
-                        cv::Rect known_detection_rect = Utils::ImageLocationToCvRect(pair.second);
 
-                        cv::Rect intersection = first_query_rect & known_detection_rect;
-
-                        if (intersection.area() > 0) {
+                        if (CompareDetections(first_query_detection, pair.second, false)) {
                             found_index = i;
                             return MPFVideoTrack(known_track);
                         }
@@ -64,6 +76,17 @@ namespace MPF { namespace COMPONENT { namespace DetectionComparison {
             }
 
             return MPFVideoTrack(-1, -1);
+        }
+
+
+        MPFVideoTrack FindTrack(const MPFVideoTrack &query_track, const vector<MPFVideoTrack> &tracks_to_search,
+                                int &found_index) {
+            found_index = -1;
+            MPFVideoTrack found_track(-1, -1);
+            for (int i = 0; found_index == -1 && i < 5; i++) {
+                found_track = FindTrack(query_track, tracks_to_search, i, found_index);
+            }
+            return found_track;
         }
 
 
@@ -88,30 +111,17 @@ namespace MPF { namespace COMPONENT { namespace DetectionComparison {
                 loop_end_count = static_cast<int>(found_track.frame_locations.size());
             }
 
-            int found_faces = 0;
+            int found_frames = 0;
             for (int k = loop_start_index; k < loop_end_count; k++) {
                 MPFImageLocation found_known_detection = found_track.frame_locations.at(found_track_start_frame + k);
                 MPFImageLocation query_detection = query_track.frame_locations.at(
                         query_track_start_frame + k + query_track_index_modifier);
-                cv::Rect found_known_detection_rect = Utils::ImageLocationToCvRect(found_known_detection);
-                cv::Rect query_detection_rect = Utils::ImageLocationToCvRect(query_detection);
-                cv::Rect intersection = found_known_detection_rect & query_detection_rect;
-                int target_intersection_area = static_cast<int>(floor(
-                        static_cast<float>(found_known_detection_rect.area()) * 0.1));
-                int intersection_area = intersection.area();
-
-                if (intersection_area > target_intersection_area) {
-                    ++found_faces;
-                }
-                else {
-                    printf("\tThe intersection was %d of %d which is %f\n",
-                           intersection_area,
-                           target_intersection_area,
-                           static_cast<float>(intersection_area) / static_cast<float>(target_intersection_area));
+                if (CompareDetections(query_detection, found_known_detection, true)) {
+                    ++found_frames;
                 }
             }
 
-            return found_faces;
+            return found_frames;
         }
 
     } // anonymous namespace
@@ -144,21 +154,20 @@ namespace MPF { namespace COMPONENT { namespace DetectionComparison {
             printf("Exact number of objects detected that exist, but still need to check locations: ");
         }
 
-        printf("%d of %d\n", total_found_frames, total_known_frames);
-
         vector<MPFVideoTrack> known_tracks_copy(known_tracks);
+        vector<MPFVideoTrack> query_tracks_copy(query_tracks);
         while (!known_tracks_copy.empty()) {
-            vector<MPFVideoTrack> query_tracks_copy(query_tracks);
             MPFVideoTrack known_track = known_tracks_copy.front();
-            int found_track_index = -1;
-            MPFVideoTrack found_track = FindTrack(known_track, query_tracks_copy, found_track_index);
 
-            while (found_track_index != -1) {
-                int found_faces = CompareTracks(found_track, known_track);
-                successfully_found_frames += found_faces;
-                query_tracks_copy.erase(query_tracks_copy.begin() + found_track_index);
-                found_track = FindTrack(known_track, query_tracks_copy, found_track_index);
-            }
+            int found_track_index;
+            do {
+                MPFVideoTrack found_track = FindTrack(known_track, query_tracks_copy, found_track_index);
+                if (found_track_index != -1) {
+                    successfully_found_frames += CompareTracks(found_track, known_track);
+                    query_tracks_copy.erase(query_tracks_copy.begin() + found_track_index);
+                }
+            } while(found_track_index != -1);
+
             known_tracks_copy.erase(known_tracks_copy.begin());
         }
 
