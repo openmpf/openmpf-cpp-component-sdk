@@ -154,6 +154,8 @@ namespace MPF { namespace COMPONENT { namespace DetectionComparison {
             printf("Exact number of objects detected that exist, but still need to check locations: ");
         }
 
+        printf("%d of %d\n", total_found_frames, total_known_frames);
+
         vector<MPFVideoTrack> known_tracks_copy(known_tracks);
         vector<MPFVideoTrack> query_tracks_copy(query_tracks);
         while (!known_tracks_copy.empty()) {
