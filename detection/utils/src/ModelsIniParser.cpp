@@ -24,12 +24,66 @@
  * limitations under the License.                                             *
  ******************************************************************************/
 
+#include "ModelsIniParser.h"
+
+#include <fstream>
+
+#include <boost/algorithm/string/join.hpp>
 #include <boost/property_tree/ptree.hpp>
 #include <boost/property_tree/ini_parser.hpp>
 
-#include "ModelsIniParser.h"
 
-namespace MPF { namespace COMPONENT {
+namespace MPF { namespace COMPONENT { namespace ModelsIniHelpers {
+
+    std::string GetFullPath(const std::string &file_name, const std::string& plugin_models_dir,
+                            const std::string &common_models_dir) {
+        if (file_name.empty()) {
+            throw MPFDetectionException(
+                    MPF_COULD_NOT_READ_DATAFILE,
+                    "Failed to load model because one of the fields in the models ini file was empty.");
+        }
+
+        std::string expanded_file_name;
+        std::string exp_error = Utils::expandFileName(file_name, expanded_file_name);
+        if (!exp_error.empty()) {
+            throw MPFDetectionException(
+                    MPF_COULD_NOT_READ_DATAFILE,
+                    "Failed to load model because the expansion of \"" + file_name
+                    + "\" failed due to: " + exp_error);
+        }
+        if (expanded_file_name.empty()) {
+            throw MPFDetectionException(
+                    MPF_COULD_NOT_READ_DATAFILE,
+                    "Failed to load model because \"" + file_name +  "\" expanded to the empty string.");
+        }
+
+        std::vector<std::string> possible_locations;
+        if (expanded_file_name.front() == '/') {
+            possible_locations.push_back(expanded_file_name);
+        }
+        else {
+            possible_locations.push_back(common_models_dir + '/' + expanded_file_name);
+            possible_locations.push_back(plugin_models_dir + '/' + expanded_file_name);
+        }
+
+
+        for (const auto& possible_location : possible_locations) {
+            if (std::ifstream(possible_location).good()) {
+                return possible_location;
+            }
+        }
+
+        std::string error_msg = "Failed to load model because a required file was not present. ";
+        if (expanded_file_name.front() == '/') {
+            error_msg += "Expected a file at \"" + expanded_file_name + "\" to exist.";
+        }
+        else {
+            error_msg += "Expected a file to exist at either \"" + possible_locations.at(0)
+                         + "\" or \"" + possible_locations.at(1) + "\".";
+        }
+
+        throw MPFDetectionException(MPF_COULD_NOT_OPEN_DATAFILE, error_msg);
+    }
 
 
     IniHelper::IniHelper(const std::string &file_path, const std::string &model_name)
@@ -48,11 +102,17 @@ namespace MPF { namespace COMPONENT {
 
         const auto &model_iter = all_models_ini.find(model_name);
         if (model_iter == all_models_ini.not_found() || model_iter->second.empty()) {
+            std::vector<std::string> model_names_vec;
+            for (auto it = all_models_ini.ordered_begin(); it != all_models_ini.not_found(); ++it) {
+                model_names_vec.emplace_back("[" + it->first + "]");
+            }
+            std::string joined_model_names = boost::algorithm::join(model_names_vec, ", ");
+
             throw MPFDetectionException(
                     MPF_COULD_NOT_READ_DATAFILE,
                     "Failed to load model \"" + model_name
                     + "\" because the models.ini file did not contain a non-empty section named ["
-                    + model_name + "].");
+                    + model_name + "], but it did contain the following models: " + joined_model_names);
         }
 
         for (const auto &sub_tree : model_iter->second) {
@@ -71,5 +131,15 @@ namespace MPF { namespace COMPONENT {
                     + "\" key was not present in the [" + model_name_ + "] section.");
         }
     }
-}}
+
+    std::pair<bool, std::string> IniHelper::GetOptionalValue(const std::string &key) const {
+        auto iter = model_ini_fields_.find(key);
+        if (iter == model_ini_fields_.end()) {
+            return {false, ""};
+        }
+        else {
+            return {true, iter->second};
+        }
+    }
+}}}
 
