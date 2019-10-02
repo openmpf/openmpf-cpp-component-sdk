@@ -43,14 +43,10 @@ namespace MPF { namespace COMPONENT { namespace DetectionComparison {
             cv::Rect query_detection_rect = Utils::ImageLocationToCvRect(query_detection);
             cv::Rect intersection = target_detection_rect & query_detection_rect;
             int intersection_area = intersection.area();
-            int target_intersection_area =
-                static_cast<int>(floor(static_cast<float>(target_detection_rect.area()) * 0.1));
+            double target_intersection_area = floor(target_detection_rect.area()) * 0.1;
             bool same = intersection_area > target_intersection_area;
             if (log && !same) {
-                printf("\tThe intersection was %d of %d which is %f\n",
-                       intersection_area,
-                       target_intersection_area,
-                       static_cast<float>(intersection_area) / static_cast<float>(target_intersection_area));
+                printf("\tCalc intersection < min target: %d < %f\n", intersection_area, target_intersection_area);
             }
             return same;
         }
@@ -78,9 +74,9 @@ namespace MPF { namespace COMPONENT { namespace DetectionComparison {
 
             int matched_detections = 0;
             for (int k = loop_start_index; k < loop_end_count; k++) {
-                MPFImageLocation target_track_detection =
+                const MPFImageLocation &target_track_detection =
                     target_track.frame_locations.at(target_track_start_frame + k);
-                MPFImageLocation query_track_detection =
+                const MPFImageLocation &query_track_detection =
                     query_track.frame_locations.at(query_track_start_frame + k + query_track_index_modifier);
                 if (CompareDetections(query_track_detection, target_track_detection, true)) {
                     matched_detections++;
@@ -91,10 +87,10 @@ namespace MPF { namespace COMPONENT { namespace DetectionComparison {
         }
 
         int FindTrack(const MPFVideoTrack &known_track, const vector<MPFVideoTrack> &actual_tracks, int frame_diff) {
-            MPFImageLocation first_known_detection = known_track.frame_locations.begin()->second;
+            const MPFImageLocation &first_known_detection = known_track.frame_locations.begin()->second;
 
             for (unsigned int i = 0; i < actual_tracks.size(); i++) {
-                MPFVideoTrack actual_track = actual_tracks.at(i);
+                const MPFVideoTrack &actual_track = actual_tracks.at(i);
 
                 if (abs(known_track.start_frame - actual_track.start_frame) == frame_diff) {
                     for (const auto &actual_pair : actual_track.frame_locations) {
@@ -154,7 +150,7 @@ namespace MPF { namespace COMPONENT { namespace DetectionComparison {
         vector<MPFVideoTrack> known_tracks_copy(known_tracks);
         vector<MPFVideoTrack> actual_tracks_copy(actual_tracks);
         while (!actual_tracks_copy.empty()) {
-            MPFVideoTrack known_track = known_tracks_copy.front();
+            const MPFVideoTrack &known_track = known_tracks_copy.front();
 
             // Match the known track to as many actual tracks as possible. This is done to address the case where the
             // component generates multiple tracks instead of one, maybe due to non-determinism or an OpenCV upgrade.
@@ -166,7 +162,7 @@ namespace MPF { namespace COMPONENT { namespace DetectionComparison {
             do {
                 match_track_index = FindTrack(known_track, actual_tracks_copy);
                 if (match_track_index != -1) {
-                    MPFVideoTrack match_track = actual_tracks_copy.at(match_track_index);
+                    const MPFVideoTrack &match_track = actual_tracks_copy.at(match_track_index);
                     matched_detections += CompareTracks(match_track, known_track);
                     actual_tracks_copy.erase(actual_tracks_copy.begin() + match_track_index);
                     // This break will result in a 1-to-1 matching between known tracks and actual tracks. Uncommenting
