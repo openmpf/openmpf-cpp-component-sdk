@@ -59,19 +59,19 @@ namespace MPF { namespace COMPONENT {
                                                    vector<int> &track_indexes) {
         vector<MPFImageLocation> locations;
         int track_index = 0;
-        for (vector<MPFVideoTrack>::const_iterator face_track = tracks.begin();
-             face_track != tracks.end(); ++face_track) {
-            if (face_track->frame_locations.find(frame_index) != face_track->frame_locations.end()) {
-                locations.emplace_back(face_track->frame_locations.at(frame_index));
+        for (vector<MPFVideoTrack>::const_iterator track = tracks.begin();
+             track != tracks.end(); track++) {
+            if (track->frame_locations.find(frame_index) != track->frame_locations.end()) {
+                locations.emplace_back(track->frame_locations.at(frame_index));
                 track_indexes.push_back(track_index);
             }
-            ++track_index;
+            track_index++;
         }
         return locations;
     }
 
 
-    Mat VideoGeneration::RotateFace(const cv::Mat &src) {
+    Mat VideoGeneration::Rotate(const cv::Mat &src) {
         Mat rot_mat(2, 3, CV_32FC1);
         Mat warp_rotate_dst;
 
@@ -93,14 +93,14 @@ namespace MPF { namespace COMPONENT {
         return warp_rotate_dst;
     }
 
-    Rect VideoGeneration::GetRandomRect(const Mat &image, const Rect &face_rect, const vector<Rect> &existing_rects) {
+    Rect VideoGeneration::GetRandomRect(const Mat &image, const Rect &rect, const vector<Rect> &existing_rects) {
         Mat mask;
         mask = Mat::zeros(image.size(), image.type());
 
-        int x_pos = rand() % (image.cols - face_rect.width);
-        int y_pos = rand() % (image.rows - face_rect.height);
+        int x_pos = rand() % (image.cols - rect.width);
+        int y_pos = rand() % (image.rows - rect.height);
 
-        Rect new_rect(x_pos, y_pos, face_rect.width, face_rect.height);
+        Rect new_rect(x_pos, y_pos, rect.width, rect.height);
 
         cv::rectangle(mask, new_rect, Scalar(255, 255, 255), CV_FILLED);
 
@@ -121,30 +121,30 @@ namespace MPF { namespace COMPONENT {
         int x_pos = rect.x + x_step;
         int y_pos = rect.y + y_step;
 
-        Rect face_rect(x_pos, y_pos, rect.width, rect.height);
+        Rect new_rect(x_pos, y_pos, rect.width, rect.height);
 
-        if (face_rect.x + face_rect.width >= image.cols ||
-            face_rect.y + face_rect.height >= image.rows) {
+        if (new_rect.x + new_rect.width >= image.cols ||
+            new_rect.y + new_rect.height >= image.rows) {
             return Rect(0, 0, 0, 0);
         }
         else {
-            cv::rectangle(mask, face_rect, Scalar(255, 255, 255), CV_FILLED);
+            cv::rectangle(mask, new_rect, Scalar(255, 255, 255), CV_FILLED);
             if (imshow_on) {
                 cv::imshow("random mask", mask);
                 cv::waitKey(5);
             }
         }
 
-        return face_rect;
+        return new_rect;
     }
 
 
     int VideoGeneration::GetCompletedTracksCount(int current_frame_index, const vector<MPFVideoTrack> &tracks) {
         int tracks_completed_count = 0;
-        for (vector<MPFVideoTrack>::const_iterator face_track = tracks.begin();
-             face_track != tracks.end(); ++face_track) {
-            if (current_frame_index > face_track->stop_frame) {
-                ++tracks_completed_count;
+        for (vector<MPFVideoTrack>::const_iterator track = tracks.begin();
+             track != tracks.end(); track++) {
+            if (current_frame_index > track->stop_frame) {
+                tracks_completed_count++;
             }
         }
         return tracks_completed_count;
@@ -181,24 +181,24 @@ namespace MPF { namespace COMPONENT {
             }
 
             vector<int> track_indexes;
-            vector<MPFImageLocation> face_rects = GetImageLocationsAtFrameIndex(frame_index, tracks, track_indexes);
+            vector<MPFImageLocation> rects = GetImageLocationsAtFrameIndex(frame_index, tracks, track_indexes);
 
             Utils::DrawText(src, frame_index);
 
             if (!track_indexes.empty()) {
                 vector<MPFVideoTrack> tracks_to_draw;
-                for (unsigned int i = 0; i < track_indexes.size(); ++i) {
+                for (unsigned int i = 0; i < track_indexes.size(); i++) {
                     MPFVideoTrack track = MPFVideoTrack(tracks[track_indexes[i]]);
                     tracks_to_draw.push_back(track);
                 }
 
                 int tracks_completed_count = GetCompletedTracksCount(frame_index, tracks);
-                Utils::DrawTracks(src, tracks_to_draw, face_rects, tracks_completed_count, track_indexes);
+                Utils::DrawTracks(src, tracks_to_draw, rects, tracks_completed_count, track_indexes);
             }
 
-            for (vector<MPFImageLocation>::iterator it = face_rects.begin(); it != face_rects.end(); ++it) {
-                Rect face_rect(it->x_left_upper, it->y_left_upper, it->width, it->height);
-                cv::rectangle(src, face_rect, Scalar(0, 255, 0));
+            for (vector<MPFImageLocation>::iterator it = rects.begin(); it != rects.end(); it++) {
+                Rect rect(it->x_left_upper, it->y_left_upper, it->width, it->height);
+                cv::rectangle(src, rect, Scalar(0, 255, 0));
             }
 
             if (imshow_on) {
@@ -208,18 +208,18 @@ namespace MPF { namespace COMPONENT {
 
             output_video << src;
 
-            ++frame_index;
+            frame_index++;
         }
 
         return 0;
     }
 
-    int VideoGeneration::CreateTestVideoAndTrackOutput(const vector<Mat> &faces,
+    int VideoGeneration::CreateTestVideoAndTrackOutput(const vector<Mat> &objects,
                                                        int video_length,
                                                        bool use_scaling_and_rotation,
                                                        const string video_out_filepath,
                                                        vector<MPFVideoTrack> &tracks) {
-        if (faces.empty()) {
+        if (objects.empty()) {
             return -1;
         }
 
@@ -240,33 +240,33 @@ namespace MPF { namespace COMPONENT {
         vector<Rect> stepped_rects;
         vector<MPFVideoTrack> current_tracks;
 
-        for (unsigned int i = 0; i < faces.size(); ++i) {
-            Mat face = Mat(faces[i]);
-            Rect face_rect = Rect(0, 0, face.cols, face.rows);
+        for (unsigned int i = 0; i < objects.size(); i++) {
+            Mat object = Mat(objects[i]);
+            Rect rect = Rect(0, 0, object.cols, object.rows);
 
             Rect random_rect;
 
             int intersection_index = -1;
             do {
-                random_rect = GetRandomRect(blank_frame, face_rect);
+                random_rect = GetRandomRect(blank_frame, rect);
             } while (Utils::IsExistingRectIntersection(random_rect, stepped_rects, intersection_index));
 
             random_rects.push_back(random_rect);
             stepped_rects.push_back(random_rect);
 
-            MPFVideoTrack face_track;
-            face_track.start_frame = 0;
+            MPFVideoTrack track;
+            track.start_frame = 0;
 
-            MPFImageLocation face_detection(random_rect.x, random_rect.y, random_rect.width, random_rect.height);
-            face_track.frame_locations[0] = face_detection;
-            current_tracks.push_back(face_track);
+            MPFImageLocation detection(random_rect.x, random_rect.y, random_rect.width, random_rect.height);
+            track.frame_locations[0] = detection;
+            current_tracks.push_back(track);
         }
 
         int frame_index = 0;
         for (; frame_index < video_length;) {
             src = blank_frame.clone();
 
-            for (unsigned int i = 0; i < random_rects.size(); ++i) {
+            for (unsigned int i = 0; i < random_rects.size(); i++) {
                 if (frame_index > 0) {
                     int step_x = rand() % 3 + 0;
                     int step_y = rand() % 2 + 0;
@@ -280,30 +280,30 @@ namespace MPF { namespace COMPONENT {
                     current_tracks[i].stop_frame = -1;
                     current_tracks[i].frame_locations.clear();
 
-                    Mat face = Mat(faces[i]);
-                    Rect face_rect = Rect(0, 0, face.cols, face.rows);
+                    Mat object = Mat(objects[i]);
+                    Rect rect = Rect(0, 0, object.cols, object.rows);
                     Rect random_rect;
 
                     int intersection_index = -1;
                     do {
-                        random_rect = GetRandomRect(blank_frame, face_rect);
+                        random_rect = GetRandomRect(blank_frame, rect);
                     } while (Utils::IsExistingRectIntersection(random_rect, stepped_rects, intersection_index));
 
                     stepped_rects[i] = random_rect;
                 }
 
-                MPFImageLocation face_detection(stepped_rects[i].x,
+                MPFImageLocation detection(stepped_rects[i].x,
                                                 stepped_rects[i].y,
                                                 stepped_rects[i].width,
                                                 stepped_rects[i].height);
-                current_tracks[i].frame_locations[frame_index] = face_detection;
+                current_tracks[i].frame_locations[frame_index] = detection;
 
                 Mat subview = src(stepped_rects[i]);
-                Mat face = Mat(faces[i]);
+                Mat object = Mat(objects[i]);
                 if (use_scaling_and_rotation) {
-                    face = RotateFace(face);
+                    object = Rotate(object);
                 }
-                face.copyTo(subview);
+                object.copyTo(subview);
             }
 
             Utils::DrawText(src, frame_index);
@@ -315,11 +315,11 @@ namespace MPF { namespace COMPONENT {
 
             output_video.write(src);
 
-            ++frame_index;
+            frame_index++;
         }
 
         output_video.release();
-        for (vector<MPFVideoTrack>::iterator iter = current_tracks.begin(); iter != current_tracks.end(); ++iter) {
+        for (vector<MPFVideoTrack>::iterator iter = current_tracks.begin(); iter != current_tracks.end(); iter++) {
             iter->stop_frame = frame_index - 1;
             tracks.push_back(*iter);
         }

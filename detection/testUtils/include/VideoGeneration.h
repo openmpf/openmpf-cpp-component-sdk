@@ -54,10 +54,10 @@ namespace MPF { namespace COMPONENT {
         int WriteTrackOutputVideo(const std::string video_in_uri, const std::vector<MPFVideoTrack> &tracks,
                                   const std::string video_out_filepath);
 
-        cv::Mat RotateFace(const cv::Mat &src);
+        cv::Mat Rotate(const cv::Mat &src);
 
         cv::Rect GetRandomRect(const cv::Mat &image,
-                               const cv::Rect &face_rect,
+                               const cv::Rect &rect,
                                const std::vector<cv::Rect> &existing_rects = {});
 
         cv::Rect StepRectThroughFrame(const cv::Mat &image,
@@ -66,7 +66,7 @@ namespace MPF { namespace COMPONENT {
                                       int y_step,
                                       const std::vector<cv::Rect> &existing_rects = {});
 
-        int CreateTestVideoAndTrackOutput(const std::vector<cv::Mat> &faces,
+        int CreateTestVideoAndTrackOutput(const std::vector<cv::Mat> &objects,
                                           int video_length,
                                           bool use_scaling_and_rotation,
                                           const std::string video_out_filepath,

@@ -34,12 +34,12 @@
 
 namespace MPF { namespace COMPONENT { namespace DetectionComparison {
 
-    float CompareDetectionOutput(const std::vector<MPFVideoTrack> &query_tracks,
+    float CompareDetectionOutput(const std::vector<MPFVideoTrack> &actual_tracks,
                                  const std::vector<MPFVideoTrack> &known_tracks);
 
 
-    float CompareDetectionOutput(const std::vector<MPFImageLocation> &query_tracks,
-                                 const std::vector<MPFImageLocation> &known_tracks);
+    float CompareDetectionOutput(const std::vector<MPFImageLocation> &actual_detections,
+                                 const std::vector<MPFImageLocation> &known_detections);
 
 }}}
 
