@@ -149,7 +149,7 @@ namespace MPF { namespace COMPONENT { namespace DetectionComparison {
 
         vector<MPFVideoTrack> known_tracks_copy(known_tracks);
         vector<MPFVideoTrack> actual_tracks_copy(actual_tracks);
-        while (!actual_tracks_copy.empty()) {
+        while (!known_tracks_copy.empty()) {
             const MPFVideoTrack &known_track = known_tracks_copy.front();
 
             // Match the known track to as many actual tracks as possible. This is done to address the case where the
