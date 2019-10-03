@@ -56,15 +56,15 @@ namespace MPF { namespace COMPONENT {
                                       const std::string image_out_filepath);
 
 
-        int CreateTestImageAndDetectionOutput(const std::vector<cv::Mat> &faces,
+        int CreateTestImageAndDetectionOutput(const std::vector<cv::Mat> &objects,
                                               bool use_scaling_and_rotation,
                                               const std::string image_out_filepath,
                                               std::vector<MPFImageLocation> &detections);
 
-        cv::Mat RotateFace(const cv::Mat &src);
+        cv::Mat Rotate(const cv::Mat &src);
 
         cv::Rect GetRandomRect(const cv::Mat &image,
-                               const cv::Rect &face_rect,
+                               const cv::Rect &rect,
                                const std::vector<cv::Rect> &existing_rects = {});
 
     private:

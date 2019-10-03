@@ -49,8 +49,8 @@ namespace MPF { namespace COMPONENT { namespace ReadDetectionsFromFile {
         size_t pos = 0;
         string token;
 
-        int next_face_track_index = 0;
-        MPFVideoTrack face_track;
+        int next_track_index = 0;
+        MPFVideoTrack track;
 
         string line;
         while (std::getline(in_file, line)) {
@@ -59,69 +59,62 @@ namespace MPF { namespace COMPONENT { namespace ReadDetectionsFromFile {
                 if (line[0] == '#') {
                     // create first track
                     string sub = line.substr(1);
-                    // std::cout << "line: " << line << std::endl;
-                    // std::cout << "substring: " << sub << std::endl;
-
-                    int face_track_index = atoi(sub.c_str());
-                    // std::cout << "face_track_index = " << face_track_index
-                    //       << " next_face_track_index = " << next_face_track_index
-                    //       << std::endl;
-                    if (next_face_track_index == face_track_index) {
+                    int track_index = atoi(sub.c_str());
+                    if (next_track_index == track_index) {
                         // push back the track before resetting it
-                        if (next_face_track_index > 0) {
-                            tracks.push_back(face_track);
+                        if (next_track_index > 0) {
+                            tracks.push_back(track);
                         }
 
-                        MPFVideoTrack default_face_track;
-                        // reset the face_track object
-                        face_track = default_face_track;
-                        ++next_face_track_index;
+                        MPFVideoTrack default_track;
+                        // reset the track object
+                        track = default_track;
+                        next_track_index++;
                     }
 
                     // get start frame and stop frame
                     getline(in_file, line);
-                    face_track.start_frame = atoi(line.c_str());
+                    track.start_frame = atoi(line.c_str());
                     getline(in_file, line);
-                    face_track.stop_frame = atoi(line.c_str());
+                    track.stop_frame = atoi(line.c_str());
 
                     continue;
                 }
 
-                if ((face_track.start_frame != -1) && (face_track.stop_frame != -1)) {
+                if ((track.start_frame != -1) && (track.stop_frame != -1)) {
                     int delim_index = 0;
-                    MPFImageLocation face_detection;
+                    MPFImageLocation detection;
                     while ((pos = line.find(delimiter)) != string::npos) {
                         token = line.substr(0, pos);
 
                         switch (delim_index) {
                             case 0:
-                                face_detection.x_left_upper = atoi(token.c_str());
+                                detection.x_left_upper = atoi(token.c_str());
                                 break;
                             case 1:
-                                face_detection.y_left_upper = atoi(token.c_str());
+                                detection.y_left_upper = atoi(token.c_str());
                                 break;
                             case 2:
-                                face_detection.width = atoi(token.c_str());
+                                detection.width = atoi(token.c_str());
                                 // ugly hack to keep the loop going
                                 line = line + ",";
                                 break;
                             case 3:
-                                face_detection.height = atoi(token.c_str());
+                                detection.height = atoi(token.c_str());
                                 break;
                             default:
                                 break;
                         }
 
-                        ++delim_index;
+                        delim_index++;
 
-                        // std::cout << token << std::endl;
                         line.erase(0, pos + delimiter.length());
                     }
 
-                    // at 4 can assume that it is a face detection - can't think of any reason to output confidence
+                    // at 4 can assume that it is a detection - can't think of any reason to output confidence
                     if (delim_index == 4) {
-                        size_t frame_index = face_track.start_frame + face_track.frame_locations.size();
-                        face_track.frame_locations[frame_index] = face_detection;
+                        size_t frame_index = track.start_frame + track.frame_locations.size();
+                        track.frame_locations[frame_index] = detection;
                     }
                 }
             }
@@ -129,11 +122,11 @@ namespace MPF { namespace COMPONENT { namespace ReadDetectionsFromFile {
         }
 
 
-        // if finished reading and the face_track has data then it needs to be pushed back as well
-        if ((face_track.start_frame != -1) &&
-            (face_track.stop_frame != -1) &&
-            (!face_track.frame_locations.empty())) {
-            tracks.push_back(face_track);
+        // if finished reading and the track has data then it needs to be pushed back as well
+        if ((track.start_frame != -1) &&
+            (track.stop_frame != -1) &&
+            (!track.frame_locations.empty())) {
+            tracks.push_back(track);
         }
 
         // close the file - if this is called again it will use the same file!!
@@ -160,7 +153,6 @@ namespace MPF { namespace COMPONENT { namespace ReadDetectionsFromFile {
 
         string line;
         while (std::getline(in_file, line)) {
-            // std::cout << "line: " << line << std::endl;
             if (!line.empty()) {
 
                 int delim_index = 0;
@@ -186,9 +178,8 @@ namespace MPF { namespace COMPONENT { namespace ReadDetectionsFromFile {
                             break;
                     }
 
-                    ++delim_index;
+                    delim_index++;
 
-                    // std::cout << token << std::endl;
                     line.erase(0, pos + delimiter.length());
                 }
                 detections.push_back(detection);

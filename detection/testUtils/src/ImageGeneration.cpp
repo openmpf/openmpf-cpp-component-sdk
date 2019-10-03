@@ -52,7 +52,7 @@ namespace MPF { namespace COMPONENT {
     }
 
 
-    Mat ImageGeneration::RotateFace(const Mat &src) {
+    Mat ImageGeneration::Rotate(const Mat &src) {
         Mat rot_mat(2, 3, CV_32FC1);
         Mat warp_rotate_dst;
 
@@ -75,14 +75,14 @@ namespace MPF { namespace COMPONENT {
     }
 
 
-    Rect ImageGeneration::GetRandomRect(const Mat &image, const Rect &face_rect, const vector<Rect> &existing_rects) {
+    Rect ImageGeneration::GetRandomRect(const Mat &image, const Rect &rect, const vector<Rect> &existing_rects) {
         Mat mask;
         mask = Mat::zeros(image.size(), image.type());
 
-        int x_pos = rand() % (image.cols - face_rect.width);
-        int y_pos = rand() % (image.rows - face_rect.height);
+        int x_pos = rand() % (image.cols - rect.width);
+        int y_pos = rand() % (image.rows - rect.height);
 
-        Rect new_rect(x_pos, y_pos, face_rect.width, face_rect.height);
+        Rect new_rect(x_pos, y_pos, rect.width, rect.height);
 
         cv::rectangle(mask, new_rect, Scalar(255, 255, 255), CV_FILLED);
 
@@ -106,9 +106,9 @@ namespace MPF { namespace COMPONENT {
 
         for (unsigned int i = 0; i < detections.size(); i++) {
             for (std::map<int, MPFImageLocation>::const_iterator it = detections[i].frame_locations.begin();
-                 it != detections[i].frame_locations.end(); ++it) {
-                Rect face_rect(it->second.x_left_upper, it->second.y_left_upper, it->second.width, it->second.height);
-                cv::rectangle(input_image, face_rect, Scalar(0, 255, 0));
+                 it != detections[i].frame_locations.end(); it++) {
+                Rect rect(it->second.x_left_upper, it->second.y_left_upper, it->second.width, it->second.height);
+                cv::rectangle(input_image, rect, Scalar(0, 255, 0));
             }
         }
 
@@ -127,11 +127,11 @@ namespace MPF { namespace COMPONENT {
         }
 
         for (unsigned int i = 0; i < detections.size(); i++) {
-            Rect face_rect(detections[i].x_left_upper,
+            Rect rect(detections[i].x_left_upper,
                            detections[i].y_left_upper,
                            detections[i].width,
                            detections[i].height);
-            cv::rectangle(input_image, face_rect, Scalar(0, 255, 0));
+            cv::rectangle(input_image, rect, Scalar(0, 255, 0));
         }
 
         cv::imwrite(image_out_filepath, input_image);
@@ -139,11 +139,11 @@ namespace MPF { namespace COMPONENT {
         return 0;
     }
 
-    int ImageGeneration::CreateTestImageAndDetectionOutput(const vector<Mat> &faces,
+    int ImageGeneration::CreateTestImageAndDetectionOutput(const vector<Mat> &objects,
                                                            bool use_scaling_and_rotation,
                                                            const string image_out_filepath,
                                                            vector<MPFImageLocation> &detections) {
-        if (faces.empty()) {
+        if (objects.empty()) {
             return -1;
         }
 
@@ -153,27 +153,27 @@ namespace MPF { namespace COMPONENT {
 
         vector<Rect> random_rects;
 
-        for (unsigned int i = 0; i < faces.size(); ++i) {
-            Mat face = Mat(faces[i]);
-            Rect face_rect = Rect(0, 0, face.cols, face.rows);
+        for (unsigned int i = 0; i < objects.size(); i++) {
+            Mat object = Mat(objects[i]);
+            Rect rect = Rect(0, 0, object.cols, object.rows);
 
             Rect random_rect;
 
             int intersection_index = -1;
             do {
-                random_rect = GetRandomRect(blank_frame, face_rect);
+                random_rect = GetRandomRect(blank_frame, rect);
             } while (Utils::IsExistingRectIntersection(random_rect, random_rects, intersection_index));
 
             random_rects.push_back(random_rect);
-            MPFImageLocation location(random_rect.x, random_rect.y, random_rect.width, random_rect.height);
-            detections.push_back(location);
+            MPFImageLocation detection(random_rect.x, random_rect.y, random_rect.width, random_rect.height);
+            detections.push_back(detection);
 
             Mat subview = src(random_rects[i]);
 
             if (use_scaling_and_rotation) {
-                face = RotateFace(face);
+                object = Rotate(object);
             }
-            face.copyTo(subview);
+            object.copyTo(subview);
         }
         if (imshow_on) {
             cv::imshow("src", src);
