@@ -146,15 +146,22 @@ TEST_F(ModelsIniParserTest, CanLoadDifferentModelsWithSameParser) {
 
 
 TEST_F(ModelsIniParserTest, PrefersCommonModelsDir) {
-    auto test_file_plugin_path = plugins_model_dir_ + "/test_file.txt";
+    const char * common_model_ini_content = R"(
+[test model]
+string_field=string content
+int_field = 123
+path_field=other_file.txt
+)";
+    write_to_file(common_models_dir_ + "/models.ini", common_model_ini_content);
+    auto test_file_plugin_path = plugins_model_dir_ + "/other_file.txt";
     write_to_file(test_file_plugin_path, "test");
 
-    auto test_file_common_path = common_models_dir_ + "/test_file.txt";
+    auto test_file_common_path = common_models_dir_ + "/other_file.txt";
     write_to_file(test_file_common_path, "test");
 
     auto model_settings = models_parser_.ParseIni("test model", common_models_dir_);
-    ASSERT_EQ("hello world", model_settings.string_field);
-    ASSERT_EQ(567, model_settings.int_field);
+    ASSERT_EQ("string content", model_settings.string_field);
+    ASSERT_EQ(123, model_settings.int_field);
     ASSERT_EQ(test_file_common_path, model_settings.path_field);
 }
 

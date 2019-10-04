@@ -27,7 +27,7 @@
 
 cmake_minimum_required(VERSION 3.6)
 
-project(component-utils-tests)
+project(openmpf-cpp-component-utils-tests)
 set(CMAKE_CXX_STANDARD 11)
 
 find_package(GTest)
