@@ -24,39 +24,17 @@
 # limitations under the License.                                            #
 #############################################################################
 
-cmake_minimum_required(VERSION 3.6)
-project(openmpf-cpp-component-utils)
 
+cmake_minimum_required(VERSION 3.6)
+
+project(openmpf-cpp-component-utils-tests)
 set(CMAKE_CXX_STANDARD 11)
 
-find_package(OpenCV 3.4.7 EXACT REQUIRED PATHS /opt/opencv-3.4.7
-    COMPONENTS opencv_core opencv_imgcodecs opencv_imgproc opencv_videoio)
+find_package(GTest)
+if (${GTEST_FOUND})
+    enable_testing()
+    add_executable(DetectionComponentUtilsTest test_models_ini_parser.cpp)
+    target_link_libraries(DetectionComponentUtilsTest GTest::GTest GTest::Main mpfComponentUtils mpfDetectionComponentApi)
 
-find_package(PkgConfig)
-pkg_search_module(LOG4CXX REQUIRED liblog4cxx)
-
-find_package(Qt4 REQUIRED)
-
-
-include_directories(include)
-
-set(SOURCE_FILES
-        include/Utils.h
-        src/Utils.cpp
-
-        include/MPFSimpleConfigLoader.h
-        src/MPFSimpleConfigLoader.cpp
-
-        include/ModelsIniParser.h
-        src/ModelsIniParser.cpp
-
-        include/DlClassLoader.h
-    )
-
-add_library(mpfComponentUtils SHARED ${SOURCE_FILES})
-target_link_libraries(mpfComponentUtils ${OpenCV_LIBS} ${LOG4CXX_LIBRARIES} Qt4::QtCore dl)
-
-
-export_mpf_lib(mpfComponentUtils)
-
-add_subdirectory(test)
+    add_test(NAME DetectionComponentUtilsTest COMMAND DetectionComponentUtilsTest)
+endif()

@@ -28,13 +28,15 @@
 #ifndef OPENMPF_CPP_COMPONENT_SDK_MODELSINIPARSER_H
 #define OPENMPF_CPP_COMPONENT_SDK_MODELSINIPARSER_H
 
-
-#include <string>
-#include <vector>
-#include <fstream>
-#include <utility>
 #include <memory>
+#include <string>
 #include <unordered_map>
+#include <utility>
+#include <vector>
+
+#include <boost/lexical_cast.hpp>
+
+#include <detectionComponentUtils.h>
 #include "MPFDetectionException.h"
 #include "Utils.h"
 
@@ -42,29 +44,132 @@
 namespace MPF { namespace COMPONENT {
 
 
-    // In order to avoid including the boost headers in this header,
-    // everything that uses boost is in this class's implementation.
-    // This makes it so the boost related code gets compiled as part of the utils library instead of as part of
-    // the library that includes this.
-    // Something about the boost property tree headers, probably their complexity,
-    // prevents clang-tidy from working correctly. When the boost property tree headers were included in this header,
-    // the clang-tidy issue spread to all files that included this file.
-    class IniHelper {
-    public:
-        IniHelper(const std::string &file_path, const std::string &model_name);
-        std::string GetValue(const std::string &key) const;
+    namespace ModelsIniHelpers {
+        // In order to avoid including the boost headers in this header,
+        // everything that uses boost is in this class's implementation.
+        // This makes it so the boost related code gets compiled as part of the utils library instead of as part of
+        // the library that includes this.
+        // Something about the boost property tree headers, probably their complexity,
+        // prevents clang-tidy from working correctly. When the boost property tree headers were included
+        // in this header, the clang-tidy issue spread to all files that included this file.
+        class IniHelper {
+        public:
+            IniHelper(const std::string &file_path, const std::string &model_name);
+            std::string GetValue(const std::string &key) const;
+            std::pair<bool, std::string> GetOptionalValue(const std::string &key) const;
 
-    private:
-        std::string model_name_;
-        std::unordered_map<std::string, std::string> model_ini_fields_;
-    };
+        private:
+            std::string model_name_;
+            std::unordered_map<std::string, std::string> model_ini_fields_;
+        };
 
+
+        std::string GetFullPath(const std::string &file_name, const std::string& plugin_models_dir,
+                                const std::string &common_models_dir);
+
+
+        // Need to use a base class that doesn't have a template argument for the field type so that
+        // the FieldInfo instances can all be added to the same vector.
+        template <typename TModelInfo>
+        class BaseFieldInfo {
+        public:
+            virtual ~BaseFieldInfo() = default;
+
+            virtual void SetField(const IniHelper &helper, TModelInfo& model_info,
+                                  const std::string &plugin_dir, const std::string &common_models_dir) = 0;
+        };
+
+
+        template <typename TModelInfo, typename TField>
+        class FieldInfo : public BaseFieldInfo<TModelInfo> {
+            using class_field_t = TField (TModelInfo::*);
+
+        public:
+            FieldInfo(std::string key_name, class_field_t field_reference, bool is_optional,
+                      TField default_value)
+                    : key_name_(std::move(key_name))
+                    , field_reference_(field_reference)
+                    , is_optional_(is_optional)
+                    , default_value_(std::move(default_value)) {
+                if (key_name_.empty()) {
+                    throw std::invalid_argument("\"key_name\" must not be empty.");
+                }
+            }
+
+            void SetField(
+                    const IniHelper &helper,
+                    TModelInfo& model_info,
+                    const std::string &plugin_dir,
+                    const std::string &common_models_dir) override {
+
+                if (is_optional_) {
+                    const auto& pair = helper.GetOptionalValue(key_name_);
+                    bool value_was_in_ini_file = pair.first;
+                    if (value_was_in_ini_file) {
+                        model_info.*field_reference_ = ConvertValue(pair.second, plugin_dir, common_models_dir);
+                        return;
+                    }
+                    // This field was optional and it was not found in the ini file.
+                    model_info.*field_reference_ = ConvertDefaultValue(
+                            default_value_, plugin_dir, common_models_dir);
+                    return;
+                }
+                const std::string string_value = helper.GetValue(key_name_);
+                model_info.*field_reference_ = ConvertValue(string_value, plugin_dir, common_models_dir);
+            }
+
+        private:
+            std::string key_name_;
+            class_field_t field_reference_;
+            bool is_optional_;
+            TField default_value_;
+
+
+            virtual TField ConvertValue(const std::string &string_value, const std::string &plugin_dir,
+                                        const std::string &common_models_dir) {
+                try {
+                    return boost::lexical_cast<TField>(string_value);
+                }
+                catch (const boost::bad_lexical_cast &e) {
+                    throw MPFDetectionException(
+                            MPF_INVALID_PROPERTY,
+                            "Failed to convert the \"" + key_name_ + "\" field to the target type due to: " + e.what());
+                }
+            };
+
+            virtual TField ConvertDefaultValue(const TField &value, const std::string &plugin_dir,
+                                               const std::string &common_models_dir) {
+                return value;
+            };
+        };
+
+
+        template <typename TModelInfo>
+        class PathFieldInfo : public FieldInfo<TModelInfo, std::string> {
+        public:
+            using FieldInfo<TModelInfo, std::string>::FieldInfo;
+
+        private:
+            std::string ConvertValue(const std::string &string_value, const std::string &plugin_models_dir,
+                                     const std::string &common_models_dir) override {
+                return GetFullPath(string_value, plugin_models_dir, common_models_dir);
+            }
+
+            std::string ConvertDefaultValue(const std::string &value, const std::string &plugin_models_dir,
+                                            const std::string &common_models_dir) {
+                return value.empty() ? value : GetFullPath(value, plugin_models_dir, common_models_dir);
+            };
+        };
+    }
 
     template <typename TModelInfo>
     class ModelsIniParser {
+        using base_field_ptr_t = std::unique_ptr<ModelsIniHelpers::BaseFieldInfo<TModelInfo>>;
 
     public:
-        typedef std::string (TModelInfo::*class_field_t);
+        // Pointer to member field
+        template <typename TField>
+        using class_field_t = TField (TModelInfo::*);
 
 
         ModelsIniParser& Init(const std::string &plugin_models_dir) {
@@ -72,13 +177,53 @@ namespace MPF { namespace COMPONENT {
             return *this;
         }
 
-        ModelsIniParser& RegisterField(const std::string &key_name, class_field_t field) {
-            if (key_name.empty()) {
-                throw std::invalid_argument("\"key_name\" must not be empty.");
-            }
-            fields_.emplace_back(key_name, field);
+
+        template<typename T, typename... Args>
+        ModelsIniParser& RegisterFieldCustomType(Args&&... args) {
+            fields_.emplace_back(base_field_ptr_t(new T(std::forward<Args>(args)...)));
             return *this;
         }
+
+
+        template <typename TField>
+        ModelsIniParser& RegisterField(const std::string &key_name, class_field_t<TField> field) {
+            return RegisterFieldCustomType<ModelsIniHelpers::FieldInfo<TModelInfo, TField>>(
+                    key_name, field, false, TField{});
+        }
+
+
+        template <typename TField>
+        ModelsIniParser& RegisterOptionalField(
+                const std::string &key_name, class_field_t<TField> field,
+                const TField &default_value = {}) {
+            return RegisterFieldCustomType<ModelsIniHelpers::FieldInfo<TModelInfo, TField>>(
+                    key_name, field, true, default_value);
+        }
+
+        // Handle cases, such as a string literal, where TDefault and TField are different types, but
+        // TDefault can be converted to TField.
+        template <typename TField, typename TDefault>
+        ModelsIniParser& RegisterOptionalField(
+                const std::string &key_name, class_field_t<TField> field,
+                const TDefault &default_value = {}) {
+            return RegisterFieldCustomType<ModelsIniHelpers::FieldInfo<TModelInfo, TField>>(
+                    key_name, field, true, TField(default_value));
+        }
+
+
+
+        ModelsIniParser& RegisterPathField(const std::string &key_name, class_field_t<std::string> field) {
+            return RegisterFieldCustomType<ModelsIniHelpers::PathFieldInfo<TModelInfo>>(
+                    key_name, field, false, "");
+        }
+
+
+        ModelsIniParser& RegisterOptionalPathField(
+                const std::string &key_name, class_field_t<std::string> field,  const std::string &default_value = "") {
+            return RegisterFieldCustomType<ModelsIniHelpers::PathFieldInfo<TModelInfo>>(
+                    key_name, field, true, default_value);
+        }
+
 
 
         TModelInfo ParseIni(const std::string &model_name, const std::string &common_models_dir) const {
@@ -91,74 +236,27 @@ namespace MPF { namespace COMPONENT {
                             + common_models_dir + "\" due to: " + exp_error);
             }
 
-            std::string models_ini_path = GetFullPath("models.ini", expanded_common_models_dir);
-            IniHelper helper(models_ini_path, model_name);
+            std::string models_ini_path = ModelsIniHelpers::GetFullPath(
+                    "models.ini", plugin_models_dir_, expanded_common_models_dir);
+            ModelsIniHelpers::IniHelper helper(models_ini_path, model_name);
 
             TModelInfo model_info;
-            for (const std::pair<std::string, class_field_t>& field_info : fields_) {
-                std::string file_name = helper.GetValue(field_info.first);
-                model_info.*field_info.second = GetFullPath(file_name, expanded_common_models_dir);
+
+            for (const auto& field_info : fields_) {
+                field_info->SetField(helper, model_info, plugin_models_dir_, expanded_common_models_dir);
             }
+
             return model_info;
         }
-
-
 
     private:
         std::string plugin_models_dir_;
 
-        std::vector<std::pair<std::string, class_field_t>> fields_;
-
-
-        std::string GetFullPath(const std::string &file_name, const std::string &common_models_dir) const {
-            if (file_name.empty()) {
-                throw MPFDetectionException(
-                        MPF_COULD_NOT_READ_DATAFILE,
-                        "Failed to load model because one of the fields in the models ini file was empty.");
-            }
-
-            std::string expanded_file_name;
-            std::string exp_error = Utils::expandFileName(file_name, expanded_file_name);
-            if (!exp_error.empty()) {
-                throw MPFDetectionException(
-                        MPF_COULD_NOT_READ_DATAFILE,
-                        "Failed to load model because the expansion of \"" + file_name
-                            + "\" failed due to: " + exp_error);
-            }
-            if (expanded_file_name.empty()) {
-                throw MPFDetectionException(
-                        MPF_COULD_NOT_READ_DATAFILE,
-                        "Failed to load model because \"" + file_name +  "\" expanded to the empty string.");
-            }
-
-            std::vector<std::string> possible_locations;
-            if (expanded_file_name.front() == '/') {
-                possible_locations.push_back(expanded_file_name);
-            }
-            else {
-                possible_locations.push_back(common_models_dir + '/' + expanded_file_name);
-                possible_locations.push_back(plugin_models_dir_ + '/' + expanded_file_name);
-            }
-
-
-            for (const auto& possible_location : possible_locations) {
-                if (std::ifstream(possible_location).good()) {
-                    return possible_location;
-                }
-            }
-
-            std::string error_msg = "Failed to load model because a required file was not present. ";
-            if (expanded_file_name.front() == '/') {
-                error_msg += "Expected a file at \"" + expanded_file_name + "\" to exist.";
-            }
-            else {
-                error_msg += "Expected a file to exist at either \"" + possible_locations.at(0)
-                             + "\" or \"" + possible_locations.at(1) + "\".";
-            }
-
-            throw MPFDetectionException(MPF_COULD_NOT_OPEN_DATAFILE, error_msg);
-        }
+        std::vector<base_field_ptr_t> fields_;
     };
+
+
+
 }}
 
 
