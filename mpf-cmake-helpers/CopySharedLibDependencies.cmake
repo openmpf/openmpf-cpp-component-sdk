@@ -104,6 +104,9 @@ function(get_link_chain file result)
 endfunction()
 
 
+if (MPF_DEBUG_ENABLED)
+    message("!!! debug enabled")
+endif()
 
 separate_arguments(EXTRA_LIB_DIRS)
 
@@ -113,16 +116,39 @@ get_prerequisites(${TARGET_BINARY_LOCATION} DEPENDENCIES 0 0 "" "${EXTRA_LIB_DIR
 
 foreach(dependency_file_relative ${DEPENDENCIES})
     # gp_resolve_item(<context> <item> <exepath> <dirs> <resolved_item_var> [<rpaths>])
+    if (MPF_DEBUG_ENABLED)
+        message("!!! Calling gp_resolve_item(\"${TARGET_BINARY_LOCATION}\" \"${dependency_file_relative}\" \"\" \"\" dependency_abs_path)")
+    endif()
+
     gp_resolve_item("${TARGET_BINARY_LOCATION}" "${dependency_file_relative}" "" "" dependency_abs_path)
 
+    if (MPF_DEBUG_ENABLED)
+        message("!!! Calling is_std_linux_lib(${dependency_abs_path} is_std_lib)")
+    endif()
+
     is_std_linux_lib(${dependency_abs_path} is_std_lib)
+
+
     if (NOT ${is_std_lib})
+        if (MPF_DEBUG_ENABLED)
+            message("!!! Calling get_link_chain(${dependency_abs_path} link_chain)")
+        endif()
         get_link_chain(${dependency_abs_path} link_chain)
         # Reverse the chain so that the links' target is copied before the link itself.
         list(REVERSE link_chain)
+        if (MPF_DEBUG_ENABLED)
+            message("!!! link_chain = ${link_chain}")
+        endif()
         foreach(lib_file ${link_chain})
+            if (MPF_DEBUG_ENABLED)
+                message("!!! Calling file(COPY ${lib_file} DESTINATION ${DEP_LIBS_INSTALL_LOCATION})")
+            endif()
             file(COPY ${lib_file} DESTINATION ${DEP_LIBS_INSTALL_LOCATION})
         endforeach()
+    endif()
+
+    if (MPF_DEBUG_ENABLED)
+        message("\n")
     endif()
 endforeach()
 

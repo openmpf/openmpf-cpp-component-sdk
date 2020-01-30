@@ -67,11 +67,21 @@ endmacro()
 # Add post-build command that copies all referenced libraries to the plugin's lib directory
 function(copy_shared_libs targetName pluginLocation)
     if (NOT CMAKE_BUILD_TYPE STREQUAL "Debug")
-        add_custom_command(TARGET ${targetName} POST_BUILD
-            COMMAND ${CMAKE_COMMAND} -D TARGET_BINARY_LOCATION="$<TARGET_FILE:${targetName}>"
-            -D DEP_LIBS_INSTALL_LOCATION="${pluginLocation}/lib"
-            -D EXTRA_LIB_DIRS="${ARGV2}"
-            -P ${CopySharedLibDependencies_LOCATION})
+        if (targetName STREQUAL darknet_wrapper)
+            message("!!! enabling debug for copy_shared_libs")
+            add_custom_command(TARGET ${targetName} POST_BUILD
+                COMMAND ${CMAKE_COMMAND} -D TARGET_BINARY_LOCATION="$<TARGET_FILE:${targetName}>"
+                -D DEP_LIBS_INSTALL_LOCATION="${pluginLocation}/lib"
+                -D EXTRA_LIB_DIRS="${ARGV2}"
+                -D MPF_DEBUG_ENABLED=true
+                -P ${CopySharedLibDependencies_LOCATION})
+        else()
+            add_custom_command(TARGET ${targetName} POST_BUILD
+                COMMAND ${CMAKE_COMMAND} -D TARGET_BINARY_LOCATION="$<TARGET_FILE:${targetName}>"
+                -D DEP_LIBS_INSTALL_LOCATION="${pluginLocation}/lib"
+                -D EXTRA_LIB_DIRS="${ARGV2}"
+                -P ${CopySharedLibDependencies_LOCATION})
+        endif()
     endif()
 endfunction()
 
