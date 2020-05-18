@@ -44,8 +44,7 @@ namespace MPF { namespace COMPONENT {
 
         bool Supports(MPFDetectionDataType data_type) override;
 
-        MPFDetectionError GetDetections(const MPFImageJob &job,
-                                        std::vector<MPFImageLocation> &locations) override;
+        std::vector<MPFImageLocation> GetDetections(const MPFImageJob &job) override;
 
     };
 }}

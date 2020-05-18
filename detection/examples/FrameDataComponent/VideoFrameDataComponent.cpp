@@ -28,6 +28,7 @@
 
 #include <VideoSegmentToFramesConverter.h>
 #include <detectionComponentUtils.h>
+#include <MPFDetectionException.h>
 
 #include "VideoFrameDataComponent.h"
 
@@ -55,11 +56,10 @@ bool VideoFrameDataComponent::Close() {
     return true;
 }
 
-MPFDetectionError VideoFrameDataComponent::GetDetectionsFromVideoFrameData(
+std::vector<MPFVideoTrack> VideoFrameDataComponent::GetDetectionsFromVideoFrameData(
         const MPFVideoFrameData &frame_data,
         const Properties &job_properties,
-        const std::string &job_name,
-        std::vector<MPFVideoTrack>& tracks)
+        const std::string &job_name)
 {
     std::cout << "[" << job_name << "] Processing video from frame " << frame_data.start_frame
               << " to frame " << frame_data.stop_frame << "." << std::endl;
@@ -106,16 +106,13 @@ MPFDetectionError VideoFrameDataComponent::GetDetectionsFromVideoFrameData(
         track.frame_locations[frame_index] = image;
     }
     track.stop_frame = track_stop_frame;
-    tracks.push_back(track);
 
-    return (MPF_DETECTION_SUCCESS);
+    return { track };
 }
 
 
-MPFDetectionError VideoFrameDataComponent::GetDetections(const MPFVideoJob &job,
-                                                         std::vector <MPFVideoTrack> &tracks) {
+std::vector<MPFVideoTrack> VideoFrameDataComponent::GetDetections(const MPFVideoJob &job) {
 
-    MPFDetectionError rc = MPF_DETECTION_SUCCESS;
     MPFVideoFrameData frame_data;
     std::pair<MPFDetectionError, std::string> ret_info;
 
@@ -128,10 +125,6 @@ MPFDetectionError VideoFrameDataComponent::GetDetections(const MPFVideoJob &job,
     // MPFImageReader examples.
     try {
         MPFVideoCapture cap(job);
-        if (!cap.IsOpened()){
-            std::cout << "Video Capture creation failed" << std::endl;
-            return (MPF_COULD_NOT_OPEN_DATAFILE);
-        }
 
         // This function allocates memory to store the byte data.
         // That allocation must be freed by the caller.
@@ -146,7 +139,7 @@ MPFDetectionError VideoFrameDataComponent::GetDetections(const MPFVideoJob &job,
             }
             std::cout << "[" << job.job_name << "] convertSegmentToFrameData failed" << std::endl;
             std::cout << "Error message: " << ret_info.second << std::endl;
-            return ret_info.first;
+            throw MPFDetectionException(ret_info.first, ret_info.second);
         }
         // If MPF_DETECTION_SUCCESS was returned, but the error
         // message string is not empty, this indicates a warning
@@ -167,20 +160,14 @@ MPFDetectionError VideoFrameDataComponent::GetDetections(const MPFVideoJob &job,
             // has been to simply return success in this circumstance,
             // but a component may choose to handle it differently.
             std::cout << "[" << job.job_name << "] Processing complete. Found 0 detections." << std::endl;
-            return MPF_DETECTION_SUCCESS;
+            return { };
         }
 
-        rc = GetDetectionsFromVideoFrameData(frame_data,
-                                             job.job_properties,
-                                             job.job_name,
-                                             tracks);
+        std::vector<MPFVideoTrack> tracks = GetDetectionsFromVideoFrameData(
+                frame_data, job.job_properties, job.job_name);
+
         delete [] frame_data.data[0];
         frame_data.data.clear();
-
-        if (rc != MPF_DETECTION_SUCCESS) {
-            std::cout << "[" << job.job_name << "] GetDetectionsFromVideoFrameData failed" << std::endl;
-            return rc;
-        }
 
         // The MPFVideoCapture object may have applied certain
         // transformations on the input video.  The following logic
@@ -190,16 +177,16 @@ MPFDetectionError VideoFrameDataComponent::GetDetections(const MPFVideoJob &job,
         for (auto &ThisTrack : tracks) {
             cap.ReverseTransform(ThisTrack);
         }
+        return tracks;
     }
     catch (...) {
         if (!frame_data.data.empty()) {
             delete [] frame_data.data[0];
             frame_data.data.clear();
         }
-        ret_info = DetectionComponentUtils::HandleDetectionException(MPFDetectionDataType::VIDEO);
+        DetectionComponentUtils::ReThrowAsMpfDetectionException(MPFDetectionDataType::VIDEO);
     }
 
-    return rc;
 }
 
 MPF_COMPONENT_CREATOR(VideoFrameDataComponent);

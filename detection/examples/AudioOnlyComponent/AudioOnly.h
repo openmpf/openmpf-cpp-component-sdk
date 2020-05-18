@@ -44,8 +44,7 @@ public:
 
     bool Close() override;
 
-    MPFDetectionError GetDetections(const MPFAudioJob &job,
-                                    std::vector <MPFAudioTrack> &tracks) override;
+    std::vector<MPFAudioTrack> GetDetections(const MPFAudioJob &job) override;
 
     std::string GetDetectionType() override;
 };

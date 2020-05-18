@@ -39,6 +39,7 @@
 
 namespace MPF { namespace COMPONENT {
 
+    // TODO: No longer used. Can we remove? Need to add destructor if keeping.
     struct MPFVideoFrameData {
         int start_frame;
         int stop_frame;

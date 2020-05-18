@@ -42,14 +42,12 @@ namespace MPF { namespace COMPONENT {
 
         std::string GetDetectionType() override { return "VIDEO_FRAME_DATA"; }
 
-        MPFDetectionError GetDetectionsFromVideoFrameData(
+        std::vector<MPFVideoTrack> GetDetectionsFromVideoFrameData(
                 const MPFVideoFrameData &video_byte_data,
                 const Properties &job_properties,
-                const std::string &job_name,
-                std::vector<MPFVideoTrack> &tracks) override;
+                const std::string &job_name) override;
 
-        MPFDetectionError GetDetections(const MPFVideoJob &job,
-                                        std::vector<MPFVideoTrack> &tracks) override;
+        std::vector<MPFVideoTrack> GetDetections(const MPFVideoJob &job) override;
 
     };
 

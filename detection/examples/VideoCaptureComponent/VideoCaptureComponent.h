@@ -42,8 +42,7 @@ namespace MPF { namespace COMPONENT {
 
         bool Close() override;
 
-        MPFDetectionError GetDetections(const MPFVideoJob &job,
-                                        std::vector <MPFVideoTrack> &tracks) override;
+        std::vector<MPFVideoTrack> GetDetections(const MPFVideoJob &job) override;
 
     };
 

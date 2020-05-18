@@ -41,13 +41,10 @@ namespace MPF { namespace COMPONENT {
     class MPFVideoFrameDataDetectionAdapter : public MPFVideoDetectionComponentAdapter {
 
     public:
-        virtual ~MPFVideoFrameDataDetectionAdapter() = default;
-
-        virtual MPFDetectionError GetDetectionsFromVideoFrameData(
+        virtual std::vector<MPFVideoTrack> GetDetectionsFromVideoFrameData(
                 const MPFVideoFrameData &video_byte_data,
                 const Properties &job_properties,
-                const std::string &job_name,
-                std::vector<MPFVideoTrack> &tracks) = 0;
+                const std::string &job_name) = 0;
 
     protected:
         MPFVideoFrameDataDetectionAdapter() = default;

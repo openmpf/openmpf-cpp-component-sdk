@@ -49,8 +49,7 @@ bool AudioOnly::Close() {
 
 //-----------------------------------------------------------------------------
 // Audio case
-MPFDetectionError AudioOnly::GetDetections(const MPFAudioJob &job,
-                                           std::vector <MPFAudioTrack> &tracks) {
+std::vector<MPFAudioTrack> AudioOnly::GetDetections(const MPFAudioJob &job) {
 
     // The MPFAudioJob structure contains all of the details needed to
     // process an audio file.
@@ -68,11 +67,10 @@ MPFDetectionError AudioOnly::GetDetections(const MPFAudioJob &job,
     // example, to return the phrase recognized in the audio track.
     audio_track.detection_properties["METADATA"] = "extra audio track info";
 
-    tracks.push_back(audio_track);
 
+    std::vector<MPFAudioTrack> tracks { audio_track };
     std::cout << "[" << job.job_name << "] Processing complete. Generated " << tracks.size() << " dummy audio tracks." << std::endl;
-
-    return MPF_DETECTION_SUCCESS;
+    return tracks;
 }
 
 //-----------------------------------------------------------------------------

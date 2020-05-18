@@ -37,9 +37,8 @@ namespace MPF { namespace COMPONENT {
 
     class MPFGenericDetectionComponentAdapter : public MPFDetectionComponent {
     public:
-        virtual ~MPFGenericDetectionComponentAdapter() = default;
 
-        MPFDetectionError GetDetections(const MPFAudioJob &audio_job, std::vector<MPFAudioTrack> &audio_tracks) override {
+        std::vector<MPFAudioTrack> GetDetections(const MPFAudioJob &audio_job) override {
             // create generic job
             MPFGenericJob generic_job(audio_job.job_name, audio_job.data_uri, audio_job.job_properties, audio_job.media_properties);
             if (audio_job.has_feed_forward_track) {
@@ -48,14 +47,10 @@ namespace MPF { namespace COMPONENT {
             }
 
             // process generic job
-            std::vector<MPFGenericTrack> generic_tracks;
-            MPFDetectionError rc = GetDetections(generic_job, generic_tracks);
-
-            if (rc != MPFDetectionError::MPF_DETECTION_SUCCESS) {
-                return rc;
-            }
+            std::vector<MPFGenericTrack> generic_tracks = GetDetections(generic_job);
 
             // convert generic tracks to expected type
+            std::vector<MPFAudioTrack> audio_tracks;
             for (auto &generic_track : generic_tracks) {
                 MPFAudioTrack audio_track;
                 if (audio_job.has_feed_forward_track) {
@@ -67,10 +62,10 @@ namespace MPF { namespace COMPONENT {
                 audio_tracks.push_back(std::move(audio_track));
             }
 
-            return MPFDetectionError::MPF_DETECTION_SUCCESS;
+            return audio_tracks;
         };
 
-        MPFDetectionError GetDetections(const MPFImageJob &image_job, std::vector<MPFImageLocation> &locations) override {
+        std::vector<MPFImageLocation> GetDetections(const MPFImageJob &image_job) override {
             // create generic job
             MPFGenericJob generic_job(image_job.job_name, image_job.data_uri, image_job.job_properties, image_job.media_properties);
             if (image_job.has_feed_forward_location) {
@@ -79,14 +74,10 @@ namespace MPF { namespace COMPONENT {
             }
 
             // process generic job
-            std::vector<MPFGenericTrack> generic_tracks;
-            MPFDetectionError rc = GetDetections(generic_job, generic_tracks);
-
-            if (rc != MPFDetectionError::MPF_DETECTION_SUCCESS) {
-                return rc;
-            }
+            std::vector<MPFGenericTrack> generic_tracks = GetDetections(generic_job);
 
             // convert generic tracks to expected type
+            std::vector<MPFImageLocation> locations;
             for (auto &generic_track : generic_tracks) {
                 MPFImageLocation location;
                 if (image_job.has_feed_forward_location) {
@@ -100,10 +91,10 @@ namespace MPF { namespace COMPONENT {
                 locations.push_back(std::move(location));
             }
 
-            return MPFDetectionError::MPF_DETECTION_SUCCESS;
+            return locations;
         }
 
-        MPFDetectionError GetDetections(const MPFVideoJob &video_job, std::vector<MPFVideoTrack> &video_tracks) override {
+        std::vector<MPFVideoTrack> GetDetections(const MPFVideoJob &video_job) override {
             // create generic job
             MPFGenericJob generic_job(video_job.job_name, video_job.data_uri, video_job.job_properties, video_job.media_properties);
             if (video_job.has_feed_forward_track) {
@@ -112,13 +103,9 @@ namespace MPF { namespace COMPONENT {
             }
 
             // process generic job
-            std::vector<MPFGenericTrack> generic_tracks;
-            MPFDetectionError rc = GetDetections(generic_job, generic_tracks);
+            std::vector<MPFGenericTrack> generic_tracks = GetDetections(generic_job);
 
-            if (rc != MPFDetectionError::MPF_DETECTION_SUCCESS) {
-                return rc;
-            }
-
+            std::vector<MPFVideoTrack> video_tracks;
             // convert generic tracks to expected type
             for (auto &generic_track : generic_tracks) {
                 MPFVideoTrack video_track;
@@ -135,10 +122,10 @@ namespace MPF { namespace COMPONENT {
                 video_tracks.push_back(std::move(video_track));
             }
 
-            return MPFDetectionError::MPF_DETECTION_SUCCESS;
+            return video_tracks;
         }
 
-        virtual MPFDetectionError GetDetections(const MPFGenericJob &job, std::vector<MPFGenericTrack> &tracks) = 0;
+        virtual std::vector<MPFGenericTrack> GetDetections(const MPFGenericJob &job) = 0;
 
 
         bool Supports(MPFDetectionDataType data_type) override {

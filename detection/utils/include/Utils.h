@@ -39,11 +39,13 @@
 
 namespace MPF { namespace COMPONENT { namespace Utils {
 
-    MPFDetectionError HandleDetectionException(const MPFVideoJob &job, log4cxx::LoggerPtr logger);
+    [[noreturn]] void LogAndReThrowException(const MPFVideoJob &job, const log4cxx::LoggerPtr &logger);
 
-    MPFDetectionError HandleDetectionException(const MPFImageJob &job, log4cxx::LoggerPtr logger);
+    [[noreturn]] void LogAndReThrowException(const MPFImageJob &job, const log4cxx::LoggerPtr &logger);
 
-    MPFDetectionError HandleDetectionException(const MPFAudioJob &job, log4cxx::LoggerPtr logger);
+    [[noreturn]] void LogAndReThrowException(const MPFAudioJob &job, const log4cxx::LoggerPtr &logger);
+
+    [[noreturn]] void LogAndReThrowException(const MPFGenericJob &job, const log4cxx::LoggerPtr &logger);
 
     // This function performs shell-like file name expansion. It
     // returns an error string. If that string is not empty, then the

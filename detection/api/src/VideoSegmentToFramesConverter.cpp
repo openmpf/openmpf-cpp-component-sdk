@@ -159,7 +159,8 @@ namespace MPF { namespace COMPONENT {
                 k = cap.GetCurrentFramePosition();
             }
         } catch (...) {
-            return (DetectionComponentUtils::HandleDetectionException(MPFDetectionDataType::VIDEO));
+            //TODO: If keeping, fix this.
+//            return (DetectionComponentUtils::HandleDetectionException(MPFDetectionDataType::VIDEO));
         }
 
         if (rc != MPF_DETECTION_SUCCESS) {

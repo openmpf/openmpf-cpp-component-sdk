@@ -51,8 +51,7 @@
 
 //-----------------------------------------------------------------------------
 // Generic case
-MPFDetectionError GenericComponent::GetDetections(const MPFGenericJob &job, std::vector <MPFGenericTrack> &tracks)
-{
+std::vector<MPFGenericTrack> GenericComponent::GetDetections(const MPFGenericJob &job) {
 
     // The MPFGenericJob structure contains all of the details needed to
     // process a generic file.
@@ -74,11 +73,9 @@ MPFDetectionError GenericComponent::GetDetections(const MPFGenericJob &job, std:
         track.detection_properties["FEED_FORWARD_COUNT"] = std::to_string(feed_forward_count+1);
     }
 
-    tracks.push_back(track);
-
+    std::vector<MPFGenericTrack> tracks { track };
     std::cout << "[" << job.job_name << "] Processing complete. Generated " << tracks.size() << " dummy tracks." << std::endl;
-
-    return MPF_DETECTION_SUCCESS;
+    return tracks;
 }
 
 //-----------------------------------------------------------------------------
