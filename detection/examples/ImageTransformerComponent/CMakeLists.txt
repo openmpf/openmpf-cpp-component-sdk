@@ -34,7 +34,7 @@ include(../ComponentSetup.cmake)
 
 find_package(mpfComponentInterface REQUIRED)
 find_package(mpfDetectionComponentApi REQUIRED)
-find_package(OpenCV 3.4.7 EXACT REQUIRED PATHS /opt/opencv-3.4.7 COMPONENTS opencv_core opencv_highgui)
+find_package(OpenCV $ENV{OPENCV_VERSION} EXACT REQUIRED PATHS /opt/opencv-$ENV{OPENCV_VERSION} COMPONENTS opencv_core opencv_highgui)
 
 
 set(IMAGE_TRANSFORMER_COMPONENT_SOURCES ImageTransformerComponent.h ImageTransformerComponent.cpp)
