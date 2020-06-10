@@ -28,6 +28,7 @@
 #include <iostream>
 #include <opencv2/highgui/highgui.hpp>
 #include <MPFImageReader.h>
+#include <MPFDetectionException.h>
 #include "ImageTransformerComponent.h"
 
 using namespace MPF;
@@ -51,9 +52,7 @@ bool ImageTransformerComponent::Close() {
     return true;
 }
 
-MPFDetectionError ImageTransformerComponent::GetDetections(const MPFImageJob &job,
-                                                           std::vector <MPFImageLocation> &locations)
-{
+std::vector<MPFImageLocation> ImageTransformerComponent::GetDetections(const MPFImageJob &job) {
 
     // The MPFImageJob structure contains all of the details needed to
     // process an image file.
@@ -80,7 +79,8 @@ MPFDetectionError ImageTransformerComponent::GetDetections(const MPFImageJob &jo
 
     if (original.empty()) {
         std::cout << "[" << job.job_name << "] Could not open original image and will not return detections" << std::endl;
-        return MPF_IMAGE_READ_ERROR;
+        throw MPFDetectionException(MPF_IMAGE_READ_ERROR,
+                                    "Could not open original image and will not return detections");
     }
 
     MPFImageReader image_reader(job);
@@ -88,7 +88,8 @@ MPFDetectionError ImageTransformerComponent::GetDetections(const MPFImageJob &jo
 
     if (image_data.empty()) {
         std::cout << "[" << job.job_name << "] Could not open transformed image and will not return detections" << std::endl;
-        return MPF_IMAGE_READ_ERROR;
+        throw MPFDetectionException(MPF_IMAGE_READ_ERROR,
+                                    "Could not open transformed image and will not return detections");
     }
 
     std::cout << "transformed image rows = " << image_data.rows << std::endl;
@@ -124,11 +125,9 @@ MPFDetectionError ImageTransformerComponent::GetDetections(const MPFImageJob &jo
     // to the original media.
 
     image_reader.ReverseTransform(image_location);
-    locations.push_back(image_location);
-
+    std::vector<MPFImageLocation> locations { image_location };
     std::cout << "[" << job.job_name << "] Processing complete. Generated " << locations.size() << " dummy image locations." << std::endl;
-
-    return MPF_DETECTION_SUCCESS;
+    return locations;
 }
 
 //-----------------------------------------------------------------------------

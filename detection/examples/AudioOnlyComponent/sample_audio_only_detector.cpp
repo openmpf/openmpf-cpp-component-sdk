@@ -54,16 +54,13 @@ int main(int argc, char* argv[]) {
     AudioOnly hw;
 
     if (hw.Init()) {
-
         int start_time = atoi(argv[2]);
         int stop_time = atoi(argv[3]);
 
         MPF::COMPONENT::MPFAudioJob job("TestAudioJob", uri, start_time, stop_time,
                                         algorithm_properties, media_properties);
-
-        std::vector<MPFAudioTrack> tracks;
-        MPFDetectionError rc = hw.GetDetections(job, tracks);
-        if (rc == MPF_DETECTION_SUCCESS) {
+        try {
+            std::vector<MPFAudioTrack> tracks = hw.GetDetections(job);
             std::cout << "Number of audio tracks = " << tracks.size() << std::endl;
 
             for (int i = 0; i < tracks.size(); i++) {
@@ -73,6 +70,9 @@ int main(int argc, char* argv[]) {
                           << "   confidence = " << tracks[i].confidence << "\n"
                           << "   metadata = \"" << tracks[i].detection_properties.at("METADATA") << "\"" << std::endl;
             }
+        }
+        catch (const std::exception &e) {
+            std::cerr << "Error: " << e.what() << std::endl;
         }
     } else {
         std::cerr << "Error: Could not initialize detection component." << std::endl;

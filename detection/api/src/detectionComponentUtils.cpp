@@ -83,35 +83,30 @@ namespace DetectionComponentUtils {
     }
 
 
-    pair<MPFDetectionError, string> HandleDetectionException(MPFDetectionDataType dataType) {
+    [[noreturn]] void ReThrowAsMpfDetectionException(MPFDetectionDataType dataType) {
         const string &dataTypeName = DetectionDataTypeToString(dataType);
 
         try {
             throw;
         }
         catch (const MPFDetectionException &ex) {
-            return {
-                ex.error_code,
-                "An exception occurred while trying to get detections from " + dataTypeName + ": " + ex.what()
-            };
+            throw MPFDetectionException(ex.error_code,
+                    "An exception occurred while trying to get detections from " + dataTypeName
+                    + ": " + ex.what());
         }
         catch (const cv::Exception &ex) {
-            return {
-                MPFDetectionError::MPF_DETECTION_FAILED,
-                "OpenCV raised an exception while trying to get detections from " + dataTypeName + ": " + ex.what()
-            };
+            throw MPFDetectionException(MPFDetectionError::MPF_DETECTION_FAILED,
+                    "OpenCV raised an exception while trying to get detections from " + dataTypeName
+                    + ": " + ex.what());
         }
         catch (const exception &ex) {
-            return {
-                MPFDetectionError::MPF_OTHER_DETECTION_ERROR_TYPE,
-                "An exception occurred while trying to get detections from " + dataTypeName + ": " + ex.what()
-            };
+            throw MPFDetectionException(MPFDetectionError::MPF_OTHER_DETECTION_ERROR_TYPE,
+                    "An exception occurred while trying to get detections from " + dataTypeName
+                    + ": " + ex.what());
         }
         catch (...) {
-            return {
-                MPFDetectionError::MPF_OTHER_DETECTION_ERROR_TYPE,
-                "An unknown error occurred while trying to get detections from " + dataTypeName + "."
-            };
+            throw MPFDetectionException(MPFDetectionError::MPF_OTHER_DETECTION_ERROR_TYPE,
+                    "An unknown error occurred while trying to get detections from " + dataTypeName + ".");
         }
     }
 

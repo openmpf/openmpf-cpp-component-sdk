@@ -178,22 +178,19 @@ namespace MPF { namespace COMPONENT {
 
     public:
 
-        virtual ~MPFDetectionComponent() { }
+        virtual std::vector<MPFVideoTrack> GetDetections(const MPFVideoJob &job) = 0;
 
+        virtual std::vector<MPFImageLocation> GetDetections(const MPFImageJob &job) = 0;
 
-        virtual MPFDetectionError GetDetections(const MPFVideoJob &job, std::vector<MPFVideoTrack> &tracks)  = 0;
+        virtual std::vector<MPFAudioTrack> GetDetections(const MPFAudioJob &job) = 0;
 
-        virtual MPFDetectionError GetDetections(const MPFImageJob &job, std::vector<MPFImageLocation> &locations) = 0;
-
-        virtual MPFDetectionError GetDetections(const MPFAudioJob &job, std::vector<MPFAudioTrack> &tracks) = 0;
-
-        virtual MPFDetectionError GetDetections(const MPFGenericJob &job, std::vector<MPFGenericTrack> &tracks) = 0;
+        virtual std::vector<MPFGenericTrack> GetDetections(const MPFGenericJob &job) = 0;
 
         virtual bool Supports(MPFDetectionDataType data_type) = 0;
 
         virtual std::string GetDetectionType() = 0;
 
-        MPFComponentType GetComponentType() { return MPF_DETECTION_COMPONENT; };
+        MPFComponentType GetComponentType() override { return MPF_DETECTION_COMPONENT; };
 
     protected:
 

@@ -28,6 +28,7 @@
 #include <opencv2/videoio.hpp>
 #include <opencv2/highgui.hpp>
 #include <detectionComponentUtils.h>
+#include <MPFDetectionException.h>
 #include <MPFVideoCapture.h>
 #include "VideoCaptureComponent.h"
 
@@ -52,9 +53,7 @@ bool VideoCaptureComponent::Close() {
     return true;
 }
 
-MPFDetectionError VideoCaptureComponent::GetDetections(
-        const MPFVideoJob &job,
-        std::vector <MPFVideoTrack> &tracks)
+std::vector<MPFVideoTrack> VideoCaptureComponent::GetDetections(const MPFVideoJob &job)
 {
 
     // The MPFVideoJob structure contains all of the details needed to
@@ -91,10 +90,6 @@ MPFDetectionError VideoCaptureComponent::GetDetections(
     // MPFVideoJob structure. Here, we instantiate an MPFVideoCapture
     // object for this job.
     MPFVideoCapture cap(job);
-    if( !cap.IsOpened() ) {
-        std::cout << "[" << job.job_name << "] Could not initialize video capture" << std::endl;
-        return MPF_COULD_NOT_OPEN_DATAFILE;
-    }
 
     // The MPFVideoCapture can provide information about the segment.
     int total_frames = cap.GetFrameCount();
@@ -104,12 +99,14 @@ MPFDetectionError VideoCaptureComponent::GetDetections(
     // not beyond the end of the video.
     if (job.start_frame >= total_frames) {
         std::cout << "Requested start_frame is greater than the number of frames in the video" << std::endl;
-        return MPF_INVALID_START_FRAME;
+        throw MPFDetectionException(MPF_INVALID_START_FRAME,
+                "Requested start_frame is greater than the number of frames in the video");
     }
 
     if (job.stop_frame >= total_frames) {
         std::cout << "Requested stop_frame is greater than the number of frames in the video" << std::endl;
-        return MPF_INVALID_STOP_FRAME;
+        throw MPFDetectionException(MPF_INVALID_STOP_FRAME,
+                                    "Requested stop_frame is greater than the number of frames in the video");
     }
 
     double fps = cap.GetFrameRate();
@@ -200,11 +197,9 @@ MPFDetectionError VideoCaptureComponent::GetDetections(
     // so that they can be related back to the original media.
     cap.ReverseTransform(video_track);
 
-    tracks.push_back(video_track);
-
+    std::vector<MPFVideoTrack> tracks { video_track };
     std::cout << "[" << job.job_name << "] Processing complete. Generated " << tracks.size() << " dummy tracks." << std::endl;
-
-    return MPF_DETECTION_SUCCESS;
+    return tracks;
 }
 
 

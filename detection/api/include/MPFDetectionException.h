@@ -38,14 +38,13 @@ namespace MPF { namespace COMPONENT {
     public:
         const MPFDetectionError error_code;
 
-        MPFDetectionException(MPFDetectionError error_code, const std::string &what)
+        explicit MPFDetectionException(MPFDetectionError error_code, const std::string &what = "")
                 : std::runtime_error(what)
                 , error_code(error_code) {
         }
 
         explicit MPFDetectionException(const std::string &what)
             : MPFDetectionException(MPF_OTHER_DETECTION_ERROR_TYPE, what) {
-
         }
     };
 }}

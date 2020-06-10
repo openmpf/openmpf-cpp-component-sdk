@@ -52,9 +52,6 @@ set(SOURCE_FILES
         include/MPFVideoCapture.h
         src/MPFVideoCapture.cpp
 
-        include/VideoSegmentToFramesConverter.h
-        src/VideoSegmentToFramesConverter.cpp
-
         include/frame_transformers/SearchRegion.h
         src/frame_transformers/SearchRegion.cpp
 
@@ -80,7 +77,6 @@ set(SOURCE_FILES
         include/adapters/MPFImageAndVideoDetectionComponentAdapter.h
         include/adapters/MPFImageDetectionComponentAdapter.h
         include/adapters/MPFVideoDetectionComponentAdapter.h
-        include/adapters/MPFVideoFrameDataDetectionAdapter.h
         include/adapters/MPFGenericDetectionComponentAdapter.h
 
         include/SeekStrategy.h

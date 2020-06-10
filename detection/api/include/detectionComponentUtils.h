@@ -84,12 +84,12 @@ namespace DetectionComponentUtils {
 
     /**
      * Exception dispatcher pattern from https://isocpp.org/wiki/faq/exceptions#throw-without-an-object
-     * Catches the current exception and returns a pair containing the error code and error message
+     * Converts the current exception to MPF::COMPONENT::MPFDetectionException, adds context to the error message,
+     * and re-throws it.
      * @param dataType Type of the input data that caused the exception
-     * @return Appropriate error code and message for handled exception
+     * @throws MPF::COMPONENT::MPFDetectionException
      */
-    std::pair<MPF::COMPONENT::MPFDetectionError, std::string>
-    HandleDetectionException(MPF::COMPONENT::MPFDetectionDataType dataType);
+    [[noreturn]] void ReThrowAsMpfDetectionException(MPF::COMPONENT::MPFDetectionDataType dataType);
 
 
     double NormalizeAngle(double angle);

@@ -108,12 +108,9 @@ int main(int argc, char* argv[]) {
 
     // Instantiate the component
     VideoCaptureComponent vc;
-    // Declare the vector of tracks to be filled in by the component.
-    std::vector<MPFVideoTrack> tracks;
-    // Pass the job to the video capture component
-    MPFDetectionError rc = MPF_DETECTION_SUCCESS;
-    rc = vc.GetDetections(job, tracks);
-    if (rc == MPF_DETECTION_SUCCESS) {
+
+    try {
+        std::vector<MPFVideoTrack> tracks = vc.GetDetections(job);
         std::cout << "Number of video tracks = " << tracks.size() << std::endl;
 
         for (int i = 0; i < tracks.size(); i++) {
@@ -135,8 +132,8 @@ int main(int argc, char* argv[]) {
             }
         }
     }
-    else {
-        std::cout << "GetDetections failed" << std::endl;
+    catch (const std::exception &e) {
+        std::cerr << "Error: " << e.what() << std::endl;
     }
 
     return 0;

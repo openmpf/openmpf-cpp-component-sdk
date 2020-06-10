@@ -43,7 +43,7 @@ public:
 
     bool Close() override;
 
-    MPFDetectionError GetDetections(const MPFGenericJob &job, std::vector <MPFGenericTrack> &tracks) override;
+    std::vector<MPFGenericTrack> GetDetections(const MPFGenericJob &job) override;
 
     bool Supports(MPFDetectionDataType data_type) override;
 

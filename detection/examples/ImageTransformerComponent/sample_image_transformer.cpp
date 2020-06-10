@@ -89,13 +89,9 @@ int main(int argc, char* argv[]) {
 
     // Instantiate the component
     ImageTransformerComponent im;
-    // Declare the vector of image locations to be filled in by the
-    // component.
-    std::vector<MPFImageLocation> locations;
-    // Pass the job to the image detection component
-    MPFDetectionError rc = MPF_DETECTION_SUCCESS;
-    rc = im.GetDetections(job, locations);
-    if (rc == MPF_DETECTION_SUCCESS) {
+
+    try {
+        std::vector<MPFImageLocation> locations = im.GetDetections(job);
         std::cout << "Number of image locations = "
                   << locations.size() << std::endl;
 
@@ -109,8 +105,8 @@ int main(int argc, char* argv[]) {
                       << "   metadata = \"" << locations[i].detection_properties.at("METADATA") << "\"" << std::endl;
         }
     }
-    else {
-        std::cout << "GetDetections failed" << std::endl;
+    catch (const std::exception &e) {
+        std::cerr << "Error: " << e.what() << std::endl;
     }
 
     return 0;

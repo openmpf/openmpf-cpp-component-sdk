@@ -32,23 +32,23 @@
 #include <vector>
 
 #include "MPFDetectionComponent.h"
+#include "MPFDetectionException.h"
 
 namespace MPF { namespace COMPONENT {
 
     class MPFVideoDetectionComponentAdapter : public MPFDetectionComponent {
     public:
-        virtual ~MPFVideoDetectionComponentAdapter() = default;
 
-        MPFDetectionError GetDetections(const MPFAudioJob &job, std::vector<MPFAudioTrack> &tracks) override {
-            return MPFDetectionError::MPF_UNSUPPORTED_DATA_TYPE;
+        std::vector<MPFAudioTrack> GetDetections(const MPFAudioJob &job) override {
+            throw MPFDetectionException(MPFDetectionError::MPF_UNSUPPORTED_DATA_TYPE);
         };
 
-        MPFDetectionError GetDetections(const MPFImageJob &job, std::vector<MPFImageLocation> &locations) override {
-            return MPFDetectionError::MPF_UNSUPPORTED_DATA_TYPE;
+        std::vector<MPFImageLocation> GetDetections(const MPFImageJob &job) override {
+            throw MPFDetectionException(MPFDetectionError::MPF_UNSUPPORTED_DATA_TYPE);
         }
 
-        MPFDetectionError GetDetections(const MPFGenericJob &job, std::vector<MPFGenericTrack> &tracks) override {
-            return MPFDetectionError::MPF_UNSUPPORTED_DATA_TYPE;
+        std::vector<MPFGenericTrack> GetDetections(const MPFGenericJob &job) override {
+            throw MPFDetectionException(MPFDetectionError::MPF_UNSUPPORTED_DATA_TYPE);
         }
 
 

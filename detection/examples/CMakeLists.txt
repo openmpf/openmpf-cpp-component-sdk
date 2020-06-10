@@ -32,7 +32,6 @@ set(CMAKE_CXX_STANDARD 11)
 
 
 add_subdirectory(AudioOnlyComponent)
-add_subdirectory(FrameDataComponent)
 add_subdirectory(GenericComponent)
 add_subdirectory(HelloWorldComponent)
 add_subdirectory(ImageTransformerComponent)

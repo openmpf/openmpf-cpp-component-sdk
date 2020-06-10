@@ -87,11 +87,9 @@ int main(int argc, char* argv[]) {
                 MPF::COMPONENT::MPFImageJob job("TestImageJob", uri,
                                                 algorithm_properties,
                                                 media_properties);
-                std::vector<MPFImageLocation> locations;
-                rc = hw.GetDetections(job, locations);
-                if (rc == MPF_DETECTION_SUCCESS) {
-                    std::cout << "Number of image locations = "
-                              << locations.size() << std::endl;
+                try {
+                    std::vector<MPFImageLocation> locations = hw.GetDetections(job);
+                    std::cout << "Number of image locations = " << locations.size() << std::endl;
 
                     for (int i = 0; i < locations.size(); i++) {
                         std::cout << "Image location number " << i << "\n"
@@ -105,6 +103,9 @@ int main(int argc, char* argv[]) {
                         }
                     }
                 }
+                catch (const std::exception &e) {
+                    std::cerr << "Error: " << e.what() << std::endl;
+                }
                 break;
             }
 
@@ -116,10 +117,8 @@ int main(int argc, char* argv[]) {
                                 start_time, stop_time,
                                 algorithm_properties,
                                 media_properties);
-                std::vector<MPFAudioTrack> tracks;
-
-                rc = hw.GetDetections(job, tracks);
-                if (rc == MPF_DETECTION_SUCCESS) {
+                try {
+                    std::vector<MPFAudioTrack> tracks  = hw.GetDetections(job);
                     std::cout << "Number of audio tracks = " << tracks.size() << std::endl;
 
                     for (int i = 0; i < tracks.size(); i++) {
@@ -131,6 +130,9 @@ int main(int argc, char* argv[]) {
                             std::cout << "   " << prop.first << " = \"" << prop.second << "\"" << std::endl;
                         }
                     }
+                }
+                catch (const std::exception &e) {
+                    std::cerr << "Error: " << e.what() << std::endl;
                 }
                 break;
             }
@@ -145,11 +147,8 @@ int main(int argc, char* argv[]) {
                                 start_frame, stop_frame,
                                 algorithm_properties,
                                 media_properties);
-
-                std::vector<MPFVideoTrack> tracks;
-
-                rc = hw.GetDetections(job, tracks);
-                if (rc == MPF_DETECTION_SUCCESS) {
+                try {
+                    std::vector<MPFVideoTrack> tracks = hw.GetDetections(job);
                     std::cout << "Number of video tracks = " << tracks.size() << std::endl;
 
                     for (int i = 0; i < tracks.size(); i++) {
@@ -175,6 +174,9 @@ int main(int argc, char* argv[]) {
                         }
                     }
                 }
+                catch (const std::exception &e) {
+                    std::cerr << "Error: " << e.what() << std::endl;
+                }
                 break;
             }
 
@@ -183,10 +185,8 @@ int main(int argc, char* argv[]) {
                 MPFGenericJob job("TestGenericJob", uri,
                                   algorithm_properties,
                                   media_properties);
-                std::vector<MPFGenericTrack> tracks;
-
-                rc = hw.GetDetections(job, tracks);
-                if (rc == MPF_DETECTION_SUCCESS) {
+                try {
+                    std::vector<MPFGenericTrack> tracks = hw.GetDetections(job);
                     std::cout << "Number of generic tracks = " << tracks.size() << std::endl;
 
                     for (int i = 0; i < tracks.size(); i++) {
@@ -196,6 +196,9 @@ int main(int argc, char* argv[]) {
                             std::cout << "   " << prop.first << " = \"" << prop.second << "\"" << std::endl;
                         }
                     }
+                }
+                catch (const std::exception &e) {
+                    std::cerr << "Error: " << e.what() << std::endl;
                 }
                 break;
             }
