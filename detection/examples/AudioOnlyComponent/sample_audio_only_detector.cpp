@@ -54,15 +54,13 @@ int main(int argc, char* argv[]) {
     AudioOnly hw;
 
     if (hw.Init()) {
-
         int start_time = atoi(argv[2]);
         int stop_time = atoi(argv[3]);
 
         MPF::COMPONENT::MPFAudioJob job("TestAudioJob", uri, start_time, stop_time,
                                         algorithm_properties, media_properties);
-
-        std::vector<MPFAudioTrack> tracks = hw.GetDetections(job);
         try {
+            std::vector<MPFAudioTrack> tracks = hw.GetDetections(job);
             std::cout << "Number of audio tracks = " << tracks.size() << std::endl;
 
             for (int i = 0; i < tracks.size(); i++) {

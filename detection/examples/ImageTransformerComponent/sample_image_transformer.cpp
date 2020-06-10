@@ -89,8 +89,9 @@ int main(int argc, char* argv[]) {
 
     // Instantiate the component
     ImageTransformerComponent im;
-    std::vector<MPFImageLocation> locations = im.GetDetections(job);
+
     try {
+        std::vector<MPFImageLocation> locations = im.GetDetections(job);
         std::cout << "Number of image locations = "
                   << locations.size() << std::endl;
 
@@ -105,7 +106,7 @@ int main(int argc, char* argv[]) {
         }
     }
     catch (const std::exception &e) {
-        std::cout << "GetDetections failed due to: " << e.what() << std::endl;
+        std::cerr << "Error: " << e.what() << std::endl;
     }
 
     return 0;

@@ -54,8 +54,8 @@ int main(int argc, char* argv[]) {
 
     if (comp.Init()) {
         MPF::COMPONENT::MPFGenericJob job("TestGenericJob", uri,algorithm_properties, media_properties);
-        std::vector<MPFGenericTrack> tracks = comp.GetDetections(job);
         try {
+            std::vector<MPFGenericTrack> tracks = comp.GetDetections(job);
             std::cout << "Number of generic tracks = " << tracks.size() << std::endl;
 
             for (int i = 0; i < tracks.size(); i++) {

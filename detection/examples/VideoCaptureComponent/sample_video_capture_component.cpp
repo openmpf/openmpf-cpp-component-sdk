@@ -108,8 +108,9 @@ int main(int argc, char* argv[]) {
 
     // Instantiate the component
     VideoCaptureComponent vc;
-    std::vector<MPFVideoTrack> tracks = vc.GetDetections(job);
+
     try {
+        std::vector<MPFVideoTrack> tracks = vc.GetDetections(job);
         std::cout << "Number of video tracks = " << tracks.size() << std::endl;
 
         for (int i = 0; i < tracks.size(); i++) {
@@ -132,7 +133,7 @@ int main(int argc, char* argv[]) {
         }
     }
     catch (const std::exception &e) {
-        std::cout << "GetDetections failed due to: " << e.what() << std::endl;
+        std::cerr << "Error: " << e.what() << std::endl;
     }
 
     return 0;
