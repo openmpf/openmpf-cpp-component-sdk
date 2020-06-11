@@ -42,6 +42,7 @@
 #include "frame_transformers/IFrameTransformer.h"
 #include "frame_transformers/SearchRegion.h"
 #include "MPFDetectionObjects.h"
+#include "MPFRotatedRect.h"
 
 
 
@@ -150,18 +151,18 @@ namespace {
     }
 
 
-    cv::Rect GetSupersetRegionNoRotation(const std::vector<std::tuple<cv::Rect, double, bool>> &regions) {
+    cv::Rect GetSupersetRegionNoRotation(const std::vector<MPFRotatedRect> &regions) {
         if (regions.empty()) {
             throw std::length_error(
                     "FEED_FORWARD_TYPE: SUPERSET_REGION is enabled, but feed forward track was empty.");
         }
 
         auto it = regions.begin();
-        cv::Rect region = std::get<0>(*it);
+        cv::Rect2d region = it->GetBoundingRect();
         ++it;
 
         for (; it != regions.end(); ++it) {
-            region |= std::get<0>(*it);
+            region |= it->GetBoundingRect();
         }
         return region;
     }
@@ -222,7 +223,7 @@ namespace {
         bool requiresRotationOrFlip = false;
         bool isExactRegionMode = FeedForwardExactRegionIsEnabled(jobProperties);
 
-        std::vector<std::tuple<cv::Rect, double, bool>> regions;
+        std::vector<MPFRotatedRect> regions;
         regions.reserve(detections.size());
 
         for (const auto &detectionPair : detections) {
@@ -258,7 +259,8 @@ namespace {
                 requiresRotationOrFlip = true;
             }
 
-            regions.emplace_back(ToRect(detection), rotation, flip);
+            regions.emplace_back(detection.x_left_upper, detection.y_left_upper, detection.width, detection.height,
+                                 rotation, flip);
         }
 
         if (isExactRegionMode) {

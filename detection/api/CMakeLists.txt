@@ -100,6 +100,9 @@ set(SOURCE_FILES
         src/KeyFrameFilter.cpp
 
         include/BlockingQueue.h
+
+        include/MPFRotatedRect.h
+        src/MPFRotatedRect.cpp
     )
 
 add_library(mpfDetectionComponentApi SHARED ${SOURCE_FILES})
