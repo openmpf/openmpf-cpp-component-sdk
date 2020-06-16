@@ -35,50 +35,30 @@
 #include <opencv2/imgproc.hpp>
 
 #include "detectionComponentUtils.h"
+#include "MPFRotatedRect.h"
 
 
 namespace MPF { namespace COMPONENT {
 
     namespace {
-        cv::Mat_<double> GetAllCorners(const std::vector<std::tuple<cv::Rect, double, bool>> &regions) {
+        cv::Mat_<double> GetAllCorners(const std::vector<MPFRotatedRect> &regions) {
             // Matrix containing each region's 4 corners. First row is x coordinate and second row is y coordinate.
             cv::Mat_<double> corners(2, 4 * regions.size());
-            auto x_iter = corners.begin();
-            auto y_iter = corners.row(1).begin();
+            auto xIter = corners.begin();
+            auto yIter = corners.row(1).begin();
 
-            for (const auto &region : regions) {
-                const cv::Rect& rect = std::get<0>(region);
-                double rotation = std::get<1>(region);
-
-                *(x_iter++) = rect.x;
-                *(y_iter++) = rect.y;
-
-                double radians = rotation * M_PI / 180.0;
-                double sinVal = std::sin(radians);
-                double cosVal = std::cos(radians);
-
-                // Need to subtract one because if you have a Rect(x=0, y=0, width=10, height=10),
-                // the bottom right corner is (9, 9) not (10, 10)
-                double width = rect.width - 1;
-                double height = rect.height - 1;
-
-                double corner2X = rect.x + width * cosVal;
-                double corner2Y = rect.y - width * sinVal;
-                *(x_iter++) = corner2X;
-                *(y_iter++) = corner2Y;
-
-                *(x_iter++) = corner2X + height * sinVal;
-                *(y_iter++) = corner2Y + height * cosVal;
-
-                *(x_iter++) = rect.x + height * sinVal;
-                *(y_iter++) = rect.y + height * cosVal;
+            for (const auto& region : regions) {
+                for (const auto& corner : region.GetCorners()) {
+                    *(xIter++) = corner.x;
+                    *(yIter++) = corner.y;
+                }
             }
             return corners;
         }
 
 
         cv::Rect2d GetMappedBoundingRect(
-                const std::vector<std::tuple<cv::Rect, double, bool>> &regions,
+                const std::vector<MPFRotatedRect> &regions,
                 const cv::Matx33d &frameRotMat) {
 
             // Since we are working with 2d points and we aren't doing any translation here,
@@ -90,16 +70,12 @@ namespace MPF { namespace COMPONENT {
             cv::minMaxLoc(mappedCorners.row(0), &minX, &maxX);
             cv::minMaxLoc(mappedCorners.row(1), &minY, &maxY);
 
-            double width = maxX - minX + 1;
-            double height = maxY - minY + 1;
-
-            return cv::Rect2d(cv::Point2d(minX, minY), cv::Size2d(width, height));
+            return cv::Rect2d(cv::Point2d(minX, minY), cv::Point2d(maxX + 1, maxY + 1));
         }
 
 
-        std::vector<std::tuple<cv::Rect, double, bool>> fullFrame(const cv::Size &frameSize) {
-            cv::Rect frameRect(cv::Point(0, 0), frameSize);
-            return { std::make_tuple(frameRect, 0, false) };
+        std::vector<MPFRotatedRect> fullFrame(const cv::Size &frameSize) {
+            return { MPFRotatedRect(0, 0, frameSize.width, frameSize.height, 0, false) };
         }
 
 
@@ -146,7 +122,7 @@ namespace MPF { namespace COMPONENT {
 
 
     AffineTransformation::AffineTransformation(
-                const std::vector<std::tuple<cv::Rect, double, bool>> &preTransformRegions,
+                const std::vector<MPFRotatedRect> &preTransformRegions,
                 double frameRotationDegrees,
                 bool flip,
                 const SearchRegion &postTransformSearchRegion)
@@ -200,7 +176,6 @@ namespace MPF { namespace COMPONENT {
     }
 
 
-
     void AffineTransformation::Apply(cv::Mat &frame) const {
         // From cv::warpAffine docs:
         // The function warpAffine transforms the source image using the specified matrix when the flag
@@ -220,10 +195,6 @@ namespace MPF { namespace COMPONENT {
 
     void AffineTransformation::ApplyReverse(MPFImageLocation &imageLocation) const {
         cv::Vec3d topLeft(imageLocation.x_left_upper, imageLocation.y_left_upper, 1);
-        if (flip_) {
-            topLeft[0] += imageLocation.width - 1;
-        }
-
         cv::Vec2d newTopLeft = reverseTransformationMatrix_ * topLeft;
 
         imageLocation.x_left_upper = cv::saturate_cast<int>(newTopLeft[0]);
@@ -232,7 +203,10 @@ namespace MPF { namespace COMPONENT {
         if (!DetectionComponentUtils::RotationAnglesEqual(rotationDegrees_, 0)) {
             double existingRotation
                     = DetectionComponentUtils::GetProperty(imageLocation.detection_properties, "ROTATION", 0.0);
-            double newRotation = DetectionComponentUtils::NormalizeAngle(existingRotation + rotationDegrees_);
+
+            double rotationAdjustAmount = flip_ ? 360 - rotationDegrees_ : rotationDegrees_;
+            double newRotation = DetectionComponentUtils::NormalizeAngle(existingRotation + rotationAdjustAmount);
+
             imageLocation.detection_properties["ROTATION"] = std::to_string(newRotation);
         }
 
@@ -278,7 +252,7 @@ namespace MPF { namespace COMPONENT {
 
 
     // Feed forward superset region constructor
-    AffineFrameTransformer::AffineFrameTransformer(const std::vector<std::tuple<cv::Rect, double, bool>> &regions,
+    AffineFrameTransformer::AffineFrameTransformer(const std::vector<MPFRotatedRect> &regions,
                                                    double frameRotation, bool frameFlip,
                                                    IFrameTransformer::Ptr innerTransform)
             : BaseDecoratedTransformer(std::move(innerTransform))
@@ -305,10 +279,10 @@ namespace MPF { namespace COMPONENT {
 
 
     FeedForwardExactRegionAffineTransformer::FeedForwardExactRegionAffineTransformer(
-                const std::vector<std::tuple<cv::Rect, double, bool>> &regions,
+                const std::vector<MPFRotatedRect> &regions,
                 IFrameTransformer::Ptr innerTransform)
             : BaseDecoratedTransformer(std::move(innerTransform))
-            , frameTransforms_(GetTransformations(regions))
+            , frameTransforms_(CreateTransformations(regions))
     {
     }
 
@@ -318,15 +292,15 @@ namespace MPF { namespace COMPONENT {
     }
 
 
-    std::vector<AffineTransformation> FeedForwardExactRegionAffineTransformer::GetTransformations(
-            const std::vector<std::tuple<cv::Rect, double, bool>> &regions) {
+    std::vector<AffineTransformation> FeedForwardExactRegionAffineTransformer::CreateTransformations(
+            const std::vector<MPFRotatedRect> &regions) {
 
         std::vector<AffineTransformation> transforms;
         transforms.reserve(regions.size());
 
         for (const auto& region : regions) {
-            transforms.emplace_back(std::vector<std::tuple<cv::Rect, double, bool>>{ region },
-                                    std::get<1>(region), std::get<2>(region));
+            double frameRotation = region.flip ? 360 - region.rotation : region.rotation;
+            transforms.emplace_back(std::vector<MPFRotatedRect>{ region }, frameRotation, region.flip);
         }
         return transforms;
     }

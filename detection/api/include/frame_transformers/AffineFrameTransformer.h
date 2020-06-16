@@ -36,6 +36,7 @@
 #include "IFrameTransformer.h"
 #include "MPFDetectionObjects.h"
 #include "SearchRegion.h"
+#include "MPFRotatedRect.h"
 
 
 namespace MPF { namespace COMPONENT {
@@ -44,7 +45,7 @@ namespace MPF { namespace COMPONENT {
     class AffineTransformation {
     public:
         AffineTransformation(
-                const std::vector<std::tuple<cv::Rect, double, bool>> &preTransformRegions,
+                const std::vector<MPFRotatedRect> &preTransformRegions,
                 double frameRotationDegrees, bool flip,
                 const SearchRegion &postTransformSearchRegion = {});
 
@@ -79,7 +80,7 @@ namespace MPF { namespace COMPONENT {
                                IFrameTransformer::Ptr innerTransform);
 
         // Feed forward superset region constructor
-        AffineFrameTransformer(const std::vector<std::tuple<cv::Rect, double, bool>> &regions,
+        AffineFrameTransformer(const std::vector<MPFRotatedRect> &regions,
                                double frameRotation, bool frameFlip,
                                IFrameTransformer::Ptr innerTransform);
 
@@ -101,7 +102,7 @@ namespace MPF { namespace COMPONENT {
 
     public:
         // Feed forward exact region constructor
-        FeedForwardExactRegionAffineTransformer(const std::vector<std::tuple<cv::Rect, double, bool>> &regions,
+        FeedForwardExactRegionAffineTransformer(const std::vector<MPFRotatedRect> &regions,
                                                 IFrameTransformer::Ptr innerTransform);
 
         cv::Size GetFrameSize(int frameIndex) override;
@@ -117,8 +118,8 @@ namespace MPF { namespace COMPONENT {
 
         const AffineTransformation& GetTransform(int frameIndex) const;
 
-        static std::vector<AffineTransformation> GetTransformations(
-                const std::vector<std::tuple<cv::Rect, double, bool>> &regions);
+        static std::vector<AffineTransformation> CreateTransformations(
+                const std::vector<MPFRotatedRect> &regions);
 
     };
 }}

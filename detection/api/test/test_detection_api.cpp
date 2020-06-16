@@ -35,17 +35,15 @@
 #include <opencv2/opencv.hpp>
 #include <frame_transformers/FrameTransformerFactory.h>
 
-
 #include "detectionComponentUtils.h"
 #include "FeedForwardFrameFilter.h"
 #include "frame_transformers/AffineFrameTransformer.h"
 #include "frame_transformers/NoOpFrameTransformer.h"
 #include <frame_transformers/SearchRegion.h>
-#include "FrameFilter.h"
-#include "KeyFrameFilter.h"
 #include "MPFImageReader.h"
 #include "MPFVideoCapture.h"
 #include "IntervalFrameFilter.h"
+#include "MPFRotatedRect.h"
 
 
 using namespace MPF::COMPONENT;
@@ -1212,7 +1210,7 @@ TEST(AffineFrameTransformerTest, ReverseTransformWithFlip) {
     int frameHeight = 200;
 
     AffineTransformation transformation(
-            { std::make_tuple(cv::Rect(0, 0, frameWidth, frameHeight), 0, false) },
+            { MPFRotatedRect(0, 0, frameWidth, frameHeight, 0, false) },
             0, true);
 
     {
@@ -1221,13 +1219,13 @@ TEST(AffineFrameTransformerTest, ReverseTransformWithFlip) {
         MPFImageLocation detectionReversed = detection;
         transformation.ApplyReverse(detectionReversed);
 
-        ASSERT_EQ(frameWidth - detection.x_left_upper - detection.width, detectionReversed.x_left_upper);
+        ASSERT_EQ(frameWidth - detection.x_left_upper - 1, detectionReversed.x_left_upper);
         ASSERT_EQ(detection.y_left_upper, detectionReversed.y_left_upper);
         ASSERT_EQ(detection.width, detectionReversed.width);
         ASSERT_EQ(detection.height, detectionReversed.height);
         ASSERT_EQ(1, detectionReversed.detection_properties.count("HORIZONTAL_FLIP"));
-        ASSERT_TRUE(DetectionComponentUtils::GetProperty(detectionReversed.detection_properties,
-                                                         "HORIZONTAL_FLIP", false));
+        ASSERT_TRUE(DetectionComponentUtils::GetProperty(
+                detectionReversed.detection_properties, "HORIZONTAL_FLIP", false));
     }
 
 
@@ -1237,12 +1235,53 @@ TEST(AffineFrameTransformerTest, ReverseTransformWithFlip) {
         MPFImageLocation detectionReversed = detection;
         transformation.ApplyReverse(detectionReversed);
 
-        ASSERT_EQ(frameWidth - detection.x_left_upper - detection.width, detectionReversed.x_left_upper);
+        ASSERT_EQ(frameWidth - detection.x_left_upper - 1, detectionReversed.x_left_upper);
         ASSERT_EQ(detection.y_left_upper, detectionReversed.y_left_upper);
         ASSERT_EQ(detection.width, detectionReversed.width);
         ASSERT_EQ(detection.height, detectionReversed.height);
         ASSERT_EQ(0, detectionReversed.detection_properties.count("HORIZONTAL_FLIP"));
     }
+}
+
+
+TEST(AffineFrameTransformerTest, FlipRotateFullFrame) {
+    double frameRotation = 345;
+    MPFImageJob job("test", "test/test_imgs/rotation/hello-world-flip.png", {
+            { "HORIZONTAL_FLIP", "true" },
+            { "ROTATION", std::to_string(frameRotation) }
+    }, {});
+
+    MPFImageReader imageReader(job);
+    auto image = imageReader.GetImage();
+    MPFImageLocation il(0, 0, image.cols, image.rows);
+    imageReader.ReverseTransform(il);
+
+    ASSERT_EQ(836, il.x_left_upper);
+    ASSERT_EQ(38, il.y_left_upper);
+    ASSERT_EQ(image.cols, il.width);
+    ASSERT_EQ(image.rows, il.height);
+    ASSERT_EQ("true", il.detection_properties.at("HORIZONTAL_FLIP"));
+    ASSERT_DOUBLE_EQ(360 - frameRotation, std::stod(il.detection_properties.at("ROTATION")));
+}
+
+
+TEST(AffineFrameTransformerTest, RotateFullFrame) {
+    double frame_rotation = 15;
+    MPFImageJob job("test", "test/test_imgs/rotation/hello-world.png", {
+            { "ROTATION", std::to_string(frame_rotation) }
+    }, {});
+
+    MPFImageReader image_reader(job);
+    auto image = image_reader.GetImage();
+    MPFImageLocation il(0, 0, image.cols, image.rows, 1, {});
+    image_reader.ReverseTransform(il);
+
+    ASSERT_EQ(-141, il.x_left_upper);
+    ASSERT_EQ(38, il.y_left_upper);
+    ASSERT_EQ(image.cols, il.width);
+    ASSERT_EQ(image.rows, il.height);
+    ASSERT_EQ(0, il.detection_properties.count("HORIZONTAL_FLIP"));
+    ASSERT_DOUBLE_EQ(frame_rotation, std::stod(il.detection_properties.at("ROTATION")));
 }
 
 
