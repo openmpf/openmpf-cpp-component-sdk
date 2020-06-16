@@ -42,6 +42,7 @@ namespace MPF { namespace COMPONENT {
 
     namespace {
         cv::Mat_<double> GetAllCorners(const std::vector<MPFRotatedRect> &regions) {
+            // Matrix containing each region's 4 corners. First row is x coordinate and second row is y coordinate.
             cv::Mat_<double> corners(2, 4 * regions.size());
             auto xIter = corners.begin();
             auto yIter = corners.row(1).begin();
