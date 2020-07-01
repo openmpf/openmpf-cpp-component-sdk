@@ -84,7 +84,7 @@ namespace MPF { namespace COMPONENT {
 
         Rect new_rect(x_pos, y_pos, rect.width, rect.height);
 
-        cv::rectangle(mask, new_rect, Scalar(255, 255, 255), CV_FILLED);
+        cv::rectangle(mask, new_rect, Scalar(255, 255, 255), cv::FILLED);
 
         if (imshow_on) {
             cv::imshow("random mask", mask);
@@ -98,7 +98,7 @@ namespace MPF { namespace COMPONENT {
     int ImageGeneration::WriteDetectionOutputImage(const string image_in_uri,
                                                    const vector<MPFVideoTrack> &detections,
                                                    const string image_out_filepath) {
-        Mat input_image = cv::imread(image_in_uri.c_str(), CV_LOAD_IMAGE_IGNORE_ORIENTATION + CV_LOAD_IMAGE_COLOR);
+        Mat input_image = cv::imread(image_in_uri.c_str(), cv::IMREAD_IGNORE_ORIENTATION + cv::IMREAD_COLOR);
         if (input_image.empty()) {
             printf("Could not open the input image: %s\n", image_in_uri.c_str());
             return -1;
@@ -120,7 +120,7 @@ namespace MPF { namespace COMPONENT {
     int ImageGeneration::WriteDetectionOutputImage(const string image_in_uri,
                                                    const vector<MPFImageLocation> &detections,
                                                    const string image_out_filepath) {
-        Mat input_image = cv::imread(image_in_uri.c_str(), CV_LOAD_IMAGE_IGNORE_ORIENTATION + CV_LOAD_IMAGE_COLOR);
+        Mat input_image = cv::imread(image_in_uri.c_str(), cv::IMREAD_IGNORE_ORIENTATION + cv::IMREAD_COLOR);
         if (input_image.empty()) {
             printf("Could not open the input image: %s\n", image_in_uri.c_str());
             return -1;
