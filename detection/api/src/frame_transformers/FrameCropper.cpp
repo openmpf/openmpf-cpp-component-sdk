@@ -53,19 +53,17 @@ namespace MPF { namespace COMPONENT {
         return GetRegionOfInterest(frameIndex).size();
     }
 
-
+    cv::Rect FrameCropper::GetIntersectingRegion(
+            const cv::Rect &regionOfInterest, int frameIndex) const {
+        cv::Rect frameRect(cv::Point(0, 0), GetInnerFrameSize(frameIndex));
+        return regionOfInterest & frameRect;
+    }
 
 
     SearchRegionFrameCropper::SearchRegionFrameCropper(const cv::Rect &regionOfInterest,
                                                        IFrameTransformer::Ptr innerTransform)
         : FrameCropper(std::move(innerTransform))
         , searchRegion_(GetIntersectingRegion(regionOfInterest, 0)) {
-    }
-
-
-    cv::Rect SearchRegionFrameCropper::GetIntersectingRegion(const cv::Rect &regionOfInterest, int frameIndex) const {
-        cv::Rect frameRect(cv::Point(0, 0), GetInnerFrameSize(frameIndex));
-        return regionOfInterest & frameRect;
     }
 
 
@@ -84,8 +82,9 @@ namespace MPF { namespace COMPONENT {
 
         for (const auto &frameLocationPair : track) {
             const auto &frameLocation = frameLocationPair.second;
-            fedForwardDetections_.emplace_back(frameLocation.x_left_upper, frameLocation.y_left_upper,
-                                               frameLocation.width, frameLocation.height);
+            cv::Rect roi(frameLocation.x_left_upper, frameLocation.y_left_upper,
+                         frameLocation.width, frameLocation.height);
+            fedForwardDetections_.emplace_back(GetIntersectingRegion(roi, frameLocationPair.first));
         }
         fedForwardDetections_.shrink_to_fit();
     }
