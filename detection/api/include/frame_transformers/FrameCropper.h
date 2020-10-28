@@ -50,6 +50,8 @@ namespace MPF { namespace COMPONENT {
 
         void DoReverseTransform(MPFImageLocation &imageLocation, int frameIndex) override;
 
+        cv::Rect GetIntersectingRegion(const cv::Rect &regionOfInterest, int frameIndex) const;
+
 
     private:
         virtual cv::Rect GetRegionOfInterest(int frameIndex) = 0;
@@ -66,8 +68,6 @@ namespace MPF { namespace COMPONENT {
         const cv::Rect searchRegion_;
 
         cv::Rect GetRegionOfInterest(int frameIndex) override;
-
-        cv::Rect GetIntersectingRegion(const cv::Rect &regionOfInterest, int frameIndex) const;
     };
 
 

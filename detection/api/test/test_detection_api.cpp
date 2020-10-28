@@ -990,6 +990,17 @@ TEST(FeedForwardFrameCropperTest, CanCropToExactRegion) {
 
 
 
+TEST(FeedForwardFrameCropperTest, CanHandleOutOfBoundsRoi) {
+    MPFImageLocation ffLoc(-10, -10, 1000, 100);
+    MPFImageJob job("Test", "test/test_imgs/rotation/hello-world.png", ffLoc,
+                    { {"FEED_FORWARD_TYPE", "REGION"} }, {});
+    MPFImageReader reader(job);
+
+    ASSERT_EQ(cv::Size(696, 90), reader.GetImage().size());
+}
+
+
+
 Pixel closestColor(const Pixel &sample) {
     std::vector<Pixel> colors {
             { 0, 0, 0 },
