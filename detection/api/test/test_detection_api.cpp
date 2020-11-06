@@ -1296,6 +1296,47 @@ TEST(AffineFrameTransformerTest, RotateFullFrame) {
 }
 
 
+TEST(AffineFrameTransformerTest, TestRotationThreshold) {
+    const auto *test_img_path = "test/test_imgs/rotation/hello-world.png";
+    auto original_img = cv::imread(test_img_path);
+    {
+        MPFImageJob job("test", test_img_path,
+                        { {"ROTATION", "10"}, {"ROTATION_THRESHOLD", "10.001"} }, {});
+
+        auto img = MPFImageReader(job).GetImage();
+        ASSERT_EQ(0, cv::countNonZero(img != original_img));
+    }
+    {
+        MPFImageJob job("test", test_img_path,
+                        { {"ROTATION", "10"}, {"ROTATION_THRESHOLD", "9.99"} }, {});
+
+        auto img = MPFImageReader(job).GetImage();
+        ASSERT_NE(original_img.size(), img.size());
+    }
+}
+
+
+TEST(AffineFrameTransformerTest, TestRotationThresholdWithFeedForward) {
+    const auto *test_img_path = "test/test_imgs/rotation/hello-world.png";
+    auto original_img = cv::imread(test_img_path);
+
+    MPFImageLocation ff_img_loc(0, 0, original_img.cols, original_img.rows, -1,
+                                { {"ROTATION", "354.9"} });
+    {
+        MPFImageJob job("test", test_img_path, ff_img_loc,
+                        { {"ROTATION_THRESHOLD", "5.12"}, {"FEED_FORWARD_TYPE", "REGION"} }, {});
+        auto img = MPFImageReader(job).GetImage();
+        ASSERT_EQ(0, cv::countNonZero(img != original_img));
+    }
+    {
+        MPFImageJob job("test", test_img_path, ff_img_loc,
+                        { {"ROTATION_THRESHOLD", "5.00"}, {"FEED_FORWARD_TYPE", "REGION"} }, {});
+        auto img = MPFImageReader(job).GetImage();
+        ASSERT_NE(0, cv::countNonZero(img != original_img));
+    }
+}
+
+
 TEST(NormalizeAngle, TestNormalizeAngle) {
     using DetectionComponentUtils::NormalizeAngle;
     using DetectionComponentUtils::RotationAnglesEqual;
@@ -1317,6 +1358,9 @@ TEST(NormalizeAngle, TestNormalizeAngle) {
     ASSERT_TRUE(RotationAnglesEqual(angle1, angle3));
     ASSERT_TRUE(RotationAnglesEqual(angle1, angle4));
     ASSERT_TRUE(RotationAnglesEqual(angle1, angle5));
+    ASSERT_TRUE(RotationAnglesEqual(359, 0, 10));
+    ASSERT_TRUE(RotationAnglesEqual(359, 5, 10));
+    ASSERT_FALSE(RotationAnglesEqual(359, 12, 10));
 
     ASSERT_DOUBLE_EQ(0, NormalizeAngle(0));
     ASSERT_DOUBLE_EQ(0, NormalizeAngle(360));

@@ -29,7 +29,6 @@
 #include <map>
 #include <stdexcept>
 #include <string>
-#include <tuple>
 #include <utility>
 #include <vector>
 
@@ -122,7 +121,14 @@ namespace {
             rotation = DetectionComponentUtils::GetProperty(jobProperties, rotationKey, 0.0);
         }
         rotation = DetectionComponentUtils::NormalizeAngle(rotation);
-        bool rotationRequired = !DetectionComponentUtils::RotationAnglesEqual(rotation, 0);
+
+        double rotationThreshold = DetectionComponentUtils::GetProperty(
+                jobProperties, "ROTATION_THRESHOLD", 0.1);
+        bool rotationRequired = !DetectionComponentUtils::RotationAnglesEqual(
+                rotation, 0, rotationThreshold);
+        if (!rotationRequired) {
+            rotation = 0;
+        }
 
         bool flipRequired;
         if (DetectionComponentUtils::GetProperty(jobProperties, "AUTO_FLIP", false)) {
@@ -146,7 +152,6 @@ namespace {
                 currentTransformer = IFrameTransformer::Ptr(
                         new SearchRegionFrameCropper(searchRegionRect, std::move(currentTransformer)));
             }
-
         }
     }
 
@@ -220,7 +225,9 @@ namespace {
             }
         }
 
-        bool requiresRotationOrFlip = false;
+        double rotationThreshold = DetectionComponentUtils::GetProperty(
+                jobProperties, "ROTATION_THRESHOLD", 0.1);
+        bool anyDetectionRequiresRotationOrFlip = false;
         bool isExactRegionMode = FeedForwardExactRegionIsEnabled(jobProperties);
 
         std::vector<MPFRotatedRect> regions;
@@ -241,30 +248,38 @@ namespace {
             else if (hasJobLevelRotation && isExactRegionMode) {
                 rotation = jobLevelRotation;
             }
+            bool currentDetectionRequiresRotation = !DetectionComponentUtils::RotationAnglesEqual(
+                    rotation, 0, rotationThreshold);
+            if (!currentDetectionRequiresRotation) {
+                rotation = 0;
+            }
+
 
             bool hasDetectionLevelFlip = detection.detection_properties.count("HORIZONTAL_FLIP");
 
-            bool flip = false;
+            bool currentDetectionRequiresFlip = false;
             if (hasDetectionLevelFlip) {
-                flip = DetectionComponentUtils::GetProperty(detection.detection_properties, "HORIZONTAL_FLIP", false);
+                currentDetectionRequiresFlip = DetectionComponentUtils::GetProperty(
+                        detection.detection_properties, "HORIZONTAL_FLIP", false);
             }
             else if (hasTrackLevelFlip) {
-                flip = trackLevelFlip;
+                currentDetectionRequiresFlip = trackLevelFlip;
             }
             else if (hasJobLevelFlip && isExactRegionMode) {
-                flip = jobLevelFlip;
+                currentDetectionRequiresFlip = jobLevelFlip;
             }
 
-            if (flip || !DetectionComponentUtils::RotationAnglesEqual(0, rotation)) {
-                requiresRotationOrFlip = true;
+            if (currentDetectionRequiresFlip || currentDetectionRequiresRotation) {
+                anyDetectionRequiresRotationOrFlip = true;
             }
 
-            regions.emplace_back(detection.x_left_upper, detection.y_left_upper, detection.width, detection.height,
-                                 rotation, flip);
+            regions.emplace_back(
+                    detection.x_left_upper, detection.y_left_upper, detection.width, detection.height,
+                    rotation, currentDetectionRequiresFlip);
         }
 
         if (isExactRegionMode) {
-            if (requiresRotationOrFlip) {
+            if (anyDetectionRequiresRotationOrFlip) {
                 currentTransformer = IFrameTransformer::Ptr(
                         new FeedForwardExactRegionAffineTransformer(regions, std::move(currentTransformer)));
             }
@@ -274,7 +289,7 @@ namespace {
             }
         }
         else {
-            if (requiresRotationOrFlip) {
+            if (anyDetectionRequiresRotationOrFlip) {
                 currentTransformer = IFrameTransformer::Ptr(
                         new AffineFrameTransformer(regions, jobLevelRotation, jobLevelFlip,
                                                    std::move(currentTransformer)));
