@@ -40,6 +40,7 @@
 #include "frame_transformers/NoOpFrameTransformer.h"
 #include "frame_transformers/IFrameTransformer.h"
 #include "frame_transformers/SearchRegion.h"
+#include "MPFDetectionException.h"
 #include "MPFDetectionObjects.h"
 #include "MPFRotatedRect.h"
 
@@ -107,6 +108,22 @@ namespace {
     }
 
 
+    cv::Scalar GetFillColor(const Properties &props) {
+        auto fillColorName = DetectionComponentUtils::GetProperty(
+                props, "ROTATION_FILL_COLOR", "BLACK");
+        if (fillColorName == "BLACK") {
+            return {0, 0, 0};
+        }
+        else if (fillColorName == "WHITE") {
+            return {255, 255, 255};
+        }
+        else {
+            throw MPFDetectionException(
+                    MPFDetectionError::MPF_INVALID_PROPERTY,
+                    "Expected the \"ROTATION_FILL_COLOR\" property to be either \"BLACK\""
+                    " or \"WHITE\", but it was set to \"" + fillColorName + "\".");
+        }
+    }
 
 
     void AddTransformersIfNeeded(const Properties &jobProperties, const Properties &mediaProperties,
@@ -143,7 +160,8 @@ namespace {
 
         if (rotationRequired || flipRequired) {
             currentTransformer = IFrameTransformer::Ptr(
-                    new AffineFrameTransformer(rotation, flipRequired, searchRegion, std::move(currentTransformer)));
+                    new AffineFrameTransformer(rotation, flipRequired, GetFillColor(jobProperties),
+                                               searchRegion, std::move(currentTransformer)));
         }
         else {
             cv::Rect frameRect(cv::Point(0, 0), inputVideoSize);
@@ -281,7 +299,9 @@ namespace {
         if (isExactRegionMode) {
             if (anyDetectionRequiresRotationOrFlip) {
                 currentTransformer = IFrameTransformer::Ptr(
-                        new FeedForwardExactRegionAffineTransformer(regions, std::move(currentTransformer)));
+                        new FeedForwardExactRegionAffineTransformer(
+                                regions, GetFillColor(jobProperties),
+                                std::move(currentTransformer)));
             }
             else {
                 currentTransformer = IFrameTransformer::Ptr(
@@ -292,6 +312,7 @@ namespace {
             if (anyDetectionRequiresRotationOrFlip) {
                 currentTransformer = IFrameTransformer::Ptr(
                         new AffineFrameTransformer(regions, jobLevelRotation, jobLevelFlip,
+                                                   GetFillColor(jobProperties),
                                                    std::move(currentTransformer)));
             }
             else {
