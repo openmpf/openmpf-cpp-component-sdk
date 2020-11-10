@@ -95,13 +95,14 @@ namespace {
 
 
     bool FeedForwardSupersetRegionIsEnabled(const Properties &jobProperties) {
-        return "SUPERSET_REGION" ==
-                DetectionComponentUtils::GetProperty(jobProperties, "FEED_FORWARD_TYPE", "");
+        return boost::iequals("SUPERSET_REGION",
+                              GetProperty(jobProperties, "FEED_FORWARD_TYPE", ""));
     }
 
 
     bool FeedForwardExactRegionIsEnabled(const Properties &jobProperties) {
-        return "REGION" == DetectionComponentUtils::GetProperty(jobProperties, "FEED_FORWARD_TYPE", "");
+        return boost::iequals("REGION",
+                              GetProperty(jobProperties, "FEED_FORWARD_TYPE", ""));
     }
 
 
@@ -111,8 +112,7 @@ namespace {
 
 
     cv::Scalar GetFillColor(const Properties &props) {
-        auto fillColorName = DetectionComponentUtils::GetProperty(
-                props, "ROTATION_FILL_COLOR", "BLACK");
+        auto fillColorName = GetProperty(props, "ROTATION_FILL_COLOR", "BLACK");
         if (boost::iequals("BLACK", fillColorName)) {
             return {0, 0, 0};
         }
