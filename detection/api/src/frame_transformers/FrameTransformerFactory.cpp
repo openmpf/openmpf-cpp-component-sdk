@@ -32,6 +32,8 @@
 #include <utility>
 #include <vector>
 
+#include <boost/algorithm/string/predicate.hpp>
+
 #include <opencv2/core.hpp>
 
 #include "detectionComponentUtils.h"
@@ -111,10 +113,10 @@ namespace {
     cv::Scalar GetFillColor(const Properties &props) {
         auto fillColorName = DetectionComponentUtils::GetProperty(
                 props, "ROTATION_FILL_COLOR", "BLACK");
-        if (fillColorName == "BLACK") {
+        if (boost::iequals("BLACK", fillColorName)) {
             return {0, 0, 0};
         }
-        else if (fillColorName == "WHITE") {
+        else if (boost::iequals("WHITE", fillColorName)) {
             return {255, 255, 255};
         }
         else {
