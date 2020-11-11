@@ -124,7 +124,16 @@ namespace DetectionComponentUtils {
 
 
     bool RotationAnglesEqual(double a1, double a2, double epsilon) {
-        return std::abs(NormalizeAngle(a1) - NormalizeAngle(a2)) < epsilon;
+        a1 = NormalizeAngle(a1);
+        a2 = NormalizeAngle(a2);
+        if (std::abs(a1 - a2) < epsilon) {
+            return true;
+        }
+        else {
+            double a1_dist = std::min(a1, std::abs(360 - a1));
+            double a2_dist = std::min(a2, std::abs(360 - a2));
+            return (a1_dist + a2_dist) < epsilon;
+        }
     }
 }
  
