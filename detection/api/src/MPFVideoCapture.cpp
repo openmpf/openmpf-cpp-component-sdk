@@ -48,7 +48,8 @@ namespace MPF { namespace COMPONENT {
 
     MPFVideoCapture::MPFVideoCapture(const MPFVideoJob &videoJob, bool enableFrameTransformers,
                                      bool enableFrameFiltering)
-            : cvVideoCapture_(videoJob.data_uri)
+            : videoPath_(videoJob.data_uri)
+            , cvVideoCapture_(videoJob.data_uri)
             , frameFilter_(GetFrameFilter(enableFrameFiltering, videoJob, cvVideoCapture_))
             , frameTransformer_(GetFrameTransformer(enableFrameTransformers, videoJob)) {
 
@@ -177,16 +178,10 @@ namespace MPF { namespace COMPONENT {
             return false;
         }
 
-        // In order to fallback to a different seek strategy, cvVideoCapture_ must be capable of setting the
-        // frame position to 0.
-        bool wasSet = SetPropertyInternal(VideoCaptureProperties::CAP_PROP_POS_FRAMES, 0);
-        if (wasSet) {
-            framePosition_ = 0;
-            return true;
-        }
-
-        seekStrategy_ = nullptr;
-        return false;
+        framePosition_ = 0;
+        cvVideoCapture_.release();
+        cvVideoCapture_ = cv::VideoCapture(videoPath_);
+        return cvVideoCapture_.isOpened();
     }
 
 

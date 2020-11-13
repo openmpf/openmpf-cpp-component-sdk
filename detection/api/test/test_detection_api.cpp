@@ -753,6 +753,15 @@ TEST(FrameFilterTest, VerifyMPfVideoCaptureDoesNotHaveSetFramePositionIssue) {
 }
 
 
+TEST(FrameFilterTest, CanSetFramePositionOnTSFile) {
+    MPFVideoCapture cap("test/test_vids/bbb24p_00_short.ts");
+    ASSERT_TRUE(cap.SetFramePosition(7));
+    cv::Mat frame;
+    ASSERT_TRUE(cap.Read(frame));
+    ASSERT_FALSE(frame.empty());
+}
+
+
 void assertCanChangeFramePosition(const SeekStrategy& seekStrategy) {
     cv::VideoCapture cap(frameFilterTestVideo);
     int framePosition = 0;
