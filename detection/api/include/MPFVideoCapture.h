@@ -109,6 +109,8 @@ namespace MPF { namespace COMPONENT {
 
 
     private:
+        std::string videoPath_;
+
         cv::VideoCapture cvVideoCapture_;
 
         FrameFilter::CPtr frameFilter_;

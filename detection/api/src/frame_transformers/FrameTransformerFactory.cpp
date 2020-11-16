@@ -29,9 +29,10 @@
 #include <map>
 #include <stdexcept>
 #include <string>
-#include <tuple>
 #include <utility>
 #include <vector>
+
+#include <boost/algorithm/string/predicate.hpp>
 
 #include <opencv2/core.hpp>
 
@@ -41,6 +42,7 @@
 #include "frame_transformers/NoOpFrameTransformer.h"
 #include "frame_transformers/IFrameTransformer.h"
 #include "frame_transformers/SearchRegion.h"
+#include "MPFDetectionException.h"
 #include "MPFDetectionObjects.h"
 #include "MPFRotatedRect.h"
 
@@ -93,13 +95,14 @@ namespace {
 
 
     bool FeedForwardSupersetRegionIsEnabled(const Properties &jobProperties) {
-        return "SUPERSET_REGION" ==
-                DetectionComponentUtils::GetProperty(jobProperties, "FEED_FORWARD_TYPE", "");
+        return boost::iequals("SUPERSET_REGION",
+                              GetProperty(jobProperties, "FEED_FORWARD_TYPE", ""));
     }
 
 
     bool FeedForwardExactRegionIsEnabled(const Properties &jobProperties) {
-        return "REGION" == DetectionComponentUtils::GetProperty(jobProperties, "FEED_FORWARD_TYPE", "");
+        return boost::iequals("REGION",
+                              GetProperty(jobProperties, "FEED_FORWARD_TYPE", ""));
     }
 
 
@@ -108,6 +111,21 @@ namespace {
     }
 
 
+    cv::Scalar GetFillColor(const Properties &props) {
+        auto fillColorName = GetProperty(props, "ROTATION_FILL_COLOR", "BLACK");
+        if (boost::iequals("BLACK", fillColorName)) {
+            return {0, 0, 0};
+        }
+        else if (boost::iequals("WHITE", fillColorName)) {
+            return {255, 255, 255};
+        }
+        else {
+            throw MPFDetectionException(
+                    MPFDetectionError::MPF_INVALID_PROPERTY,
+                    "Expected the \"ROTATION_FILL_COLOR\" property to be either \"BLACK\""
+                    " or \"WHITE\", but it was set to \"" + fillColorName + "\".");
+        }
+    }
 
 
     void AddTransformersIfNeeded(const Properties &jobProperties, const Properties &mediaProperties,
@@ -122,7 +140,14 @@ namespace {
             rotation = DetectionComponentUtils::GetProperty(jobProperties, rotationKey, 0.0);
         }
         rotation = DetectionComponentUtils::NormalizeAngle(rotation);
-        bool rotationRequired = !DetectionComponentUtils::RotationAnglesEqual(rotation, 0);
+
+        double rotationThreshold = DetectionComponentUtils::GetProperty(
+                jobProperties, "ROTATION_THRESHOLD", 0.1);
+        bool rotationRequired = !DetectionComponentUtils::RotationAnglesEqual(
+                rotation, 0, rotationThreshold);
+        if (!rotationRequired) {
+            rotation = 0;
+        }
 
         bool flipRequired;
         if (DetectionComponentUtils::GetProperty(jobProperties, "AUTO_FLIP", false)) {
@@ -137,7 +162,8 @@ namespace {
 
         if (rotationRequired || flipRequired) {
             currentTransformer = IFrameTransformer::Ptr(
-                    new AffineFrameTransformer(rotation, flipRequired, searchRegion, std::move(currentTransformer)));
+                    new AffineFrameTransformer(rotation, flipRequired, GetFillColor(jobProperties),
+                                               searchRegion, std::move(currentTransformer)));
         }
         else {
             cv::Rect frameRect(cv::Point(0, 0), inputVideoSize);
@@ -146,7 +172,6 @@ namespace {
                 currentTransformer = IFrameTransformer::Ptr(
                         new SearchRegionFrameCropper(searchRegionRect, std::move(currentTransformer)));
             }
-
         }
     }
 
@@ -220,7 +245,9 @@ namespace {
             }
         }
 
-        bool requiresRotationOrFlip = false;
+        double rotationThreshold = DetectionComponentUtils::GetProperty(
+                jobProperties, "ROTATION_THRESHOLD", 0.1);
+        bool anyDetectionRequiresRotationOrFlip = false;
         bool isExactRegionMode = FeedForwardExactRegionIsEnabled(jobProperties);
 
         std::vector<MPFRotatedRect> regions;
@@ -241,32 +268,42 @@ namespace {
             else if (hasJobLevelRotation && isExactRegionMode) {
                 rotation = jobLevelRotation;
             }
+            bool currentDetectionRequiresRotation = !DetectionComponentUtils::RotationAnglesEqual(
+                    rotation, 0, rotationThreshold);
+            if (!currentDetectionRequiresRotation) {
+                rotation = 0;
+            }
+
 
             bool hasDetectionLevelFlip = detection.detection_properties.count("HORIZONTAL_FLIP");
 
-            bool flip = false;
+            bool currentDetectionRequiresFlip = false;
             if (hasDetectionLevelFlip) {
-                flip = DetectionComponentUtils::GetProperty(detection.detection_properties, "HORIZONTAL_FLIP", false);
+                currentDetectionRequiresFlip = DetectionComponentUtils::GetProperty(
+                        detection.detection_properties, "HORIZONTAL_FLIP", false);
             }
             else if (hasTrackLevelFlip) {
-                flip = trackLevelFlip;
+                currentDetectionRequiresFlip = trackLevelFlip;
             }
             else if (hasJobLevelFlip && isExactRegionMode) {
-                flip = jobLevelFlip;
+                currentDetectionRequiresFlip = jobLevelFlip;
             }
 
-            if (flip || !DetectionComponentUtils::RotationAnglesEqual(0, rotation)) {
-                requiresRotationOrFlip = true;
+            if (currentDetectionRequiresFlip || currentDetectionRequiresRotation) {
+                anyDetectionRequiresRotationOrFlip = true;
             }
 
-            regions.emplace_back(detection.x_left_upper, detection.y_left_upper, detection.width, detection.height,
-                                 rotation, flip);
+            regions.emplace_back(
+                    detection.x_left_upper, detection.y_left_upper, detection.width, detection.height,
+                    rotation, currentDetectionRequiresFlip);
         }
 
         if (isExactRegionMode) {
-            if (requiresRotationOrFlip) {
+            if (anyDetectionRequiresRotationOrFlip) {
                 currentTransformer = IFrameTransformer::Ptr(
-                        new FeedForwardExactRegionAffineTransformer(regions, std::move(currentTransformer)));
+                        new FeedForwardExactRegionAffineTransformer(
+                                regions, GetFillColor(jobProperties),
+                                std::move(currentTransformer)));
             }
             else {
                 currentTransformer = IFrameTransformer::Ptr(
@@ -274,9 +311,10 @@ namespace {
             }
         }
         else {
-            if (requiresRotationOrFlip) {
+            if (anyDetectionRequiresRotationOrFlip) {
                 currentTransformer = IFrameTransformer::Ptr(
                         new AffineFrameTransformer(regions, jobLevelRotation, jobLevelFlip,
+                                                   GetFillColor(jobProperties),
                                                    std::move(currentTransformer)));
             }
             else {
