@@ -47,6 +47,7 @@ namespace MPF { namespace COMPONENT {
         AffineTransformation(
                 const std::vector<MPFRotatedRect> &preTransformRegions,
                 double frameRotationDegrees, bool flip,
+                const cv::Scalar &fillColor,
                 const SearchRegion &postTransformSearchRegion = {});
 
         void Apply(cv::Mat &frame) const;
@@ -62,6 +63,8 @@ namespace MPF { namespace COMPONENT {
 
         cv::Size2d regionSize_;
 
+        cv::Scalar fillColor_;
+
         // OpenCV does the mapping in the reverse order (from destination to the source) to avoid sampling artifacts.
         cv::Matx23d reverseTransformationMatrix_;
     };
@@ -72,16 +75,17 @@ namespace MPF { namespace COMPONENT {
 
     public:
         // Search region frame cropping on rotated frame constructor.
-        AffineFrameTransformer(double rotation, bool flip, const SearchRegion &searchRegion,
+        AffineFrameTransformer(double rotation, bool flip, const cv::Scalar &fillColor,
+                               const SearchRegion &searchRegion,
                                IFrameTransformer::Ptr innerTransform);
 
         // Rotate full frame constructor.
-        AffineFrameTransformer(double rotation, bool flip,
+        AffineFrameTransformer(double rotation, bool flip, const cv::Scalar &fillColor,
                                IFrameTransformer::Ptr innerTransform);
 
         // Feed forward superset region constructor
         AffineFrameTransformer(const std::vector<MPFRotatedRect> &regions,
-                               double frameRotation, bool frameFlip,
+                               double frameRotation, bool frameFlip, const cv::Scalar &fillColor,
                                IFrameTransformer::Ptr innerTransform);
 
         cv::Size GetFrameSize(int frameIndex) override;
@@ -103,6 +107,7 @@ namespace MPF { namespace COMPONENT {
     public:
         // Feed forward exact region constructor
         FeedForwardExactRegionAffineTransformer(const std::vector<MPFRotatedRect> &regions,
+                                                const cv::Scalar &fillColor,
                                                 IFrameTransformer::Ptr innerTransform);
 
         cv::Size GetFrameSize(int frameIndex) override;
@@ -119,7 +124,7 @@ namespace MPF { namespace COMPONENT {
         const AffineTransformation& GetTransform(int frameIndex) const;
 
         static std::vector<AffineTransformation> CreateTransformations(
-                const std::vector<MPFRotatedRect> &regions);
+                const std::vector<MPFRotatedRect> &regions, const cv::Scalar &fillColor);
 
     };
 }}
