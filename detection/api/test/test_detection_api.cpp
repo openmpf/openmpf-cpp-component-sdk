@@ -753,6 +753,15 @@ TEST(FrameFilterTest, VerifyMPfVideoCaptureDoesNotHaveSetFramePositionIssue) {
 }
 
 
+TEST(FrameFilterTest, CanSetFramePositionOnTSFile) {
+    MPFVideoCapture cap("test/test_vids/bbb24p_00_short.ts");
+    ASSERT_TRUE(cap.SetFramePosition(7));
+    cv::Mat frame;
+    ASSERT_TRUE(cap.Read(frame));
+    ASSERT_FALSE(frame.empty());
+}
+
+
 void assertCanChangeFramePosition(const SeekStrategy& seekStrategy) {
     cv::VideoCapture cap(frameFilterTestVideo);
     int framePosition = 0;
@@ -990,6 +999,17 @@ TEST(FeedForwardFrameCropperTest, CanCropToExactRegion) {
 
 
 
+TEST(FeedForwardFrameCropperTest, CanHandleOutOfBoundsRoi) {
+    MPFImageLocation ffLoc(-10, -10, 1000, 100);
+    MPFImageJob job("Test", "test/test_imgs/rotation/hello-world.png", ffLoc,
+                    { {"FEED_FORWARD_TYPE", "REGION"} }, {});
+    MPFImageReader reader(job);
+
+    ASSERT_EQ(cv::Size(696, 90), reader.GetImage().size());
+}
+
+
+
 Pixel closestColor(const Pixel &sample) {
     std::vector<Pixel> colors {
             { 0, 0, 0 },
@@ -1098,7 +1118,8 @@ TEST(AffineFrameTransformerTest, FullFrameRotationNonOrthogonal) {
     cv::Size size(640, 480);
     cv::Mat img(size, CV_8UC3, white);
 
-    AffineFrameTransformer transformer(20, false, IFrameTransformer::Ptr(new NoOpFrameTransformer(size)));
+    AffineFrameTransformer transformer(20, false, {0, 0, 0},
+                                       IFrameTransformer::Ptr(new NoOpFrameTransformer(size)));
 
     transformer.TransformFrame(img, 0);
 
@@ -1119,7 +1140,8 @@ TEST(AffineFrameTransformerTest, FullFrameRotationOrthogonal) {
     const cv::Mat img(size, CV_8UC3, white);
 
     for (int rotation : { 0, 90, 180, 270 }) {
-        AffineFrameTransformer transformer(rotation, false, IFrameTransformer::Ptr(new NoOpFrameTransformer(size)));
+        AffineFrameTransformer transformer(rotation, false, {0, 0, 0},
+                                           IFrameTransformer::Ptr(new NoOpFrameTransformer(size)));
 
         cv::Mat transformed = img.clone();
         transformer.TransformFrame(transformed, 0);
@@ -1211,7 +1233,7 @@ TEST(AffineFrameTransformerTest, ReverseTransformWithFlip) {
 
     AffineTransformation transformation(
             { MPFRotatedRect(0, 0, frameWidth, frameHeight, 0, false) },
-            0, true);
+            0, true, {0, 0, 0});
 
     {
         // Test without existing flip.
@@ -1285,6 +1307,73 @@ TEST(AffineFrameTransformerTest, RotateFullFrame) {
 }
 
 
+TEST(AffineFrameTransformerTest, TestRotationThreshold) {
+    const auto *test_img_path = "test/test_imgs/rotation/hello-world.png";
+    auto original_img = cv::imread(test_img_path);
+    {
+        MPFImageJob job("test", test_img_path,
+                        { {"ROTATION", "10"}, {"ROTATION_THRESHOLD", "10.001"} }, {});
+
+        auto img = MPFImageReader(job).GetImage();
+        ASSERT_EQ(0, cv::countNonZero(img != original_img));
+    }
+    {
+        MPFImageJob job("test", test_img_path,
+                        { {"ROTATION", "10"}, {"ROTATION_THRESHOLD", "9.99"} }, {});
+
+        auto img = MPFImageReader(job).GetImage();
+        ASSERT_NE(original_img.size(), img.size());
+    }
+}
+
+
+TEST(AffineFrameTransformerTest, TestRotationThresholdWithFeedForward) {
+    const auto *test_img_path = "test/test_imgs/rotation/hello-world.png";
+    auto original_img = cv::imread(test_img_path);
+
+    MPFImageLocation ff_img_loc(0, 0, original_img.cols, original_img.rows, -1,
+                                { {"ROTATION", "354.9"} });
+    {
+        MPFImageJob job("test", test_img_path, ff_img_loc,
+                        { {"ROTATION_THRESHOLD", "5.12"}, {"FEED_FORWARD_TYPE", "REGION"} }, {});
+        auto img = MPFImageReader(job).GetImage();
+        ASSERT_EQ(0, cv::countNonZero(img != original_img));
+    }
+    {
+        MPFImageJob job("test", test_img_path, ff_img_loc,
+                        { {"ROTATION_THRESHOLD", "5.00"}, {"FEED_FORWARD_TYPE", "REGION"} }, {});
+        auto img = MPFImageReader(job).GetImage();
+        ASSERT_NE(0, cv::countNonZero(img != original_img));
+    }
+}
+
+
+TEST(AffineFrameTransformerTest, TestRotationFillColor) {
+    const auto *test_img_path = "test/test_imgs/rotation/hello-world.png";
+    {
+        MPFImageJob job("test", test_img_path,
+                        { {"ROTATION", "45"} }, {});
+        auto img = MPFImageReader(job).GetImage();
+        auto top_left_color = img.at<Pixel>(0, 0);
+        ASSERT_EQ(Pixel(0, 0, 0), top_left_color);
+    }
+    {
+        MPFImageJob job("test", test_img_path,
+                        { {"ROTATION", "45"}, {"ROTATION_FILL_COLOR", "BLACK"} }, {});
+        auto img = MPFImageReader(job).GetImage();
+        auto top_left_color = img.at<Pixel>(0, 0);
+        ASSERT_EQ(Pixel(0, 0, 0), top_left_color);
+    }
+    {
+        MPFImageJob job("test", test_img_path,
+                        { {"ROTATION", "45"}, {"ROTATION_FILL_COLOR", "WHITE"} }, {});
+        auto img = MPFImageReader(job).GetImage();
+        auto top_left_color = img.at<Pixel>(0, 0);
+        ASSERT_EQ(Pixel(255, 255, 255), top_left_color);
+    }
+}
+
+
 TEST(NormalizeAngle, TestNormalizeAngle) {
     using DetectionComponentUtils::NormalizeAngle;
     using DetectionComponentUtils::RotationAnglesEqual;
@@ -1306,6 +1395,9 @@ TEST(NormalizeAngle, TestNormalizeAngle) {
     ASSERT_TRUE(RotationAnglesEqual(angle1, angle3));
     ASSERT_TRUE(RotationAnglesEqual(angle1, angle4));
     ASSERT_TRUE(RotationAnglesEqual(angle1, angle5));
+    ASSERT_TRUE(RotationAnglesEqual(359, 0, 10));
+    ASSERT_TRUE(RotationAnglesEqual(359, 5, 10));
+    ASSERT_FALSE(RotationAnglesEqual(359, 12, 10));
 
     ASSERT_DOUBLE_EQ(0, NormalizeAngle(0));
     ASSERT_DOUBLE_EQ(0, NormalizeAngle(360));

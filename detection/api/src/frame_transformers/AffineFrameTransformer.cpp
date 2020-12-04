@@ -125,9 +125,11 @@ namespace MPF { namespace COMPONENT {
                 const std::vector<MPFRotatedRect> &preTransformRegions,
                 double frameRotationDegrees,
                 bool flip,
+                const cv::Scalar &fillColor,
                 const SearchRegion &postTransformSearchRegion)
             : rotationDegrees_(frameRotationDegrees)
             , flip_(flip)
+            , fillColor_(fillColor)
     {
         if (preTransformRegions.empty()) {
             throw std::length_error(
@@ -188,7 +190,8 @@ namespace MPF { namespace COMPONENT {
         // "This transform relocates pixels requiring intensity interpolation to approximate the value of moved pixels,
         // bicubic interpolation is the standard for image transformations in image processing applications."
         cv::warpAffine(frame, frame, reverseTransformationMatrix_, regionSize_,
-                       cv::InterpolationFlags::WARP_INVERSE_MAP | cv::InterpolationFlags::INTER_CUBIC);
+                       cv::InterpolationFlags::WARP_INVERSE_MAP | cv::InterpolationFlags::INTER_CUBIC,
+                       cv::BORDER_CONSTANT, fillColor_);
     }
 
 
@@ -233,10 +236,11 @@ namespace MPF { namespace COMPONENT {
     // Search region frame cropping on rotated frame constructor.
     AffineFrameTransformer::AffineFrameTransformer(double rotation,
                                                    bool flip,
+                                                   const cv::Scalar &fillColor,
                                                    const SearchRegion &searchRegion,
                                                    IFrameTransformer::Ptr innerTransform)
             : BaseDecoratedTransformer(std::move(innerTransform))
-            , transform_(fullFrame(GetInnerFrameSize(0)), rotation, flip, searchRegion)
+            , transform_(fullFrame(GetInnerFrameSize(0)), rotation, flip, fillColor, searchRegion)
     {
     }
 
@@ -244,9 +248,10 @@ namespace MPF { namespace COMPONENT {
     // Rotate full frame constructor.
     AffineFrameTransformer::AffineFrameTransformer(double rotation,
                                                    bool flip,
+                                                   const cv::Scalar &fillColor,
                                                    IFrameTransformer::Ptr innerTransform)
             : BaseDecoratedTransformer(std::move(innerTransform))
-            , transform_(fullFrame(GetInnerFrameSize(0)), rotation, flip)
+            , transform_(fullFrame(GetInnerFrameSize(0)), rotation, flip, fillColor)
     {
     }
 
@@ -254,9 +259,10 @@ namespace MPF { namespace COMPONENT {
     // Feed forward superset region constructor
     AffineFrameTransformer::AffineFrameTransformer(const std::vector<MPFRotatedRect> &regions,
                                                    double frameRotation, bool frameFlip,
+                                                   const cv::Scalar &fillColor,
                                                    IFrameTransformer::Ptr innerTransform)
             : BaseDecoratedTransformer(std::move(innerTransform))
-            , transform_(regions, frameRotation, frameFlip)
+            , transform_(regions, frameRotation, frameFlip, fillColor)
     {
     }
 
@@ -280,9 +286,10 @@ namespace MPF { namespace COMPONENT {
 
     FeedForwardExactRegionAffineTransformer::FeedForwardExactRegionAffineTransformer(
                 const std::vector<MPFRotatedRect> &regions,
+                const cv::Scalar &fillColor,
                 IFrameTransformer::Ptr innerTransform)
             : BaseDecoratedTransformer(std::move(innerTransform))
-            , frameTransforms_(CreateTransformations(regions))
+            , frameTransforms_(CreateTransformations(regions, fillColor))
     {
     }
 
@@ -293,14 +300,15 @@ namespace MPF { namespace COMPONENT {
 
 
     std::vector<AffineTransformation> FeedForwardExactRegionAffineTransformer::CreateTransformations(
-            const std::vector<MPFRotatedRect> &regions) {
+            const std::vector<MPFRotatedRect> &regions, const cv::Scalar &fillColor) {
 
         std::vector<AffineTransformation> transforms;
         transforms.reserve(regions.size());
 
         for (const auto& region : regions) {
             double frameRotation = region.flip ? 360 - region.rotation : region.rotation;
-            transforms.emplace_back(std::vector<MPFRotatedRect>{ region }, frameRotation, region.flip);
+            transforms.emplace_back(std::vector<MPFRotatedRect>{ region }, frameRotation,
+                                    region.flip, fillColor);
         }
         return transforms;
     }
