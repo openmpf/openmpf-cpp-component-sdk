@@ -30,7 +30,7 @@ project(openmpf-cpp-component-test-utils)
 
 set(CMAKE_CXX_STANDARD 11)
 
-find_package(OpenCV 3.4.7 EXACT REQUIRED PATHS /opt/opencv-3.4.7
+find_package(OpenCV 4.5.0 EXACT REQUIRED PATHS /opt/opencv-4.5.0
     COMPONENTS opencv_core opencv_imgcodecs opencv_imgproc opencv_videoio opencv_highgui)
 
 include_directories(include)

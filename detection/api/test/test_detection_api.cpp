@@ -1307,6 +1307,14 @@ TEST(AffineFrameTransformerTest, RotateFullFrame) {
 }
 
 
+bool isSameImage(const cv::Mat &im1, const cv::Mat &im2) {
+    if (im1.size() != im2.size()) {
+        return false;
+    }
+    return std::equal(im1.begin<Pixel>(), im1.end<Pixel>(), im2.begin<Pixel>());
+}
+
+
 TEST(AffineFrameTransformerTest, TestRotationThreshold) {
     const auto *test_img_path = "test/test_imgs/rotation/hello-world.png";
     auto original_img = cv::imread(test_img_path);
@@ -1315,14 +1323,14 @@ TEST(AffineFrameTransformerTest, TestRotationThreshold) {
                         { {"ROTATION", "10"}, {"ROTATION_THRESHOLD", "10.001"} }, {});
 
         auto img = MPFImageReader(job).GetImage();
-        ASSERT_EQ(0, cv::countNonZero(img != original_img));
+        ASSERT_TRUE(isSameImage(original_img, img));
     }
     {
         MPFImageJob job("test", test_img_path,
                         { {"ROTATION", "10"}, {"ROTATION_THRESHOLD", "9.99"} }, {});
 
         auto img = MPFImageReader(job).GetImage();
-        ASSERT_NE(original_img.size(), img.size());
+        ASSERT_FALSE(isSameImage(original_img, img));
     }
 }
 
@@ -1337,13 +1345,13 @@ TEST(AffineFrameTransformerTest, TestRotationThresholdWithFeedForward) {
         MPFImageJob job("test", test_img_path, ff_img_loc,
                         { {"ROTATION_THRESHOLD", "5.12"}, {"FEED_FORWARD_TYPE", "REGION"} }, {});
         auto img = MPFImageReader(job).GetImage();
-        ASSERT_EQ(0, cv::countNonZero(img != original_img));
+        ASSERT_TRUE(isSameImage(original_img, img));
     }
     {
         MPFImageJob job("test", test_img_path, ff_img_loc,
                         { {"ROTATION_THRESHOLD", "5.00"}, {"FEED_FORWARD_TYPE", "REGION"} }, {});
         auto img = MPFImageReader(job).GetImage();
-        ASSERT_NE(0, cv::countNonZero(img != original_img));
+        ASSERT_FALSE(isSameImage(original_img, img));
     }
 }
 

@@ -102,7 +102,7 @@ namespace MPF { namespace COMPONENT {
 
         Rect new_rect(x_pos, y_pos, rect.width, rect.height);
 
-        cv::rectangle(mask, new_rect, Scalar(255, 255, 255), CV_FILLED);
+        cv::rectangle(mask, new_rect, Scalar(255, 255, 255), cv::FILLED);
 
         if (imshow_on) {
             cv::imshow("random mask", mask);
@@ -128,7 +128,7 @@ namespace MPF { namespace COMPONENT {
             return Rect(0, 0, 0, 0);
         }
         else {
-            cv::rectangle(mask, new_rect, Scalar(255, 255, 255), CV_FILLED);
+            cv::rectangle(mask, new_rect, Scalar(255, 255, 255), cv::FILLED);
             if (imshow_on) {
                 cv::imshow("random mask", mask);
                 cv::waitKey(5);
@@ -158,13 +158,13 @@ namespace MPF { namespace COMPONENT {
             return -1;
         }
 
-        Size size = Size(static_cast<int>(input_video.get(CV_CAP_PROP_FRAME_WIDTH)),
-                         static_cast<int>(input_video.get(CV_CAP_PROP_FRAME_HEIGHT)));
+        Size size = Size(static_cast<int>(input_video.get(cv::CAP_PROP_FRAME_WIDTH)),
+                         static_cast<int>(input_video.get(cv::CAP_PROP_FRAME_HEIGHT)));
 
         VideoWriter output_video;
 
-        double fps = input_video.get(CV_CAP_PROP_FPS);
-        output_video.open(video_out_filepath, CV_FOURCC('M', 'J', 'P', 'G'), fps, size, true);
+        double fps = input_video.get(cv::CAP_PROP_FPS);
+        output_video.open(video_out_filepath, cv::VideoWriter::fourcc('M', 'J', 'P', 'G'), fps, size, true);
 
         if (!output_video.isOpened()) {
             std::cout << "Could not open the output video for write: " << video_out_filepath << std::endl;
@@ -227,7 +227,7 @@ namespace MPF { namespace COMPONENT {
         VideoWriter output_video;
         double fps = 30;
 
-        output_video.open(video_out_filepath, CV_FOURCC('M', 'J', 'P', 'G'), fps, video_size, true);
+        output_video.open(video_out_filepath, cv::VideoWriter::fourcc('M', 'J', 'P', 'G'), fps, video_size, true);
         if (!output_video.isOpened()) {
             std::cout << "Could not open the output video for write: " << video_out_filepath << std::endl;
             return -1;

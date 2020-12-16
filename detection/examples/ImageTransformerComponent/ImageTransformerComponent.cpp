@@ -73,7 +73,7 @@ std::vector<MPFImageLocation> ImageTransformerComponent::GetDetections(const MPF
     std::cout << "original image rows = " << original.rows << std::endl;
     std::cout << "original image cols = " << original.cols << std::endl;
     std::cout << std::endl << std::endl;
-    cv::namedWindow("Original", CV_WINDOW_AUTOSIZE);
+    cv::namedWindow("Original", cv::WINDOW_AUTOSIZE);
     cv::imshow("Original", original);
     cv::waitKey(500);
 
@@ -101,7 +101,7 @@ std::vector<MPFImageLocation> ImageTransformerComponent::GetDetections(const MPF
 
     // Again, for illustration purposes only, we display the image after
     // the transformation has been applied.
-    cv::namedWindow("Transformed", CV_WINDOW_AUTOSIZE);
+    cv::namedWindow("Transformed", cv::WINDOW_AUTOSIZE);
     cv::imshow("Transformed", image_data);
     cv::waitKey(0);
 
