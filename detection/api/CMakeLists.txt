@@ -52,6 +52,9 @@ set(SOURCE_FILES
         include/MPFVideoCapture.h
         src/MPFVideoCapture.cpp
 
+        include/MPFAsyncVideoCapture.h
+        src/MPFAsyncVideoCapture.cpp
+
         include/frame_transformers/SearchRegion.h
         src/frame_transformers/SearchRegion.cpp
 

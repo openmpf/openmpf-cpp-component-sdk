@@ -88,13 +88,13 @@ namespace MPF { namespace COMPONENT {
                                double frameRotation, bool frameFlip, const cv::Scalar &fillColor,
                                IFrameTransformer::Ptr innerTransform);
 
-        cv::Size GetFrameSize(int frameIndex) override;
+        cv::Size GetFrameSize(int frameIndex) const override;
 
 
     protected:
-        void DoFrameTransform(cv::Mat &frame, int frameIndex) override;
+        void DoFrameTransform(cv::Mat &frame, int frameIndex) const override;
 
-        void DoReverseTransform(MPFImageLocation &imageLocation, int frameIndex) override;
+        void DoReverseTransform(MPFImageLocation &imageLocation, int frameIndex) const override;
         
     private:
         const AffineTransformation transform_;
@@ -110,13 +110,13 @@ namespace MPF { namespace COMPONENT {
                                                 const cv::Scalar &fillColor,
                                                 IFrameTransformer::Ptr innerTransform);
 
-        cv::Size GetFrameSize(int frameIndex) override;
+        cv::Size GetFrameSize(int frameIndex) const override;
 
 
     protected:
-        void DoFrameTransform(cv::Mat &frame, int frameIndex) override;
+        void DoFrameTransform(cv::Mat &frame, int frameIndex) const override;
 
-        void DoReverseTransform(MPFImageLocation &imageLocation, int frameIndex) override;
+        void DoReverseTransform(MPFImageLocation &imageLocation, int frameIndex) const override;
 
     private:
         const std::vector<AffineTransformation> frameTransforms_;

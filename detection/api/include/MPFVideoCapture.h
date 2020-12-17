@@ -28,6 +28,7 @@
 #ifndef OPENMPF_CPP_COMPONENT_SDK_MPFVIDEOCAPTURE_H
 #define OPENMPF_CPP_COMPONENT_SDK_MPFVIDEOCAPTURE_H
 
+#include <memory>
 #include <vector>
 
 #include <opencv2/videoio.hpp>
@@ -41,6 +42,7 @@
 
 namespace MPF { namespace COMPONENT {
 
+    class ReverseTransformer;
 
     class MPFVideoCapture {
 
@@ -72,6 +74,11 @@ namespace MPF { namespace COMPONENT {
 
         int GetCurrentFramePosition() const;
 
+        /**
+         * Release the underlying cv::VideoCapture. It is generally not necessary call this
+         * manually, because the destructor will take care of it. This only needs to be called if
+         * you want to release resources prior to destroying MPFVideoCapture.
+         */
         void Release();
 
         double GetFrameRate() const;
@@ -97,6 +104,12 @@ namespace MPF { namespace COMPONENT {
         void ReverseTransform(MPFVideoTrack &videoTrack) const;
 
         /**
+         * @return An object that can do the reverse transform even after MPFVideoCapture has been
+         *         destroyed
+         */
+        ReverseTransformer CreateReverseTransformer();
+
+        /**
          * Gets up to numberOfRequestedFrames frames before beginning of segment, skipping frameInterval frames.
          * If less than numberOfRequestedFrames are available, returned vector will have as many initialization frames
          * as are available.
@@ -113,9 +126,9 @@ namespace MPF { namespace COMPONENT {
 
         cv::VideoCapture cvVideoCapture_;
 
-        FrameFilter::CPtr frameFilter_;
+        std::shared_ptr<const FrameFilter> frameFilter_;
 
-        IFrameTransformer::Ptr frameTransformer_;
+        std::shared_ptr<const IFrameTransformer> frameTransformer_;
 
         /**
          * MPFVideoCapture keeps track of the frame position instead of depending on
@@ -154,6 +167,24 @@ namespace MPF { namespace COMPONENT {
         static FrameFilter::CPtr GetFrameFilter(bool frameFilteringEnabled, const MPFVideoJob &job,
                                                 const cv::VideoCapture &cvVideoCapture);
 
+    };
+
+
+
+    class ReverseTransformer {
+    public:
+        ReverseTransformer(std::shared_ptr<const IFrameTransformer> frameTransformer,
+                           std::shared_ptr<const FrameFilter> frameFilter);
+
+        void operator()(MPFVideoTrack &track) const;
+
+        static void ReverseTransform(MPFVideoTrack &track,
+                                     const IFrameTransformer& frameTransformer,
+                                     const FrameFilter& frameFilter);
+
+    private:
+        std::shared_ptr<const IFrameTransformer> frameTransformer_;
+        std::shared_ptr<const FrameFilter> frameFilter_;
     };
 }}
 

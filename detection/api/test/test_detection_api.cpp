@@ -42,6 +42,7 @@
 #include <frame_transformers/SearchRegion.h>
 #include "MPFImageReader.h"
 #include "MPFVideoCapture.h"
+#include "MPFAsyncVideoCapture.h"
 #include "IntervalFrameFilter.h"
 #include "MPFRotatedRect.h"
 
@@ -589,6 +590,17 @@ void assertFrameRead(MPFVideoCapture &cap, int expectedFrameNumber, const cv::Si
     ASSERT_EQ(frame.cols, expectedSize.width);
 }
 
+void assertFrameRead(MPFAsyncVideoCapture &cap, int expectedActualFrameNumber,
+                     int expectedSegmentFrameNumber, const cv::Size &expectedSize) {
+    auto frame = cap.Read();
+    ASSERT_TRUE(frame);
+
+    ASSERT_EQ(GetFrameNumber(frame.data), expectedActualFrameNumber);
+    ASSERT_EQ(frame.index, expectedSegmentFrameNumber);
+    ASSERT_EQ(frame.data.rows, expectedSize.height);
+    ASSERT_EQ(frame.data.cols, expectedSize.width);
+}
+
 
 
 TEST(FrameFilterTest, CanHandleFeedForwardTrack) {
@@ -647,6 +659,60 @@ TEST(FrameFilterTest, CanHandleFeedForwardTrack) {
     assertMapContainsKeys(track.frame_locations, {3, 7, 12, 20});
 }
 
+
+
+TEST(FrameFilterTest, AsyncVideoCaptureCanHandleFeedForwardTrack) {
+    MPFVideoTrack feedForwardTrack(0, 29);
+    feedForwardTrack.frame_locations = {
+            { 1, {5, 5, 5, 10} },
+            { 3, {4, 4, 5, 6} },
+            { 7, {5, 5, 8, 9} },
+            { 11, {4, 5, 5, 6} },
+            { 12, {4, 4, 1, 2} },
+            { 20, {5, 5, 5, 5} },
+            { 25, {4, 4, 5, 5} }
+    };
+    MPFVideoJob job("Test", frameFilterTestVideo, 0, -1, feedForwardTrack,
+                    {{"FEED_FORWARD_TYPE", "SUPERSET_REGION"}}, {});
+
+    MPFAsyncVideoCapture cap(job);
+    ASSERT_EQ(cap.GetFrameCount(), 7);
+
+    int minX = feedForwardTrack.frame_locations[3].x_left_upper;
+    int maxX = feedForwardTrack.frame_locations[7].x_left_upper + feedForwardTrack.frame_locations[7].width;
+
+    int minY = feedForwardTrack.frame_locations[3].y_left_upper;
+    int maxY = feedForwardTrack.frame_locations[1].y_left_upper + feedForwardTrack.frame_locations[1].height;
+
+    cv::Size expectedSize(maxX - minX, maxY - minY);
+    ASSERT_EQ(cap.GetFrameSize(), expectedSize);
+
+    assertFrameRead(cap, 1, 0, expectedSize);
+    assertFrameRead(cap, 3, 1, expectedSize);
+    assertFrameRead(cap, 7, 2, expectedSize);
+    assertFrameRead(cap, 11, 3, expectedSize);
+    assertFrameRead(cap, 12, 4, expectedSize);
+    assertFrameRead(cap, 20, 5, expectedSize);
+    assertFrameRead(cap, 25, 6, expectedSize);
+
+    auto invalidFrame = cap.Read();
+    ASSERT_FALSE(invalidFrame);
+    ASSERT_TRUE(invalidFrame.data.empty());
+
+    MPFVideoTrack track(0, 6);
+    track.frame_locations = {
+            { 1, {} },
+            { 2, {} },
+            { 4, {} },
+            { 5, {} },
+    };
+
+    cap.ReverseTransform(track);
+
+    ASSERT_EQ(track.start_frame, 1);
+    ASSERT_EQ(track.stop_frame, 25);
+    assertMapContainsKeys(track.frame_locations, {3, 7, 12, 20});
+}
 
 
 TEST(FrameFilterTest, CanUseSearchRegionWithFeedForwardFrameType) {
@@ -1225,6 +1291,39 @@ TEST(AffineFrameTransformerTest, TestFeedForwardSupersetRegion) {
     }
 }
 
+
+TEST(AffineFrameTransformerTest, TestFeedForwardSupersetRegionWithAsyncVideoCapture) {
+    MPFVideoTrack ffTrack(0, 2);
+    ffTrack.frame_locations.emplace(0, MPFImageLocation(60, 300, 100, 40, -1, { { "ROTATION", "260" } }));
+    ffTrack.frame_locations.emplace(1, MPFImageLocation(160, 350, 130, 20, -1, { { "ROTATION", "60" } }));
+    ffTrack.frame_locations.emplace(2, MPFImageLocation(260, 340, 60, 60, -1, { { "ROTATION", "20" } }));
+
+
+    for (int rotation = 0; rotation <= 360; rotation += 20) {
+        MPFVideoJob job("Test", "test/test_imgs/rotation/feed-forward-rotation-test.png",
+                        ffTrack.start_frame, ffTrack.stop_frame, ffTrack,
+                        { {"FEED_FORWARD_TYPE", "SUPERSET_REGION" }, { "ROTATION", std::to_string(rotation) } }, {});
+
+        int expectedMinNumBlue = 0;
+        int expectedMaxNumBlue = 0;
+        for (const auto &pair : ffTrack.frame_locations) {
+            int area = pair.second.height * pair.second.width;
+            int perimeter = 2 * pair.second.height + 2 * pair.second.width;
+            expectedMinNumBlue += area - perimeter;
+            expectedMaxNumBlue += area + perimeter;
+        }
+
+        MPFAsyncVideoCapture cap(job);
+        auto frame = cap.Read();
+
+        int actualNumBlue = std::count(frame.data.begin<Pixel>(), frame.data.end<Pixel>(),
+                                       Pixel(255, 0, 0));
+
+        // Color of pixels along edges gets blended with nearby pixels during interpolation.
+        ASSERT_LE(actualNumBlue, expectedMaxNumBlue);
+        ASSERT_GE(actualNumBlue, expectedMinNumBlue);
+    }
+}
 
 
 TEST(AffineFrameTransformerTest, ReverseTransformWithFlip) {

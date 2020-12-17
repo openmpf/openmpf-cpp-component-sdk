@@ -37,19 +37,19 @@ namespace MPF { namespace COMPONENT {
     }
 
 
-    void FrameCropper::DoFrameTransform(cv::Mat &frame, int frameIndex) {
+    void FrameCropper::DoFrameTransform(cv::Mat &frame, int frameIndex) const {
         frame = frame(GetRegionOfInterest(frameIndex));
     }
 
 
-    void FrameCropper::DoReverseTransform(MPFImageLocation &imageLocation, int frameIndex) {
+    void FrameCropper::DoReverseTransform(MPFImageLocation &imageLocation, int frameIndex) const {
         const cv::Rect roi = GetRegionOfInterest(frameIndex);
         imageLocation.x_left_upper += roi.x;
         imageLocation.y_left_upper += roi.y;
     }
 
 
-    cv::Size FrameCropper::GetFrameSize(int frameIndex) {
+    cv::Size FrameCropper::GetFrameSize(int frameIndex) const {
         return GetRegionOfInterest(frameIndex).size();
     }
 
@@ -67,7 +67,7 @@ namespace MPF { namespace COMPONENT {
     }
 
 
-    cv::Rect SearchRegionFrameCropper::GetRegionOfInterest(int frameIndex) {
+    cv::Rect SearchRegionFrameCropper::GetRegionOfInterest(int frameIndex) const {
         return searchRegion_;
     }
 
@@ -90,7 +90,7 @@ namespace MPF { namespace COMPONENT {
     }
 
 
-    cv::Rect FeedForwardFrameCropper::GetRegionOfInterest(int frameIndex) {
+    cv::Rect FeedForwardFrameCropper::GetRegionOfInterest(int frameIndex) const {
         try {
             return fedForwardDetections_.at(frameIndex);
         }

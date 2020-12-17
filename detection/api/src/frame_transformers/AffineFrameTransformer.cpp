@@ -267,17 +267,18 @@ namespace MPF { namespace COMPONENT {
     }
 
 
-    cv::Size AffineFrameTransformer::GetFrameSize(int frameIndex) {
+    cv::Size AffineFrameTransformer::GetFrameSize(int frameIndex) const {
         return transform_.GetRegionSize();
     }
 
 
-    void AffineFrameTransformer::DoFrameTransform(cv::Mat &frame, int frameIndex) {
+    void AffineFrameTransformer::DoFrameTransform(cv::Mat &frame, int frameIndex) const {
         transform_.Apply(frame);
     }
 
 
-    void AffineFrameTransformer::DoReverseTransform(MPFImageLocation &imageLocation, int frameIndex) {
+    void AffineFrameTransformer::DoReverseTransform(MPFImageLocation &imageLocation,
+                                                    int frameIndex) const {
         transform_.ApplyReverse(imageLocation);
     }
 
@@ -294,7 +295,7 @@ namespace MPF { namespace COMPONENT {
     }
 
 
-    cv::Size FeedForwardExactRegionAffineTransformer::GetFrameSize(int frameIndex) {
+    cv::Size FeedForwardExactRegionAffineTransformer::GetFrameSize(int frameIndex) const {
         return GetTransform(frameIndex).GetRegionSize();
     }
 
@@ -326,11 +327,13 @@ namespace MPF { namespace COMPONENT {
         }
     }
 
-    void FeedForwardExactRegionAffineTransformer::DoFrameTransform(cv::Mat &frame, int frameIndex) {
+    void FeedForwardExactRegionAffineTransformer::DoFrameTransform(cv::Mat &frame,
+                                                                   int frameIndex) const {
         GetTransform(frameIndex).Apply(frame);
     }
 
-    void FeedForwardExactRegionAffineTransformer::DoReverseTransform(MPFImageLocation &imageLocation, int frameIndex) {
+    void FeedForwardExactRegionAffineTransformer::DoReverseTransform(
+            MPFImageLocation &imageLocation, int frameIndex) const {
         GetTransform(frameIndex).ApplyReverse(imageLocation);
     }
 }}

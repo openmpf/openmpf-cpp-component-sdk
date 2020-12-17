@@ -51,46 +51,84 @@ class BlockingQueue {
 
 public:
     explicit BlockingQueue(int max_size=-1)
-            : max_size_(max_size), halt_(false)
+            : max_size_(max_size)
+            , halt_(false)
+            , addingComplete_(false)
     {
     }
 
     void push(const T& item) {
-        auto lock = acquire_lock();
-        await_free_space(lock);
+        auto lock = acquireLock();
+        waitUntilCanAdd(lock);
         queue_.push(item);
         cond_.notify_all();
     }
 
     void push(T&& item) {
-        auto lock = acquire_lock();
-        await_free_space(lock);
+        auto lock = acquireLock();
+        waitUntilCanAdd(lock);
         queue_.push(std::move(item));
         cond_.notify_all();
     }
 
     template <typename... Args>
     void emplace(Args&&... args) {
-        auto lock = acquire_lock();
-        await_free_space(lock);
+        auto lock = acquireLock();
+        waitUntilCanAdd(lock);
         queue_.emplace(std::forward<Args>(args)...);
         cond_.notify_all();
     }
 
     T pop() {
-        auto lock = acquire_lock();
-        await_non_empty(lock);
+        auto lock = acquireLock();
+        waitUntilCanRemove(lock);
         T result = std::move(queue_.front());
         queue_.pop();
         cond_.notify_all();
         return result;
     }
 
+    /**
+     * Indicates that both producers and consumers should stop processing even if there are items
+     * in the queue.
+     */
     void halt() {
-        auto lock = acquire_lock();
+        auto lock = acquireLock();
         halt_ = true;
         cond_.notify_all();
     }
+
+    /**
+     * Indicates that no more items will be added to the queue. Producers may not add items after
+     * completeAdding() is called. Consumers should finish processing items already in the queue.
+     *
+     * Loosely based on C#'s BlockingCollection<T>.CompleteAdding method
+     * (https://docs.microsoft.com/en-us/dotnet/api/system.collections.concurrent.blockingcollection-1.completeadding?view=net-5.0#System_Collections_Concurrent_BlockingCollection_1_CompleteAdding).
+     */
+    void completeAdding() {
+        auto lock = acquireLock();
+        addingComplete_ = true;
+        cond_.notify_all();
+    }
+
+    /**
+     * @return true if adding complete. May or may not be empty.
+     */
+    bool isAddingComplete() {
+        auto lock = acquireLock();
+        return halt_ || addingComplete_;
+    }
+
+    /**
+     * The queue is "completed" if it has been halted or if a producer called completeAdding()
+     * and the remaining items have all been removed from the queue.
+     * @return true if items should not be added or removed from queue.
+     */
+    bool isCompleted() {
+        auto lock = acquireLock();
+        return halt_ || (addingComplete_ && queue_.empty());
+    }
+
 
 private:
     int max_size_;
@@ -98,24 +136,27 @@ private:
     std::mutex mutex_;
     std::condition_variable cond_;
     bool halt_;
+    bool addingComplete_;
 
-    void await_non_empty(std::unique_lock<std::mutex> &lock) {
-        cond_.wait(lock, [this] { return (halt_ || !queue_.empty()); });
-        if (halt_) {
+    void waitUntilCanRemove(std::unique_lock<std::mutex> &lock) {
+        cond_.wait(lock, [this] { return halt_ || addingComplete_ || !queue_.empty(); });
+        if (halt_ || (queue_.empty() && addingComplete_)) {
             throw QueueHaltedException();
         }
     }
 
-    void await_free_space(std::unique_lock<std::mutex> &lock) {
+    void waitUntilCanAdd(std::unique_lock<std::mutex> &lock) {
         if (max_size_ > 0) {
-            cond_.wait(lock, [this] { return (halt_ || queue_.size() < max_size_); });
+            cond_.wait(lock, [this] {
+                return halt_ || addingComplete_ || queue_.size() < max_size_;
+            });
         }
-        if (halt_) {
+        if (halt_ || addingComplete_) {
             throw QueueHaltedException();
         }
     }
 
-    std::unique_lock<std::mutex> acquire_lock() {
+    std::unique_lock<std::mutex> acquireLock() {
         return std::unique_lock<std::mutex>(mutex_);
     }
 };
