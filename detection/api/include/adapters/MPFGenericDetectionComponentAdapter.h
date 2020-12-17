@@ -39,15 +39,8 @@ namespace MPF { namespace COMPONENT {
     public:
 
         std::vector<MPFAudioTrack> GetDetections(const MPFAudioJob &audio_job) override {
-            // create generic job
-            MPFGenericJob generic_job(audio_job.job_name, audio_job.data_uri, audio_job.job_properties, audio_job.media_properties);
-            if (audio_job.has_feed_forward_track) {
-                generic_job.feed_forward_track = MPFGenericTrack(audio_job.feed_forward_track.confidence, audio_job.feed_forward_track.detection_properties);
-                generic_job.has_feed_forward_track = true;
-            }
-
             // process generic job
-            std::vector<MPFGenericTrack> generic_tracks = GetDetections(generic_job);
+            std::vector<MPFGenericTrack> generic_tracks = GetDetections(ConvertJob(audio_job));
 
             // convert generic tracks to expected type
             std::vector<MPFAudioTrack> audio_tracks;
@@ -66,15 +59,8 @@ namespace MPF { namespace COMPONENT {
         };
 
         std::vector<MPFImageLocation> GetDetections(const MPFImageJob &image_job) override {
-            // create generic job
-            MPFGenericJob generic_job(image_job.job_name, image_job.data_uri, image_job.job_properties, image_job.media_properties);
-            if (image_job.has_feed_forward_location) {
-                generic_job.feed_forward_track = MPFGenericTrack(image_job.feed_forward_location.confidence, image_job.feed_forward_location.detection_properties);
-                generic_job.has_feed_forward_track = true;
-            }
-
             // process generic job
-            std::vector<MPFGenericTrack> generic_tracks = GetDetections(generic_job);
+            std::vector<MPFGenericTrack> generic_tracks = GetDetections(ConvertJob(image_job));
 
             // convert generic tracks to expected type
             std::vector<MPFImageLocation> locations;
@@ -95,15 +81,8 @@ namespace MPF { namespace COMPONENT {
         }
 
         std::vector<MPFVideoTrack> GetDetections(const MPFVideoJob &video_job) override {
-            // create generic job
-            MPFGenericJob generic_job(video_job.job_name, video_job.data_uri, video_job.job_properties, video_job.media_properties);
-            if (video_job.has_feed_forward_track) {
-                generic_job.feed_forward_track = MPFGenericTrack(video_job.feed_forward_track.confidence, video_job.feed_forward_track.detection_properties);
-                generic_job.has_feed_forward_track = true;
-            }
-
             // process generic job
-            std::vector<MPFGenericTrack> generic_tracks = GetDetections(generic_job);
+            std::vector<MPFGenericTrack> generic_tracks = GetDetections(ConvertJob(video_job));
 
             std::vector<MPFVideoTrack> video_tracks;
             // convert generic tracks to expected type
@@ -135,6 +114,51 @@ namespace MPF { namespace COMPONENT {
 
     protected:
         MPFGenericDetectionComponentAdapter() = default;
+
+    private:
+        static MPFGenericJob ConvertJob(const MPFAudioJob &job) {
+            if (job.has_feed_forward_track) {
+                return {job.job_name,
+                        job.data_uri,
+                        MPFGenericTrack(job.feed_forward_track.confidence,
+                                        job.feed_forward_track.detection_properties),
+                        job.job_properties,
+                        job.media_properties};
+            }
+            else {
+                return {job.job_name, job.data_uri, job.job_properties, job.media_properties};
+            }
+        }
+
+
+        static MPFGenericJob ConvertJob(const MPFImageJob &job) {
+            if (job.has_feed_forward_location) {
+                return {job.job_name,
+                        job.data_uri,
+                        MPFGenericTrack(job.feed_forward_location.confidence,
+                                        job.feed_forward_location.detection_properties),
+                        job.job_properties,
+                        job.media_properties};
+            }
+            else {
+                return {job.job_name, job.data_uri, job.job_properties, job.media_properties};
+            }
+        }
+
+
+        static MPFGenericJob ConvertJob(const MPFVideoJob &job) {
+            if (job.has_feed_forward_track) {
+                return {job.job_name,
+                        job.data_uri,
+                        MPFGenericTrack(job.feed_forward_track.confidence,
+                                        job.feed_forward_track.detection_properties),
+                        job.job_properties,
+                        job.media_properties};
+            }
+            else {
+                return {job.job_name, job.data_uri, job.job_properties, job.media_properties};
+            }
+        }
     };
 
 }}

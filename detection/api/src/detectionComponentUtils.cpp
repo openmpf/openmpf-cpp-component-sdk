@@ -67,7 +67,7 @@ namespace DetectionComponentUtils {
     template<>
     bool GetProperty<bool>(const Properties &props,
                            const string &key,
-                           const bool defaultValue) {
+                           bool defaultValue) {
         const string &propValue = GetProperty<string>(props, key, "");
         if (propValue.empty()) {
             return defaultValue;

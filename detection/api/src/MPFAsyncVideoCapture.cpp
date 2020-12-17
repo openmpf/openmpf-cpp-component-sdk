@@ -65,7 +65,7 @@ namespace MPF { namespace COMPONENT {
                         // Add invalid frame to indicate that the end of the video has been reached.
                         frame.data.release();
                         queue.push(std::move(frame));
-                        queue.completeAdding();
+                        queue.complete_adding();
                         return;
                     }
                 }
@@ -80,7 +80,7 @@ namespace MPF { namespace COMPONENT {
                     // it stops incrementing the frame count and keeps reporting
                     // (last_frame_index + 1) or equivalently the total number of frames.
                     queue.emplace(videoCapture.GetFrameCount());
-                    queue.completeAdding();
+                    queue.complete_adding();
                 }
                 catch (const QueueHaltedException&) {
                     // This is very unlikely, but we don't want the QueueHaltedException to
@@ -114,11 +114,11 @@ namespace MPF { namespace COMPONENT {
             , frameRate_(videoCapture.GetFrameRate())
             , frameSize_(videoCapture.GetFrameSize())
             , originalFrameSize_(videoCapture.GetOriginalFrameSize())
-            , reverseTransformer_(videoCapture.CreateReverseTransformer())
+            , reverseTransformer_(videoCapture.GetReverseTransformer())
+            , doneReadingFuture_(std::async(
+                    std::launch::async,
+                    frameReader, std::move(videoCapture), std::ref(frameQueue_)))
     {
-        doneReadingFuture_ = std::async(
-                std::launch::async,
-                frameReader, std::move(videoCapture), std::ref(frameQueue_));
     }
 
 
@@ -146,8 +146,13 @@ namespace MPF { namespace COMPONENT {
         }
     }
 
+
     void MPFAsyncVideoCapture::ReverseTransform(MPFVideoTrack &videoTrack) const {
         return reverseTransformer_(videoTrack);
+    }
+
+    ReverseTransformer MPFAsyncVideoCapture::GetReverseTransformer() const {
+        return reverseTransformer_;
     }
 
     int MPFAsyncVideoCapture::GetFrameCount() const {

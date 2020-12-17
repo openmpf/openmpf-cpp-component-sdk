@@ -29,6 +29,7 @@
 #define OPENMPF_CPP_COMPONENT_SDK_MPFVIDEOCAPTURE_H
 
 #include <memory>
+#include <string>
 #include <vector>
 
 #include <opencv2/videoio.hpp>
@@ -107,7 +108,7 @@ namespace MPF { namespace COMPONENT {
          * @return An object that can do the reverse transform even after MPFVideoCapture has been
          *         destroyed
          */
-        ReverseTransformer CreateReverseTransformer();
+        ReverseTransformer GetReverseTransformer() const;
 
         /**
          * Gets up to numberOfRequestedFrames frames before beginning of segment, skipping frameInterval frames.

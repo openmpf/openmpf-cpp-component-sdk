@@ -54,7 +54,7 @@ namespace DetectionComponentUtils {
     template<typename T>
     t_unless_char_ptr_then_string<T> GetProperty(const MPF::COMPONENT::Properties &props,
                                                  const std::string &key,
-                                                 const T defaultValue) {
+                                                 T defaultValue) {
         auto iter = props.find(key);
         if (iter == props.end()) {
             return defaultValue;
@@ -79,7 +79,7 @@ namespace DetectionComponentUtils {
     template<>
     bool GetProperty(const MPF::COMPONENT::Properties &props,
                      const std::string &key,
-                     const bool defaultValue);
+                     bool defaultValue);
 
 
     /**

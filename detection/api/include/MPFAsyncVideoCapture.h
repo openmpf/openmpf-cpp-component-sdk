@@ -75,6 +75,12 @@ namespace MPF { namespace COMPONENT {
 
         void ReverseTransform(MPFVideoTrack &videoTrack) const;
 
+        /**
+         * @return An object that can do the reverse transform even after MPFAsyncVideoCapture has
+         *         been destroyed
+         */
+        ReverseTransformer GetReverseTransformer() const;
+
         int GetFrameCount() const;
 
         double GetFrameRate() const;
@@ -82,7 +88,6 @@ namespace MPF { namespace COMPONENT {
         cv::Size GetFrameSize() const;
 
         cv::Size GetOriginalFrameSize() const;
-
 
 
     private:
@@ -100,7 +105,6 @@ namespace MPF { namespace COMPONENT {
         ReverseTransformer reverseTransformer_;
 
         std::shared_future<void> doneReadingFuture_;
-
 
         MPFAsyncVideoCapture(MPFVideoCapture&& videoCapture, int frameQueueSize);
     };

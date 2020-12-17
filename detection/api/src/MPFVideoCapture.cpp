@@ -343,7 +343,7 @@ namespace MPF { namespace COMPONENT {
     }
 
 
-    ReverseTransformer MPFVideoCapture::CreateReverseTransformer() {
+    ReverseTransformer MPFVideoCapture::GetReverseTransformer() const {
         return ReverseTransformer(frameTransformer_, frameFilter_);
     }
 

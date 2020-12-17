@@ -593,7 +593,7 @@ void assertFrameRead(MPFVideoCapture &cap, int expectedFrameNumber, const cv::Si
 void assertFrameRead(MPFAsyncVideoCapture &cap, int expectedActualFrameNumber,
                      int expectedSegmentFrameNumber, const cv::Size &expectedSize) {
     auto frame = cap.Read();
-    ASSERT_TRUE(frame);
+    ASSERT_TRUE(bool(frame));
 
     ASSERT_EQ(GetFrameNumber(frame.data), expectedActualFrameNumber);
     ASSERT_EQ(frame.index, expectedSegmentFrameNumber);
@@ -696,7 +696,7 @@ TEST(FrameFilterTest, AsyncVideoCaptureCanHandleFeedForwardTrack) {
     assertFrameRead(cap, 25, 6, expectedSize);
 
     auto invalidFrame = cap.Read();
-    ASSERT_FALSE(invalidFrame);
+    ASSERT_FALSE(bool(invalidFrame));
     ASSERT_TRUE(invalidFrame.data.empty());
 
     MPFVideoTrack track(0, 6);
@@ -1020,9 +1020,8 @@ TEST(FeedForwardFrameCropperTest, CanCropToExactRegion) {
             {29, MPFImageLocation(70, 0, 30, 240)}
     };
 
-    MPFVideoJob job("Test", frameFilterTestVideo, 4, 29, { {"FEED_FORWARD_TYPE", "REGION"} }, {});
-    job.has_feed_forward_track = true;
-    job.feed_forward_track = feedForwardTrack;
+    MPFVideoJob job("Test", frameFilterTestVideo, 4, 29, feedForwardTrack,
+                    { {"FEED_FORWARD_TYPE", "REGION"} }, {});
 
     MPFVideoCapture cap(job);
 
