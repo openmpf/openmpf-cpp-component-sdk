@@ -1,7 +1,7 @@
 {
   "componentName": "ImageTransformerComponent",
-  "componentVersion": "5.1",
-  "middlewareVersion": "5.1",
+  "componentVersion": "6.0",
+  "middlewareVersion": "6.0",
   "sourceLanguage": "c++",
   "batchLibrary": "${MPF_HOME}/plugins/ImageTransformerComponent/lib/libmpfImageTransformer.so",
   "environmentVariables": [

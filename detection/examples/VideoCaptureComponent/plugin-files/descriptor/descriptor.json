@@ -1,7 +1,7 @@
 {
   "componentName": "VideoCaptureComponent",
-  "componentVersion": "5.1",
-  "middlewareVersion": "5.1",
+  "componentVersion": "6.0",
+  "middlewareVersion": "6.0",
   "sourceLanguage": "c++",
   "batchLibrary": "${MPF_HOME}/plugins/VideoCaptureComponent/lib/libmpfVideoCapture.so",
   "environmentVariables": [
