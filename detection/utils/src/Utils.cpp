@@ -120,7 +120,7 @@ namespace MPF { namespace COMPONENT { namespace Utils {
     cv::Mat ConvertToGray(const cv::Mat &image) {
         cv::Mat gray;
         if (image.channels() == 3) {
-            cv::cvtColor(image, gray, CV_BGR2GRAY);
+            cv::cvtColor(image, gray, cv::COLOR_BGR2GRAY);
         }
         else if (image.channels() == 1) {
             gray = image.clone();

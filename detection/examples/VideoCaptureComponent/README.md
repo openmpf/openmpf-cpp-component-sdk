@@ -1,6 +1,6 @@
 # BUILD
 
-NOTE: To build and run this component, OpenCV 3.4.7 and
+NOTE: To build and run this component, OpenCV 4.5.0 and
       ffmpeg must be installed first.
 
 NOTE: You must build the MPF Component API library before
@@ -10,7 +10,7 @@ NOTE: You must build the MPF Component API library before
 
 Before you build, edit the src/CMakeLists.txt file, and change
 the "find_package" command so that the PATHS option specifies
-the root directory of your OpenCV 3.4.7 installation.
+the root directory of your OpenCV 4.5.0 installation.
 
 Run the following commands:
 ```
