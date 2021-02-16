@@ -61,8 +61,8 @@ namespace MPF { namespace COMPONENT {
     }
 
 
-    MPFVideoCapture::MPFVideoCapture(const std::string &videoPath)
-        : MPFVideoCapture(MPFVideoJob("", videoPath, 0, -1, {}, {}), false, false)
+    MPFVideoCapture::MPFVideoCapture(std::string videoPath)
+        : MPFVideoCapture(MPFVideoJob("", std::move(videoPath), 0, -1, {}, {}), false, false)
     {
     }
 

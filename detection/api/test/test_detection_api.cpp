@@ -31,7 +31,6 @@
 
 #include <gtest/gtest.h>
 
-#include <opencv2/video.hpp>
 #include <opencv2/opencv.hpp>
 #include <frame_transformers/FrameTransformerFactory.h>
 

@@ -5,11 +5,11 @@
  * under contract, and is subject to the Rights in Data-General Clause        *
  * 52.227-14, Alt. IV (DEC 2007).                                             *
  *                                                                            *
- * Copyright 2020 The MITRE Corporation. All Rights Reserved.                 *
+ * Copyright 2021 The MITRE Corporation. All Rights Reserved.                 *
  ******************************************************************************/
 
 /******************************************************************************
- * Copyright 2020 The MITRE Corporation                                       *
+ * Copyright 2021 The MITRE Corporation                                       *
  *                                                                            *
  * Licensed under the Apache License, Version 2.0 (the "License");            *
  * you may not use this file except in compliance with the License.           *
@@ -103,8 +103,8 @@ namespace MPF { namespace COMPONENT {
     }
 
 
-    MPFAsyncVideoCapture::MPFAsyncVideoCapture(const std::string &videoPath, int frameQueueSize)
-            : MPFAsyncVideoCapture(MPFVideoCapture(videoPath), frameQueueSize) {
+    MPFAsyncVideoCapture::MPFAsyncVideoCapture(std::string videoPath, int frameQueueSize)
+            : MPFAsyncVideoCapture(MPFVideoCapture(std::move(videoPath)), frameQueueSize) {
     }
 
 
@@ -148,7 +148,7 @@ namespace MPF { namespace COMPONENT {
 
 
     void MPFAsyncVideoCapture::ReverseTransform(MPFVideoTrack &videoTrack) const {
-        return reverseTransformer_(videoTrack);
+        reverseTransformer_(videoTrack);
     }
 
     ReverseTransformer MPFAsyncVideoCapture::GetReverseTransformer() const {

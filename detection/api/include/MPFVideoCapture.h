@@ -60,7 +60,7 @@ namespace MPF { namespace COMPONENT {
         explicit MPFVideoCapture(const MPFVideoJob &videoJob, bool enableFrameTransformers=true,
                                  bool enableFrameFiltering=true);
 
-        explicit MPFVideoCapture(const std::string &videoPath);
+        explicit MPFVideoCapture(std::string videoPath);
 
 
         bool Read(cv::Mat &frame);
