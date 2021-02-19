@@ -43,11 +43,11 @@ namespace MPF { namespace COMPONENT {
     public:
         explicit NoOpFrameTransformer(const cv::Size &frameSize);
 
-        cv::Size GetFrameSize(int frameIndex) override;
+        cv::Size GetFrameSize(int frameIndex) const override;
 
-        void TransformFrame(cv::Mat &frame, int frameIndex) override;
+        void TransformFrame(cv::Mat &frame, int frameIndex) const override;
 
-        void ReverseTransform(MPFImageLocation &imageLocation, int frameIndex) override;
+        void ReverseTransform(MPFImageLocation &imageLocation, int frameIndex) const override;
 
     private:
         const cv::Size frameSize_;

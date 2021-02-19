@@ -26,7 +26,6 @@
 
 
 #include <algorithm>
-#include <iostream>
 #include "FeedForwardFrameFilter.h"
 
 

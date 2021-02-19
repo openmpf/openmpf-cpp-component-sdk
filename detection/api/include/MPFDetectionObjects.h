@@ -31,6 +31,7 @@
 
 #include <map>
 #include <string>
+#include <utility>
 
 namespace MPF { namespace COMPONENT {
     typedef std::map<std::string, std::string> Properties;
@@ -88,13 +89,13 @@ namespace MPF { namespace COMPONENT {
                          int width,
                          int height,
                          float confidence = -1,
-                         const Properties &detection_properties = {})
+                         Properties detection_properties = {})
                 : x_left_upper(x_left_upper)
                 , y_left_upper(y_left_upper)
                 , width(width)
                 , height(height)
                 , confidence(confidence)
-                , detection_properties(detection_properties) {
+                , detection_properties(std::move(detection_properties)) {
         }
     };
 
@@ -113,11 +114,12 @@ namespace MPF { namespace COMPONENT {
         }
 
 
-        MPFVideoTrack(int start, int stop, float confidence = -1, const Properties &detection_properties = {})
+        MPFVideoTrack(int start, int stop, float confidence = -1,
+                      Properties detection_properties = {})
                 : start_frame(start)
                 , stop_frame(stop)
                 , confidence(confidence)
-                , detection_properties(detection_properties) {
+                , detection_properties(std::move(detection_properties)) {
         }
     };
 
@@ -134,11 +136,12 @@ namespace MPF { namespace COMPONENT {
                 , confidence(-1) {
         }
 
-        MPFAudioTrack(int start, int stop, float confidence = -1, const Properties &detection_properties = {})
+        MPFAudioTrack(int start, int stop, float confidence = -1,
+                      Properties detection_properties = {})
                 : start_time(start)
                 , stop_time(stop)
                 , confidence(confidence)
-                , detection_properties(detection_properties) { }
+                , detection_properties(std::move(detection_properties)) { }
     };
 
 
@@ -146,9 +149,9 @@ namespace MPF { namespace COMPONENT {
         float confidence;  // optional
         Properties detection_properties;
 
-        explicit MPFGenericTrack(float confidence = -1, const Properties &detection_properties = {})
+        explicit MPFGenericTrack(float confidence = -1, Properties detection_properties = {})
                 : confidence(confidence)
-                , detection_properties(detection_properties) { }
+                , detection_properties(std::move(detection_properties)) { }
     };
 
 }}
