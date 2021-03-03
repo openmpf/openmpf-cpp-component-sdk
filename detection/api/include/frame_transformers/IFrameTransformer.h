@@ -41,15 +41,15 @@ namespace MPF { namespace COMPONENT {
     class IFrameTransformer {
 
     public:
-        typedef std::unique_ptr<IFrameTransformer> Ptr;
+        typedef std::unique_ptr<const IFrameTransformer> Ptr;
 
         virtual ~IFrameTransformer() = default;
 
-        virtual void TransformFrame(cv::Mat &frame, int frameIndex) = 0;
+        virtual void TransformFrame(cv::Mat &frame, int frameIndex) const = 0;
 
-        virtual void ReverseTransform(MPFImageLocation &imageLocation, int frameIndex) = 0;
+        virtual void ReverseTransform(MPFImageLocation &imageLocation, int frameIndex) const = 0;
 
-        virtual cv::Size GetFrameSize(int frameIndex) = 0;
+        virtual cv::Size GetFrameSize(int frameIndex) const = 0;
     };
 }}
 

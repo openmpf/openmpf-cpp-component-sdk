@@ -42,19 +42,19 @@ namespace MPF { namespace COMPONENT {
     public:
         explicit FrameCropper(IFrameTransformer::Ptr innerTransform);
 
-        cv::Size GetFrameSize(int frameIndex) override;
+        cv::Size GetFrameSize(int frameIndex) const override;
 
 
     protected:
-        void DoFrameTransform(cv::Mat &frame, int frameIndex) override;
+        void DoFrameTransform(cv::Mat &frame, int frameIndex) const override;
 
-        void DoReverseTransform(MPFImageLocation &imageLocation, int frameIndex) override;
+        void DoReverseTransform(MPFImageLocation &imageLocation, int frameIndex) const override;
 
         cv::Rect GetIntersectingRegion(const cv::Rect &regionOfInterest, int frameIndex) const;
 
 
     private:
-        virtual cv::Rect GetRegionOfInterest(int frameIndex) = 0;
+        virtual cv::Rect GetRegionOfInterest(int frameIndex) const = 0;
     };
 
 
@@ -67,7 +67,7 @@ namespace MPF { namespace COMPONENT {
     private:
         const cv::Rect searchRegion_;
 
-        cv::Rect GetRegionOfInterest(int frameIndex) override;
+        cv::Rect GetRegionOfInterest(int frameIndex) const override;
     };
 
 
@@ -80,7 +80,7 @@ namespace MPF { namespace COMPONENT {
     private:
         std::vector<cv::Rect> fedForwardDetections_;
 
-        cv::Rect GetRegionOfInterest(int frameIndex) override;
+        cv::Rect GetRegionOfInterest(int frameIndex) const override;
     };
 
 }}

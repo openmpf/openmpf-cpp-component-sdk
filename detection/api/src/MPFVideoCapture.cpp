@@ -61,8 +61,8 @@ namespace MPF { namespace COMPONENT {
     }
 
 
-    MPFVideoCapture::MPFVideoCapture(const std::string &videoPath)
-        : MPFVideoCapture(MPFVideoJob("", videoPath, 0, -1, {}, {}), false, false)
+    MPFVideoCapture::MPFVideoCapture(std::string videoPath)
+        : MPFVideoCapture(MPFVideoJob("", std::move(videoPath), 0, -1, {}, {}), false, false)
     {
     }
 
@@ -338,22 +338,14 @@ namespace MPF { namespace COMPONENT {
     }
 
 
-    void MPFVideoCapture::ReverseTransform(MPFVideoTrack &videoTrack) const {
-        videoTrack.start_frame = frameFilter_->SegmentToOriginalFramePosition(videoTrack.start_frame);
-        videoTrack.stop_frame = frameFilter_->SegmentToOriginalFramePosition(videoTrack.stop_frame);
-
-        std::map<int, MPFImageLocation> newFrameLocations;
-        for (auto &frameLocationPair : videoTrack.frame_locations) {
-            frameTransformer_->ReverseTransform(frameLocationPair.second, frameLocationPair.first);
-
-            int fixedFrameIndex = frameFilter_->SegmentToOriginalFramePosition(frameLocationPair.first);
-            newFrameLocations[fixedFrameIndex] = frameLocationPair.second;
-        }
-
-        videoTrack.frame_locations = std::move(newFrameLocations);
+    void MPFVideoCapture::ReverseTransform(MPFVideoTrack &track) const {
+        ReverseTransformer::ReverseTransform(track, *frameTransformer_, *frameFilter_);
     }
 
 
+    ReverseTransformer MPFVideoCapture::GetReverseTransformer() const {
+        return ReverseTransformer(frameTransformer_, frameFilter_);
+    }
 
     std::vector<cv::Mat> MPFVideoCapture::GetInitializationFramesIfAvailable(int numberOfRequestedFrames) {
         int initFramesAvailable = frameFilter_->GetAvailableInitializationFrameCount();
@@ -384,5 +376,36 @@ namespace MPF { namespace COMPONENT {
         UpdateOriginalFramePosition(initialFramePos);
 
         return initializationFrames;
+    }
+
+
+
+    ReverseTransformer::ReverseTransformer(
+                std::shared_ptr<const IFrameTransformer> frameTransformer,
+                std::shared_ptr<const FrameFilter> frameFilter)
+            : frameTransformer_(std::move(frameTransformer))
+            , frameFilter_(std::move(frameFilter))
+    {
+    }
+
+    void ReverseTransformer::operator()(MPFVideoTrack &track) const {
+        ReverseTransform(track, *frameTransformer_, *frameFilter_);
+    }
+
+    void ReverseTransformer::ReverseTransform(MPFVideoTrack &track,
+                                              const IFrameTransformer &frameTransformer,
+                                              const FrameFilter &frameFilter) {
+        track.start_frame = frameFilter.SegmentToOriginalFramePosition(track.start_frame);
+        track.stop_frame = frameFilter.SegmentToOriginalFramePosition(track.stop_frame);
+
+        std::map<int, MPFImageLocation> newFrameLocations;
+        for (auto &frameLocationPair : track.frame_locations) {
+            frameTransformer.ReverseTransform(frameLocationPair.second, frameLocationPair.first);
+
+            int fixedFrameIndex = frameFilter.SegmentToOriginalFramePosition(frameLocationPair.first);
+            newFrameLocations.emplace(fixedFrameIndex, std::move(frameLocationPair.second));
+        }
+
+        track.frame_locations = std::move(newFrameLocations);
     }
 }}
