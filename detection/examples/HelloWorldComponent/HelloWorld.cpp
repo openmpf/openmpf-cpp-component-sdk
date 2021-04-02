@@ -27,7 +27,6 @@
 #include <map>
 #include <iostream>
 #include <detectionComponentUtils.h>
-#include <log4cxx/xml/domconfigurator.h>
 
 #include "HelloWorld.h"
 
@@ -42,7 +41,6 @@ using namespace MPF::COMPONENT;
         run_directory = ".";
     }
 
-    log4cxx::xml::DOMConfigurator::configure(run_directory + "/HelloWorldComponent/config/Log4cxxConfig.xml");
     hw_logger_ = log4cxx::Logger::getLogger("HelloWorldSample");
     LOG4CXX_INFO(hw_logger_, "Running in directory \"" << run_directory << "\"");
 

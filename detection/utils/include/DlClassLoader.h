@@ -27,9 +27,13 @@
 #ifndef OPENMPF_CPP_COMPONENT_SDK_DLCLASSLOADER_H
 #define OPENMPF_CPP_COMPONENT_SDK_DLCLASSLOADER_H
 
-#include <string>
-#include <memory>
 #include <dlfcn.h>
+
+#include <memory>
+#include <string>
+#include <type_traits>
+#include <utility>
+
 #include <MPFDetectionException.h>
 
 
@@ -46,6 +50,14 @@ namespace MPF { namespace COMPONENT {
     template<>
     struct all_standard_layout<> {
         static const bool value = true;
+    };
+
+
+    class DlError : public MPFDetectionException {
+    public:
+        explicit DlError(const std::string &what)
+            : MPFDetectionException(MPF_DETECTION_NOT_INITIALIZED, what) {
+        }
     };
 
 
@@ -94,7 +106,7 @@ namespace MPF { namespace COMPONENT {
                     const std::string &deleter_func_name,
                     CreatorArgs&&... args) {
             if (lib_handle == nullptr) {
-                throw std::runtime_error("Failed to open \"" + lib_path + "\" due to: " + dlerror());
+                throw DlError("Failed to open \"" + lib_path + "\" due to: " + dlerror());
             }
 
             auto create_instance_fn = LoadFunction<creator_func_t<CreatorArgs...>>(lib_handle, creator_func_name);
@@ -126,7 +138,7 @@ namespace MPF { namespace COMPONENT {
         static TFunc* LoadFunction(void* lib_handle, const std::string &symbol_name) {
             auto result = reinterpret_cast<TFunc*>(dlsym(lib_handle, symbol_name.c_str()));
             if (result == nullptr) {
-                throw std::runtime_error("dlsym failed for " + symbol_name + ": " + dlerror());
+                throw DlError("dlsym failed for " + symbol_name + ": " + dlerror());
             }
             return result;
         }
