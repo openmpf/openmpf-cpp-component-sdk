@@ -51,7 +51,8 @@ namespace MPF { namespace COMPONENT {
             : videoPath_(videoJob.data_uri)
             , cvVideoCapture_(videoJob.data_uri)
             , frameFilter_(GetFrameFilter(enableFrameFiltering, videoJob, cvVideoCapture_))
-            , frameTransformer_(GetFrameTransformer(enableFrameTransformers, videoJob)) {
+            , frameTransformer_(GetFrameTransformer(enableFrameTransformers, videoJob))
+            , seekStrategy_(GetSeekStrategy(videoJob)) {
 
         if (!cvVideoCapture_.isOpened()) {
             throw MPFDetectionException(MPFDetectionError::MPF_COULD_NOT_OPEN_DATAFILE,
@@ -116,6 +117,15 @@ namespace MPF { namespace COMPONENT {
         }
 
         return FrameFilter::CPtr(new IntervalFrameFilter(job, frameCount));
+    }
+
+
+    SeekStrategy::CPtr MPFVideoCapture::GetSeekStrategy(const MPFVideoJob &job) {
+        bool hasConstantFrameRate = DetectionComponentUtils::GetProperty(
+                job.media_properties, "HAS_CONSTANT_FRAME_RATE", false);
+        return hasConstantFrameRate
+            ? SeekStrategy::CPtr(new SetFramePositionSeek)
+            : SeekStrategy::CPtr(new GrabSeek);
     }
 
 

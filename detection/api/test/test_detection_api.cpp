@@ -57,7 +57,12 @@ const char frameFilterTestVideo[] = "test/test_vids/frame_filter_test.mp4";
 const char videoWithFramePositionIssues[] = "test/test_vids/vid-with-set-position-issues.mov";
 
 
-
+bool isSameImage(const cv::Mat &im1, const cv::Mat &im2) {
+    if (im1.size() != im2.size()) {
+        return false;
+    }
+    return std::equal(im1.begin<Pixel>(), im1.end<Pixel>(), im2.begin<Pixel>());
+}
 
 FeedForwardFrameFilter toFeedForwardFilter(const IntervalFrameFilter &filter) {
     int frameCount = filter.GetSegmentFrameCount();
@@ -818,6 +823,29 @@ TEST(FrameFilterTest, VerifyMPfVideoCaptureDoesNotHaveSetFramePositionIssue) {
 }
 
 
+TEST(FrameFilterTest, TestVfrHandling) {
+    int targetFrame = 40;
+    MPFVideoCapture vfrCap({"Test", videoWithFramePositionIssues, targetFrame, 82, {}, {}});
+    MPFVideoCapture cfrCap({"Test", videoWithFramePositionIssues, targetFrame, 82, {},
+                                   {{"HAS_CONSTANT_FRAME_RATE", "true"}}});
+
+    cv::Mat vfrFrame;
+    ASSERT_TRUE(vfrCap.Read(vfrFrame));
+    cv::Mat cfrFrame;
+    ASSERT_TRUE(cfrCap.Read(cfrFrame));
+
+    ASSERT_FALSE(isSameImage(vfrFrame, cfrFrame));
+
+    cv::VideoCapture sequentialCap(videoWithFramePositionIssues);
+    for (int i = 0; i < targetFrame; i++) {
+        sequentialCap.grab();
+    }
+    cv::Mat sequentialFrame;
+    sequentialCap.read(sequentialFrame);
+    ASSERT_TRUE(isSameImage(sequentialFrame, vfrFrame));
+}
+
+
 TEST(FrameFilterTest, CanSetFramePositionOnTSFile) {
     MPFVideoCapture cap("test/test_vids/bbb24p_00_short.ts");
     ASSERT_TRUE(cap.SetFramePosition(7));
@@ -1401,14 +1429,6 @@ TEST(AffineFrameTransformerTest, RotateFullFrame) {
     ASSERT_EQ(image.rows, il.height);
     ASSERT_EQ(0, il.detection_properties.count("HORIZONTAL_FLIP"));
     ASSERT_DOUBLE_EQ(frame_rotation, std::stod(il.detection_properties.at("ROTATION")));
-}
-
-
-bool isSameImage(const cv::Mat &im1, const cv::Mat &im2) {
-    if (im1.size() != im2.size()) {
-        return false;
-    }
-    return std::equal(im1.begin<Pixel>(), im1.end<Pixel>(), im2.begin<Pixel>());
 }
 
 

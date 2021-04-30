@@ -51,16 +51,6 @@ namespace MPF { namespace COMPONENT {
     };
 
 
-
-    class SetFramePositionSeek : public SeekStrategy {
-    public:
-        int ChangePosition(cv::VideoCapture &cap, int currentPosition, int requestedPosition) const override;
-
-        SeekStrategy::CPtr fallback() const override;
-    };
-
-
-
     class SequentialSeek : public SeekStrategy {
     public:
         int ChangePosition(cv::VideoCapture &cap, int currentPosition, int requestedPosition) const final;
@@ -88,6 +78,24 @@ namespace MPF { namespace COMPONENT {
         bool Advance(cv::VideoCapture &cap) const override;
     };
 
+
+    class SetFramePositionSeek : public SeekStrategy {
+    public:
+        int ChangePosition(cv::VideoCapture &cap, int currentPosition, int requestedPosition) const override;
+
+        SeekStrategy::CPtr fallback() const override;
+
+    private:
+        GrabSeek grabSeek_;
+
+        // When setting frame position, OpenCV sets the frame position to 16 frames before the
+        // requested frame in order to locate the closest key frame. Once OpenCV locates the key
+        // frame, it uses cv::VideoCapture::grab to advance cv::VideoCapture's position.
+        // This means that when you need to advance 16 or fewer frames, it is more efficient to
+        // just use cv::VideoCapture::grab.
+        // https://github.com/opencv/opencv/blob/4.5.0/modules/videoio/src/cap_ffmpeg_impl.hpp#L1459
+        static constexpr int SET_POS_MIN_FRAMES = 16;
+    };
 }}
 
 
