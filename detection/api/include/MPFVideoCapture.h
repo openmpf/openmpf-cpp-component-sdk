@@ -131,14 +131,14 @@ namespace MPF { namespace COMPONENT {
 
         std::shared_ptr<const IFrameTransformer> frameTransformer_;
 
+        SeekStrategy::CPtr seekStrategy_;
+
         /**
          * MPFVideoCapture keeps track of the frame position instead of depending on
          * cv::VideoCapture::get(cv::VideoCaptureProperties::CAP_PROP_POS_FRAMES)
          * because for certain videos it does not correctly report the frame position.
          */
         int framePosition_ = 0;
-
-        SeekStrategy::CPtr seekStrategy_ = SeekStrategy::CPtr(new SetFramePositionSeek);
 
 
         double GetPropertyInternal(int propId) const;
@@ -168,6 +168,7 @@ namespace MPF { namespace COMPONENT {
         static FrameFilter::CPtr GetFrameFilter(bool frameFilteringEnabled, const MPFVideoJob &job,
                                                 const cv::VideoCapture &cvVideoCapture);
 
+        static SeekStrategy::CPtr GetSeekStrategy(const MPFVideoJob &job);
     };
 
 

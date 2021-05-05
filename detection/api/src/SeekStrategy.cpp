@@ -31,10 +31,16 @@
 namespace MPF { namespace COMPONENT {
 
     int SetFramePositionSeek::ChangePosition(cv::VideoCapture &cap, int currentPosition, int requestedPosition) const {
-        if (cap.set(cv::VideoCaptureProperties::CAP_PROP_POS_FRAMES, requestedPosition)) {
+        int frameDiff = requestedPosition - currentPosition;
+        if (frameDiff > 0 && frameDiff <= SET_POS_MIN_FRAMES) {
+            return grabSeek_.ChangePosition(cap, currentPosition, requestedPosition);
+        }
+        else if (cap.set(cv::VideoCaptureProperties::CAP_PROP_POS_FRAMES, requestedPosition)) {
             return requestedPosition;
         }
-        return currentPosition;
+        else {
+            return currentPosition;
+        }
     }
 
     SeekStrategy::CPtr SetFramePositionSeek::fallback() const {
