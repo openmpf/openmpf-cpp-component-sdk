@@ -55,7 +55,7 @@ namespace MPF { namespace COMPONENT {
             , seekStrategy_(GetSeekStrategy(videoJob)) {
 
         if (!cvVideoCapture_.isOpened()) {
-            throw MPFDetectionException(MPFDetectionError::MPF_COULD_NOT_OPEN_DATAFILE,
+            throw MPFDetectionException(MPFDetectionError::MPF_COULD_NOT_READ_MEDIA,
                                         "Failed to open \"" + videoJob.data_uri + "\".");
         }
         SetFramePosition(0);
