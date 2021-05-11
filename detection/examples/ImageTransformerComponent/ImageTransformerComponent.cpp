@@ -77,21 +77,8 @@ std::vector<MPFImageLocation> ImageTransformerComponent::GetDetections(const MPF
     cv::imshow("Original", original);
     cv::waitKey(500);
 
-    if (original.empty()) {
-        std::cout << "[" << job.job_name << "] Could not open original image and will not return detections" << std::endl;
-        throw MPFDetectionException(MPF_IMAGE_READ_ERROR,
-                                    "Could not open original image and will not return detections");
-    }
-
     MPFImageReader image_reader(job);
     cv::Mat image_data(image_reader.GetImage());
-
-    if (image_data.empty()) {
-        std::cout << "[" << job.job_name << "] Could not open transformed image and will not return detections" << std::endl;
-        throw MPFDetectionException(MPF_IMAGE_READ_ERROR,
-                                    "Could not open transformed image and will not return detections");
-    }
-
     std::cout << "transformed image rows = " << image_data.rows << std::endl;
     std::cout << "transformed image cols = " << image_data.cols << std::endl;
     std::cout << std::endl << std::endl;
