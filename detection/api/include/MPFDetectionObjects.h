@@ -64,7 +64,10 @@ namespace MPF { namespace COMPONENT {
         MPF_PROPERTY_IS_NOT_FLOAT,
         MPF_INVALID_ROTATION,
         MPF_MEMORY_ALLOCATION_FAILED,
-        MPF_GPU_ERROR
+        MPF_GPU_ERROR,
+        MPF_NETWORK_ERROR,
+        MPF_COULD_NOT_OPEN_MEDIA,
+        MPF_COULD_NOT_READ_MEDIA
     };
 
     struct MPFImageLocation {
