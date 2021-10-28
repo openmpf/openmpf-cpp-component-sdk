@@ -26,6 +26,7 @@
 
 #include "frame_transformers/FrameTransformerFactory.h"
 
+#include <iostream>
 #include <map>
 #include <stdexcept>
 #include <string>

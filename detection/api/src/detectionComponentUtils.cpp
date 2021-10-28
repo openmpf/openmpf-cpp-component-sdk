@@ -29,6 +29,8 @@
 #include <cmath>
 #include <exception>
 
+#include <libgen.h>
+
 #include <opencv2/core.hpp>
 
 #include "MPFInvalidPropertyException.h"
@@ -134,6 +136,31 @@ namespace DetectionComponentUtils {
             double a2_dist = std::min(a2, std::abs(360 - a2));
             return (a1_dist + a2_dist) < epsilon;
         }
+    }
+
+    std::string GetAppDir(const char * const argv0) {
+        std::unique_ptr<char, decltype(&std::free)> this_exe(canonicalize_file_name("/proc/self/exe"), std::free);
+        if (this_exe != nullptr) {
+            // The dirname documentation says the returned pointer must not be freed.
+            std::string app_dir = dirname(this_exe.get());
+            if (!app_dir.empty()) {
+                return app_dir;
+            }
+        }
+
+        std::unique_ptr<char[]> argv0_copy(new char[strlen(argv0) + 1]);
+        std::strcpy(argv0_copy.get(), argv0);
+        std::string app_dir = dirname(argv0_copy.get());
+        if (!app_dir.empty()) {
+            return app_dir;
+        }
+
+        std::unique_ptr<char, decltype(&std::free)> cwd(get_current_dir_name(), std::free);
+        if (cwd != nullptr) {
+            return cwd.get();
+        }
+
+        return ".";
     }
 }
  

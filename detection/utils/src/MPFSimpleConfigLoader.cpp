@@ -24,83 +24,46 @@
  * limitations under the License.                                             *
  ******************************************************************************/
 
-
-#include <QtCore/QByteArray>
-#include <QtCore/QFile>
-#include <QtCore/QIODevice>
-#include <QtCore/QStringList>
+#include <fstream>
+#include <sstream>
 
 #include "MPFSimpleConfigLoader.h"
 
 
 namespace MPF { namespace COMPONENT {
-
-    int LoadConfig(const std::string &config_path, QHash<QString, QString> &parameters) {
-        QFile file(QString::fromStdString(config_path));
-
-        parameters.clear();
-
-        if (!file.open(QIODevice::ReadOnly | QIODevice::Text)) {
-            printf("ERROR: Config file not loaded.\n");
-            return (-1);
+    namespace {
+        std::string trim(const std::string &input) {
+            std::istringstream ss(input);
+            std::string result;
+            ss >> result;
+            return result;
         }
 
-        QByteArray line = file.readLine();
-        while (line.count() > 0) {
-            QStringList list = QString(line).left(line.indexOf('#')).split(": ");
-            if (list.count() == 2) {
-                parameters.insert(list[0].simplified(), list[1].simplified());
+        std::string stripComments(const std::string &input) {
+            auto commentPos = input.find_first_of('#');
+            return input.substr(0, commentPos);
+        }
+    }
+
+
+    std::map<std::string, std::string> LoadConfig(const std::string &config_path) {
+        std::map<std::string, std::string> config_map;
+        std::string line;
+        std::ifstream file(config_path);
+        while (std::getline(file, line)) {
+            line = stripComments(line);
+            std::istringstream ss(line);
+            std::string key;
+            if (!std::getline(ss, key, ':')) {
+                continue;
+            };
+
+            std::string val;
+            if (!std::getline(ss, val, ':')) {
+                continue;
             }
-            line = file.readLine();
+            config_map.emplace(trim(key), trim(val));
         }
-        file.close();
-        return (0);
-    };
-
-
-//    namespace {
-//        std::string trim(const std::string &input) {
-//            std::istringstream ss(input);
-//            std::string result;
-//            ss >> result;
-//            return result;
-//        }
-//
-//        std::string stripComments(const std::string &input) {
-//            auto commentPos = input.find_first_of('#');
-//            return input.substr(0, commentPos);
-//        }
-//    }
-
-
-//    int LoadConfig(const std::string &config_path, std::map<std::string, std::string> &parameters) {
-//        std::ifstream file(config_path);
-//        parameters.clear();
-//
-//        if (!file.is_open()) {
-//            printf("ERROR: Config file not loaded.\n");
-//            return -1;
-//
-//        }
-//
-//        std::string line;
-//        while (std::getline(file, line)) {
-//            line = stripComments(line);
-//            std::istringstream ss(line);
-//            std::string key;
-//            if (!std::getline(ss, key, ':')) {
-//                continue;
-//            };
-//            key = trim(key);
-//
-//            std::string val;
-//            if (!std::getline(ss, val, ':')) {
-//                continue;
-//            }
-//            val = trim(val);
-//
-//            parameters[key] = val;
-//        }
-//        return 0;
-//    }
+        return config_map;
+    }
 }}

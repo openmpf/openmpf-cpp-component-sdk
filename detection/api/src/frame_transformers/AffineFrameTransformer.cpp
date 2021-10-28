@@ -44,18 +44,16 @@ namespace MPF { namespace COMPONENT {
         cv::Mat_<double> GetAllCorners(const std::vector<MPFRotatedRect> &regions) {
             // Matrix containing each region's 4 corners. First row is x coordinate and second row is y coordinate.
             cv::Mat_<double> corners(2, 4 * regions.size());
-            auto xIter = corners.begin();
-            auto yIter = corners.row(1).begin();
-
+            int cornerIdx = 0;
             for (const auto& region : regions) {
                 for (const auto& corner : region.GetCorners()) {
-                    *(xIter++) = corner.x;
-                    *(yIter++) = corner.y;
+                    corners(0, cornerIdx) = corner.x;
+                    corners(1, cornerIdx) = corner.y;
+                    cornerIdx++;
                 }
             }
             return corners;
         }
-
 
         cv::Rect2d GetMappedBoundingRect(
                 const std::vector<MPFRotatedRect> &regions,

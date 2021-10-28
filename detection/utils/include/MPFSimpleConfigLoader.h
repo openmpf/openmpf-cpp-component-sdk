@@ -28,18 +28,14 @@
 #ifndef OPENMPF_CPP_COMPONENT_SDK_MPFSIMPLECONFIGLOADER_H
 #define OPENMPF_CPP_COMPONENT_SDK_MPFSIMPLECONFIGLOADER_H
 
-
-#include <QtCore/QHash>
-#include <QtCore/QString>
-
 #include <string>
+#include <map>
 
 
 namespace MPF { namespace COMPONENT {
 
-//    int LoadConfig(const std::string &config_path, std::map<std::string, std::string> &parameters);
+    std::map<std::string, std::string> LoadConfig(const std::string &config_path);
 
-    int LoadConfig(const std::string &config_path, QHash<QString, QString> &parameters);
 }}
 
 #endif //OPENMPF_CPP_COMPONENT_SDK_MPFSIMPLECONFIGLOADER_H
