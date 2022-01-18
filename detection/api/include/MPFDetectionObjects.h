@@ -44,29 +44,22 @@ namespace MPF { namespace COMPONENT {
         MPF_DETECTION_SUCCESS = 0,
         MPF_OTHER_DETECTION_ERROR_TYPE,  // CHECK: could we use any other?
         MPF_DETECTION_NOT_INITIALIZED,
-        MPF_UNSUPPORTED_DATA_TYPE,  // KEEP
-        MPF_INVALID_DATAFILE_URI,  // DELETE
+        MPF_UNSUPPORTED_DATA_TYPE,
         MPF_COULD_NOT_OPEN_DATAFILE,  // KEEP, but check that it is not same as media
         MPF_COULD_NOT_READ_DATAFILE,  // KEEP, but check that it is not same as media
         MPF_FILE_WRITE_ERROR,  // CHECK: what is this being used for?
-        MPF_IMAGE_READ_ERROR, // DELETE
         MPF_BAD_FRAME_SIZE,  // KEEP: possibly replace with COULD_NOT_READ_MEDIA
         MPF_BOUNDING_BOX_SIZE_ERROR, // CHANGE: MPF_BAD_FRAME_SIZE
-        MPF_INVALID_FRAME_INTERVAL,  // DELETE: unused
-        MPF_INVALID_START_FRAME,  // DELETE: unused
-        MPF_INVALID_STOP_FRAME,  // DELETE: unused
-        MPF_DETECTION_FAILED,  // KEEP
+        MPF_DETECTION_FAILED,
         MPF_DETECTION_TRACKING_FAILED,  // CHECK
-        MPF_INVALID_PROPERTY,  // KEEP
-        MPF_MISSING_PROPERTY,  // KEEP
+        MPF_INVALID_PROPERTY,
+        MPF_MISSING_PROPERTY,
         MPF_PROPERTY_IS_NOT_INT,  // CHANGE: MPF_INVALID_PROPERTY
         MPF_PROPERTY_IS_NOT_FLOAT,  // CHANGE: MPF_INVALID_PROPERTY
-        MPF_INVALID_ROTATION,  // DELETE: unused
-        MPF_MEMORY_ALLOCATION_FAILED, // DELETE: unused
-        MPF_GPU_ERROR,  // KEEP
-        MPF_NETWORK_ERROR,  // KEEP
-        MPF_COULD_NOT_OPEN_MEDIA,  // KEEP
-        MPF_COULD_NOT_READ_MEDIA  // KEEP
+        MPF_GPU_ERROR,
+        MPF_NETWORK_ERROR,
+        MPF_COULD_NOT_OPEN_MEDIA,
+        MPF_COULD_NOT_READ_MEDIA
     };
 
     struct MPFImageLocation {

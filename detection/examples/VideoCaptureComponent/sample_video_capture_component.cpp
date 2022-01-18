@@ -56,7 +56,7 @@ int main(int argc, char* argv[]) {
 
     if ((start_frame < 0) || (stop_frame <= start_frame)) {
         std::cerr << "Start frame must be greater than or equal 0, and stop_frame must be greater than start_frame" << std::endl;
-        return MPF_INVALID_STOP_FRAME;
+        return EXIT_FAILURE;
     }
 
     // Requests for frame transformations are passed to the component
