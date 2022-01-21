@@ -42,20 +42,16 @@ namespace MPF { namespace COMPONENT {
 
     enum MPFDetectionError {
         MPF_DETECTION_SUCCESS = 0,
-        MPF_OTHER_DETECTION_ERROR_TYPE,  // CHECK: could we use any other?
+        MPF_OTHER_DETECTION_ERROR_TYPE,
         MPF_DETECTION_NOT_INITIALIZED,
         MPF_UNSUPPORTED_DATA_TYPE,
-        MPF_COULD_NOT_OPEN_DATAFILE,  // KEEP, but check that it is not same as media
-        MPF_COULD_NOT_READ_DATAFILE,  // KEEP, but check that it is not same as media
-        MPF_FILE_WRITE_ERROR,  // CHECK: what is this being used for?
-        MPF_BAD_FRAME_SIZE,  // KEEP: possibly replace with COULD_NOT_READ_MEDIA
-        MPF_BOUNDING_BOX_SIZE_ERROR, // CHANGE: MPF_BAD_FRAME_SIZE
+        MPF_COULD_NOT_OPEN_DATAFILE,
+        MPF_COULD_NOT_READ_DATAFILE,
+        MPF_FILE_WRITE_ERROR,
+        MPF_BAD_FRAME_SIZE,
         MPF_DETECTION_FAILED,
-        MPF_DETECTION_TRACKING_FAILED,  // CHECK
         MPF_INVALID_PROPERTY,
         MPF_MISSING_PROPERTY,
-        MPF_PROPERTY_IS_NOT_INT,  // CHANGE: MPF_INVALID_PROPERTY
-        MPF_PROPERTY_IS_NOT_FLOAT,  // CHANGE: MPF_INVALID_PROPERTY
         MPF_GPU_ERROR,
         MPF_NETWORK_ERROR,
         MPF_COULD_NOT_OPEN_MEDIA,
