@@ -95,20 +95,6 @@ std::vector<MPFVideoTrack> VideoCaptureComponent::GetDetections(const MPFVideoJo
     int total_frames = cap.GetFrameCount();
     std::cout << "Total video frames: " << total_frames << std::endl;
 
-    // Make sure the start and stop frames defined for this segment is
-    // not beyond the end of the video.
-    if (job.start_frame >= total_frames) {
-        std::cout << "Requested start_frame is greater than the number of frames in the video" << std::endl;
-        throw MPFDetectionException(MPF_INVALID_START_FRAME,
-                "Requested start_frame is greater than the number of frames in the video");
-    }
-
-    if (job.stop_frame >= total_frames) {
-        std::cout << "Requested stop_frame is greater than the number of frames in the video" << std::endl;
-        throw MPFDetectionException(MPF_INVALID_STOP_FRAME,
-                                    "Requested stop_frame is greater than the number of frames in the video");
-    }
-
     double fps = cap.GetFrameRate();
     std::cout << "Video frame rate: " << fps << std::endl;
 
