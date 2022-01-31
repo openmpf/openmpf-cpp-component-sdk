@@ -26,6 +26,7 @@
 
 #include <fstream>
 #include <sstream>
+#include <stdexcept>
 
 #include "MPFSimpleConfigLoader.h"
 
@@ -51,18 +52,23 @@ namespace MPF { namespace COMPONENT {
         std::string line;
         std::ifstream file(config_path);
         while (std::getline(file, line)) {
-            line = stripComments(line);
-            std::istringstream ss(line);
+            std::istringstream ss(stripComments(line));
             std::string key;
             if (!std::getline(ss, key, ':')) {
                 continue;
             };
 
+            auto trimmed_key = trim(key);
+            if (trimmed_key.empty()) {
+                throw std::runtime_error(
+                        "\"" + config_path + "\" contained a line with a blank key.");
+            }
+
             std::string val;
             if (!std::getline(ss, val, ':')) {
                 continue;
             }
-            config_map.emplace(trim(key), trim(val));
+            config_map.emplace(std::move(trimmed_key), trim(val));
         }
         return config_map;
     }
