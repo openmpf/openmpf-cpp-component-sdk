@@ -26,6 +26,7 @@
 
 #include "ModelsIniParser.h"
 
+#include <filesystem>
 #include <fstream>
 
 #include <boost/algorithm/string/join.hpp>
@@ -33,7 +34,7 @@
 #include <boost/property_tree/ini_parser.hpp>
 
 
-namespace MPF { namespace COMPONENT { namespace ModelsIniHelpers {
+namespace MPF::COMPONENT::ModelsIniHelpers {
 
     std::string GetFullPath(const std::string &file_name, const std::string& plugin_models_dir,
                             const std::string &common_models_dir) {
@@ -57,29 +58,33 @@ namespace MPF { namespace COMPONENT { namespace ModelsIniHelpers {
                     "Failed to load model because \"" + file_name +  "\" expanded to the empty string.");
         }
 
-        std::vector<std::string> possible_locations;
-        if (expanded_file_name.front() == '/') {
-            possible_locations.push_back(expanded_file_name);
+        namespace fs = std::filesystem;
+        fs::path expanded_path = expanded_file_name;
+
+        std::vector<fs::path> possible_locations;
+        if (expanded_path.is_absolute()) {
+            possible_locations.push_back(expanded_path);
         }
         else {
-            possible_locations.push_back(common_models_dir + '/' + expanded_file_name);
-            possible_locations.push_back(plugin_models_dir + '/' + expanded_file_name);
+            possible_locations.push_back(common_models_dir / expanded_path);
+            possible_locations.push_back(plugin_models_dir / expanded_path);
         }
 
 
         for (const auto& possible_location : possible_locations) {
-            if (std::ifstream(possible_location).good()) {
+            if (fs::exists(possible_location)) {
                 return possible_location;
             }
         }
 
         std::string error_msg = "Failed to load model because a required file was not present. ";
-        if (expanded_file_name.front() == '/') {
-            error_msg += "Expected a file at \"" + expanded_file_name + "\" to exist.";
+        if (expanded_path.is_absolute()) {
+            error_msg += "Expected a file at \"" + expanded_path.string() + "\" to exist.";
         }
         else {
-            error_msg += "Expected a file to exist at either \"" + possible_locations.at(0)
-                         + "\" or \"" + possible_locations.at(1) + "\".";
+            error_msg += "Expected a file to exist at either \""
+                    + possible_locations.at(0).string()
+                      + "\" or \"" + possible_locations.at(1).string() + "\".";
         }
 
         throw MPFDetectionException(MPF_COULD_NOT_OPEN_DATAFILE, error_msg);
@@ -132,14 +137,14 @@ namespace MPF { namespace COMPONENT { namespace ModelsIniHelpers {
         }
     }
 
-    std::pair<bool, std::string> IniHelper::GetOptionalValue(const std::string &key) const {
+    std::optional<std::string> IniHelper::GetOptionalValue(const std::string &key) const {
         auto iter = model_ini_fields_.find(key);
         if (iter == model_ini_fields_.end()) {
-            return {false, ""};
+            return {};
         }
         else {
-            return {true, iter->second};
+            return iter->second;
         }
     }
-}}}
+}
 

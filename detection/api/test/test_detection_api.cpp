@@ -599,10 +599,10 @@ void assertFrameRead(MPFAsyncVideoCapture &cap, int expectedActualFrameNumber,
     auto frame = cap.Read();
     ASSERT_TRUE(bool(frame));
 
-    ASSERT_EQ(GetFrameNumber(frame.data), expectedActualFrameNumber);
-    ASSERT_EQ(frame.index, expectedSegmentFrameNumber);
-    ASSERT_EQ(frame.data.rows, expectedSize.height);
-    ASSERT_EQ(frame.data.cols, expectedSize.width);
+    ASSERT_EQ(GetFrameNumber(frame->data), expectedActualFrameNumber);
+    ASSERT_EQ(frame->index, expectedSegmentFrameNumber);
+    ASSERT_EQ(frame->data.rows, expectedSize.height);
+    ASSERT_EQ(frame->data.cols, expectedSize.width);
 }
 
 
@@ -701,7 +701,6 @@ TEST(FrameFilterTest, AsyncVideoCaptureCanHandleFeedForwardTrack) {
 
     auto invalidFrame = cap.Read();
     ASSERT_FALSE(bool(invalidFrame));
-    ASSERT_TRUE(invalidFrame.data.empty());
 
     MPFVideoTrack track(0, 6);
     track.frame_locations = {
@@ -1342,7 +1341,7 @@ TEST(AffineFrameTransformerTest, TestFeedForwardSupersetRegionWithAsyncVideoCapt
         MPFAsyncVideoCapture cap(job);
         auto frame = cap.Read();
 
-        int actualNumBlue = std::count(frame.data.begin<Pixel>(), frame.data.end<Pixel>(),
+        int actualNumBlue = std::count(frame->data.begin<Pixel>(), frame->data.end<Pixel>(),
                                        Pixel(255, 0, 0));
 
         // Color of pixels along edges gets blended with nearby pixels during interpolation.
@@ -1685,3 +1684,4 @@ TEST(SearchRegion, TestSearchRegion) {
                 RegionEdge::Default()
             });
 }
+

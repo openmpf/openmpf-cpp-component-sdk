@@ -28,7 +28,7 @@
 cmake_minimum_required(VERSION 3.6)
 project(openmpf-cpp-component-sdk)
 
-set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_CXX_STANDARD 17)
 
 # Configure install location for SDK libs
 if(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT) # prefix path not provided on command line
