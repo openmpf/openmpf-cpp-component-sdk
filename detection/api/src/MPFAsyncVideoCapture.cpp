@@ -44,7 +44,8 @@ namespace MPF::COMPONENT {
 
     namespace {
 
-        void frameReader(MPFVideoCapture videoCapture, BlockingQueue<std::optional<MPFFrame>> &queue) {
+        void frameReader(MPFVideoCapture videoCapture,
+                         BlockingQueue<std::optional<MPFFrame>> &queue) {
             try {
                 while (true) {
                     int frameIndex = videoCapture.GetCurrentFramePosition();
@@ -53,7 +54,7 @@ namespace MPF::COMPONENT {
                         queue.emplace(MPFFrame(frameIndex, std::move(frameData)));
                     }
                     else {
-                        // Add invalid frame to indicate that the end of the video has been reached.
+                        // Add empty optional to indicate that the end of the video has been reached.
                         queue.push(std::nullopt);
                         queue.complete_adding();
                         return;
@@ -64,11 +65,9 @@ namespace MPF::COMPONENT {
                 // Other side requested early exit.
             }
             catch (...) {
-                // Make sure other side doesn't get stuck if an exception is thrown.
                 try {
-                    // If you try to read past the end of a video with cv::VideoCapture,
-                    // it stops incrementing the frame count and keeps reporting
-                    // (last_frame_index + 1) or equivalently the total number of frames.
+                    // Add empty optional to make sure other side doesn't get stuck if an exception
+                    // is thrown.
                     queue.push(std::nullopt);
                     queue.complete_adding();
                 }
@@ -129,10 +128,7 @@ namespace MPF::COMPONENT {
         catch (QueueHaltedException&) {
             // If frameReader ended with an exception it will be re-thrown here.
             doneReadingFuture_.get();
-            // If you try to read past the end of a video with cv::VideoCapture,
-            // it stops incrementing the frame count and keeps reporting
-            // (last_frame_index + 1) or equivalently the total number of frames.
-            return {};
+            return std::nullopt;
         }
     }
 
