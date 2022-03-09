@@ -60,7 +60,7 @@ namespace MPF { namespace COMPONENT {
         explicit MPFVideoCapture(const MPFVideoJob &videoJob, bool enableFrameTransformers=true,
                                  bool enableFrameFiltering=true);
 
-        explicit MPFVideoCapture(std::string videoPath);
+        explicit MPFVideoCapture(const std::string videoPath);
 
 
         bool Read(cv::Mat &frame);
@@ -170,7 +170,7 @@ namespace MPF { namespace COMPONENT {
 
         static SeekStrategy::CPtr GetSeekStrategy(const MPFVideoJob &job);
 
-        static cv::VideoCapture GetCvVideoCapture(std::string videoPath);
+        static cv::VideoCapture GetCvVideoCapture(const std::string videoPath);
     };
 
 
