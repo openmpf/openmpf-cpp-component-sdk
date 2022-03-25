@@ -61,13 +61,13 @@ namespace MPF { namespace COMPONENT {
     }
 
 
-    MPFVideoCapture::MPFVideoCapture(const std::string videoPath)
+    MPFVideoCapture::MPFVideoCapture(std::string videoPath)
         : MPFVideoCapture(MPFVideoJob("", std::move(videoPath), 0, -1, {}, {}), false, false)
     {
     }
 
 
-    cv::VideoCapture MPFVideoCapture::GetCvVideoCapture(const std::string videoPath) {
+    cv::VideoCapture MPFVideoCapture::GetCvVideoCapture(const std::string &videoPath) {
         cv::VideoCapture videoCapture(videoPath);
         videoCapture.set(cv::CAP_PROP_ORIENTATION_AUTO, 0);
         return videoCapture;
