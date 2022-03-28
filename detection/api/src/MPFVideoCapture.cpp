@@ -24,7 +24,6 @@
  * limitations under the License.                                             *
  ******************************************************************************/
 
-#include <algorithm>
 #include <iostream>
 #include <map>
 #include <stdexcept>
@@ -49,7 +48,7 @@ namespace MPF { namespace COMPONENT {
     MPFVideoCapture::MPFVideoCapture(const MPFVideoJob &videoJob, bool enableFrameTransformers,
                                      bool enableFrameFiltering)
             : videoPath_(videoJob.data_uri)
-            , cvVideoCapture_(videoJob.data_uri)
+            , cvVideoCapture_(GetCvVideoCapture(videoJob.data_uri))
             , frameFilter_(GetFrameFilter(enableFrameFiltering, videoJob, cvVideoCapture_))
             , frameTransformer_(GetFrameTransformer(enableFrameTransformers, videoJob))
             , seekStrategy_(GetSeekStrategy(videoJob)) {
@@ -65,6 +64,13 @@ namespace MPF { namespace COMPONENT {
     MPFVideoCapture::MPFVideoCapture(std::string videoPath)
         : MPFVideoCapture(MPFVideoJob("", std::move(videoPath), 0, -1, {}, {}), false, false)
     {
+    }
+
+
+    cv::VideoCapture MPFVideoCapture::GetCvVideoCapture(const std::string &videoPath) {
+        cv::VideoCapture videoCapture(videoPath);
+        videoCapture.set(cv::CAP_PROP_ORIENTATION_AUTO, 0);
+        return videoCapture;
     }
 
 
