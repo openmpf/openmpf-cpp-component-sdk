@@ -169,6 +169,8 @@ namespace MPF { namespace COMPONENT {
                                                 const cv::VideoCapture &cvVideoCapture);
 
         static SeekStrategy::CPtr GetSeekStrategy(const MPFVideoJob &job);
+
+        static cv::VideoCapture GetCvVideoCapture(const std::string &videoPath);
     };
 
 

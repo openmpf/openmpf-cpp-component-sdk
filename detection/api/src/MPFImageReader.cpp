@@ -37,6 +37,7 @@ namespace MPF { namespace COMPONENT {
 
     MPFImageReader::MPFImageReader(const MPFImageJob &job) {
         cv::VideoCapture video_cap(job.data_uri);
+        video_cap.set(cv::CAP_PROP_ORIENTATION_AUTO, 0);
         if (!video_cap.isOpened()) {
             throw MPFDetectionException(MPFDetectionError::MPF_COULD_NOT_OPEN_MEDIA,
                                         "Failed to open \"" + job.data_uri + "\".");
