@@ -34,7 +34,7 @@
 using DetectionComponentUtils::GetProperty;
 
 
-namespace MPF { namespace COMPONENT {
+namespace MPF::COMPONENT {
 
     MPFFrame::MPFFrame(int index, cv::Mat data)
             : index(index)
@@ -42,29 +42,20 @@ namespace MPF { namespace COMPONENT {
 
     }
 
-    bool MPFFrame::isValid() const {
-        return index >= 0 && !data.empty();
-    }
-
-    MPFFrame::operator bool() const {
-        return isValid();
-    }
-
-
     namespace {
 
-        void frameReader(MPFVideoCapture videoCapture, BlockingQueue<MPFFrame> &queue) {
+        void frameReader(MPFVideoCapture videoCapture,
+                         BlockingQueue<std::optional<MPFFrame>> &queue) {
             try {
                 while (true) {
-                    MPFFrame frame(videoCapture.GetCurrentFramePosition());
-                    bool wasRead = videoCapture.Read(frame.data);
-                    if (wasRead && frame) {
-                        queue.push(std::move(frame));
+                    int frameIndex = videoCapture.GetCurrentFramePosition();
+                    cv::Mat frameData;
+                    if (videoCapture.Read(frameData)) {
+                        queue.emplace(MPFFrame(frameIndex, std::move(frameData)));
                     }
                     else {
-                        // Add invalid frame to indicate that the end of the video has been reached.
-                        frame.data.release();
-                        queue.push(std::move(frame));
+                        // Add empty optional to indicate that the end of the video has been reached.
+                        queue.push(std::nullopt);
                         queue.complete_adding();
                         return;
                     }
@@ -74,12 +65,10 @@ namespace MPF { namespace COMPONENT {
                 // Other side requested early exit.
             }
             catch (...) {
-                // Make sure other side doesn't get stuck if an exception is thrown.
                 try {
-                    // If you try to read past the end of a video with cv::VideoCapture,
-                    // it stops incrementing the frame count and keeps reporting
-                    // (last_frame_index + 1) or equivalently the total number of frames.
-                    queue.emplace(videoCapture.GetFrameCount());
+                    // Add empty optional to make sure other side doesn't get stuck if an exception
+                    // is thrown.
+                    queue.push(std::nullopt);
                     queue.complete_adding();
                 }
                 catch (const QueueHaltedException&) {
@@ -127,7 +116,7 @@ namespace MPF { namespace COMPONENT {
     }
 
 
-    MPFFrame MPFAsyncVideoCapture::Read() {
+    std::optional<MPFFrame> MPFAsyncVideoCapture::Read() {
         try {
             auto frame = frameQueue_.pop();
             if (!frame) {
@@ -139,10 +128,7 @@ namespace MPF { namespace COMPONENT {
         catch (QueueHaltedException&) {
             // If frameReader ended with an exception it will be re-thrown here.
             doneReadingFuture_.get();
-            // If you try to read past the end of a video with cv::VideoCapture,
-            // it stops incrementing the frame count and keeps reporting
-            // (last_frame_index + 1) or equivalently the total number of frames.
-            return MPFFrame(frameCount_);
+            return std::nullopt;
         }
     }
 
@@ -170,4 +156,4 @@ namespace MPF { namespace COMPONENT {
     cv::Size MPFAsyncVideoCapture::GetOriginalFrameSize() const {
         return originalFrameSize_;
     }
-}}
+}

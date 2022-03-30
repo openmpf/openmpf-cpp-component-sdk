@@ -95,6 +95,8 @@ namespace DetectionComponentUtils {
     double NormalizeAngle(double angle);
 
     bool RotationAnglesEqual(double a1, double a2, double epsilon = 0.1);
+
+    std::string GetAppDir(const char * argv0);
 }
 
 

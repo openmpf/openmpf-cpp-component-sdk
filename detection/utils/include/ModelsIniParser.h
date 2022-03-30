@@ -29,6 +29,7 @@
 #define OPENMPF_CPP_COMPONENT_SDK_MODELSINIPARSER_H
 
 #include <memory>
+#include <optional>
 #include <string>
 #include <unordered_map>
 #include <utility>
@@ -41,7 +42,7 @@
 #include "Utils.h"
 
 
-namespace MPF { namespace COMPONENT {
+namespace MPF::COMPONENT {
 
 
     namespace ModelsIniHelpers {
@@ -56,7 +57,7 @@ namespace MPF { namespace COMPONENT {
         public:
             IniHelper(const std::string &file_path, const std::string &model_name);
             std::string GetValue(const std::string &key) const;
-            std::pair<bool, std::string> GetOptionalValue(const std::string &key) const;
+            std::optional<std::string> GetOptionalValue(const std::string &key) const;
 
         private:
             std::string model_name_;
@@ -103,10 +104,10 @@ namespace MPF { namespace COMPONENT {
                     const std::string &common_models_dir) override {
 
                 if (is_optional_) {
-                    const auto& pair = helper.GetOptionalValue(key_name_);
-                    bool value_was_in_ini_file = pair.first;
-                    if (value_was_in_ini_file) {
-                        model_info.*field_reference_ = ConvertValue(pair.second, plugin_dir, common_models_dir);
+                    const auto ini_value = helper.GetOptionalValue(key_name_);
+                    if (ini_value) {
+                        model_info.*field_reference_
+                            = ConvertValue(*ini_value, plugin_dir, common_models_dir);
                         return;
                     }
                     // This field was optional and it was not found in the ini file.
@@ -254,10 +255,7 @@ namespace MPF { namespace COMPONENT {
 
         std::vector<base_field_ptr_t> fields_;
     };
-
-
-
-}}
+}
 
 
 

@@ -87,7 +87,7 @@ namespace MPF { namespace COMPONENT {
     private:
         using instance_ptr_t = std::unique_ptr<DlClass, void(*)(DlClass*)>;
 
-        std::unique_ptr<void, decltype(&dlclose)> lib_handle_;
+        std::unique_ptr<void, int(*)(void*)> lib_handle_;
 
         instance_ptr_t instance_;
 

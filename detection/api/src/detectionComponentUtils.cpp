@@ -24,20 +24,20 @@
  * limitations under the License.                                             *
  ******************************************************************************/
 
+#include "detectionComponentUtils.h"
+
 #include <algorithm>
 #include <cctype>
 #include <cmath>
 #include <exception>
+#include <filesystem>
 
 #include <opencv2/core.hpp>
 
 #include "MPFInvalidPropertyException.h"
 
-#include "detectionComponentUtils.h"
-
 
 using std::exception;
-using std::pair;
 using std::string;
 
 using MPF::COMPONENT::MPFDetectionDataType;
@@ -134,6 +134,31 @@ namespace DetectionComponentUtils {
             double a2_dist = std::min(a2, std::abs(360 - a2));
             return (a1_dist + a2_dist) < epsilon;
         }
+    }
+
+    std::string GetAppDir(const char * const argv0) {
+        namespace fs = std::filesystem;
+        try {
+            return fs::canonical("/proc/self/exe").parent_path();
+        }
+        catch (const fs::filesystem_error&) {
+        }
+
+        try {
+            if (fs::path argv0Path(argv0); argv0Path.has_parent_path()) {
+                return argv0Path.parent_path();
+            }
+        }
+        catch (const fs::filesystem_error&) {
+        }
+
+        try {
+            return fs::current_path();
+        }
+        catch (const fs::filesystem_error&) {
+        }
+
+        return ".";
     }
 }
  

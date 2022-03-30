@@ -27,15 +27,13 @@
 cmake_minimum_required(VERSION 3.6)
 project(openmpf-cpp-component-utils)
 
-set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_CXX_STANDARD 17)
 
 find_package(OpenCV 4.5.0 EXACT REQUIRED PATHS /opt/opencv-4.5.0
     COMPONENTS opencv_core opencv_imgcodecs opencv_imgproc opencv_videoio)
 
 find_package(PkgConfig)
 pkg_search_module(LOG4CXX REQUIRED liblog4cxx)
-
-find_package(Qt4 REQUIRED)
 
 
 include_directories(include)
@@ -54,7 +52,8 @@ set(SOURCE_FILES
     )
 
 add_library(mpfComponentUtils SHARED ${SOURCE_FILES})
-target_link_libraries(mpfComponentUtils ${OpenCV_LIBS} ${LOG4CXX_LIBRARIES} Qt4::QtCore dl)
+target_link_libraries(mpfComponentUtils mpfDetectionComponentApi
+                        ${OpenCV_LIBS} ${LOG4CXX_LIBRARIES} dl)
 
 
 export_mpf_lib(mpfComponentUtils)

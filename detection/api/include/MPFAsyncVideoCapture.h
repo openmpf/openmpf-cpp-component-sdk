@@ -28,6 +28,7 @@
 #define OPENMPF_CPP_COMPONENT_SDK_MPFASYNCVIDEOCAPTURE_H
 
 #include <future>
+#include <optional>
 #include <string>
 
 #include <opencv2/core.hpp>
@@ -36,7 +37,7 @@
 #include "MPFVideoCapture.h"
 #include "BlockingQueue.h"
 
-namespace MPF { namespace COMPONENT {
+namespace MPF::COMPONENT {
 
     struct MPFFrame {
     public:
@@ -46,11 +47,7 @@ namespace MPF { namespace COMPONENT {
         int index;
         cv::Mat data;
 
-        explicit MPFFrame(int index = -1, cv::Mat data = {});
-
-        bool isValid() const;
-
-        explicit operator bool() const;
+        MPFFrame(int index, cv::Mat data);
     };
 
 
@@ -71,7 +68,7 @@ namespace MPF { namespace COMPONENT {
 
         ~MPFAsyncVideoCapture();
 
-        MPFFrame Read();
+        std::optional<MPFFrame> Read();
 
         void ReverseTransform(MPFVideoTrack &videoTrack) const;
 
@@ -91,7 +88,7 @@ namespace MPF { namespace COMPONENT {
 
 
     private:
-        BlockingQueue<MPFFrame> frameQueue_;
+        BlockingQueue<std::optional<MPFFrame>> frameQueue_;
 
         // Fields for properties of the video that don't change as it is being read.
         // We can't just query the underlying video capture on the fly because it is being used by
@@ -108,7 +105,7 @@ namespace MPF { namespace COMPONENT {
 
         MPFAsyncVideoCapture(MPFVideoCapture&& videoCapture, int frameQueueSize);
     };
-}}
+}
 
 
 
