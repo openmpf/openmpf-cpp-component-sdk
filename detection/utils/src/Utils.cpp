@@ -50,13 +50,13 @@ using MPF::COMPONENT::MPFVideoTrack;
 namespace MPF { namespace COMPONENT { namespace Utils {
 
     namespace {
-        [[noreturn]] void LogAndReThrowExceptionInner(const string &job_name, MPFDetectionDataType dataType,
+        [[noreturn]] void LogAndReThrowExceptionInner(MPFDetectionDataType dataType,
                                                       const log4cxx::LoggerPtr &logger) {
             try {
                 DetectionComponentUtils::ReThrowAsMpfDetectionException(dataType);
             }
             catch (const std::exception &ex) {
-                LOG4CXX_ERROR(logger, "[" << job_name << "] " << ex.what());
+                LOG4CXX_ERROR(logger, ex.what());
                 throw;
             }
         }
@@ -64,19 +64,19 @@ namespace MPF { namespace COMPONENT { namespace Utils {
 
 
     [[noreturn]] void LogAndReThrowException(const MPFVideoJob &job, const log4cxx::LoggerPtr &logger) {
-        LogAndReThrowExceptionInner(job.job_name, MPFDetectionDataType::VIDEO, logger);
+        LogAndReThrowExceptionInner(MPFDetectionDataType::VIDEO, logger);
     }
 
     [[noreturn]] void LogAndReThrowException(const MPFImageJob &job, const log4cxx::LoggerPtr &logger) {
-        LogAndReThrowExceptionInner(job.job_name, MPFDetectionDataType::IMAGE, logger);
+        LogAndReThrowExceptionInner(MPFDetectionDataType::IMAGE, logger);
     }
 
     [[noreturn]] void LogAndReThrowException(const MPFAudioJob &job, const log4cxx::LoggerPtr &logger) {
-        LogAndReThrowExceptionInner(job.job_name, MPFDetectionDataType::AUDIO, logger);
+        LogAndReThrowExceptionInner(MPFDetectionDataType::AUDIO, logger);
     }
 
     [[noreturn]] void LogAndReThrowException(const MPFGenericJob &job, const log4cxx::LoggerPtr &logger) {
-        LogAndReThrowExceptionInner(job.job_name, MPFDetectionDataType::UNKNOWN, logger);
+        LogAndReThrowExceptionInner(MPFDetectionDataType::UNKNOWN, logger);
     }
 
     // This function performs shell-like file name expansion. It
