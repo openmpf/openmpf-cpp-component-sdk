@@ -29,7 +29,9 @@
 #define OPENMPF_CPP_COMPONENT_SDK_DETECTIONCOMPONENTUTILS_H
 
 
+#include <optional>
 #include <string>
+#include <type_traits>
 #include <utility>
 
 #include <boost/lexical_cast.hpp>
@@ -45,27 +47,34 @@ namespace DetectionComponentUtils {
     // GetProperty(props, "KEY", "default")
     template <typename T>
     using t_unless_char_ptr_then_string
-        = typename std::conditional<
-                std::is_same<T, const char*>::value,
+        = std::conditional_t<
+                std::is_same_v<T, const char*>,
                 std::string,
-                T
-          >::type;
+                T>;
+
+
+    template<typename T>
+    std::optional<t_unless_char_ptr_then_string<T>> GetProperty(
+            const MPF::COMPONENT::Properties &props,
+            const std::string &key) {
+        auto iter = props.find(key);
+        if (iter == props.end()) {
+            return {};
+        }
+        try {
+            return boost::lexical_cast<t_unless_char_ptr_then_string<T>>(iter->second);
+        }
+        catch (const boost::bad_lexical_cast &e) {
+            return {};
+        }
+    }
 
     template<typename T>
     t_unless_char_ptr_then_string<T> GetProperty(const MPF::COMPONENT::Properties &props,
                                                  const std::string &key,
                                                  T defaultValue) {
-        auto iter = props.find(key);
-        if (iter == props.end()) {
-            return defaultValue;
-        }
-
-        try {
-            return boost::lexical_cast<t_unless_char_ptr_then_string<T>>(iter->second);
-        }
-        catch (const boost::bad_lexical_cast &e) {
-            return defaultValue;
-        }
+        return GetProperty<t_unless_char_ptr_then_string<T>>(props, key)
+                        .value_or(std::move(defaultValue));
     }
 
     /**
@@ -80,6 +89,10 @@ namespace DetectionComponentUtils {
     bool GetProperty(const MPF::COMPONENT::Properties &props,
                      const std::string &key,
                      bool defaultValue);
+
+    template<>
+    std::optional<bool> GetProperty<bool>(const MPF::COMPONENT::Properties &props,
+                                          const std::string &key);
 
 
     /**

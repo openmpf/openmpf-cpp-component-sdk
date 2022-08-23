@@ -33,7 +33,7 @@ set(CMAKE_CXX_STANDARD 17)
 find_package(GTest)
 if (${GTEST_FOUND})
     enable_testing()
-    add_executable(DetectionApiTest test_detection_api.cpp)
+    add_executable(DetectionApiTest test_detection_api.cpp test_affine_transformer.cpp)
     target_link_libraries(DetectionApiTest GTest::GTest GTest::Main mpfDetectionComponentApi)
 
     add_test(NAME DetectionApiTest COMMAND DetectionApiTest)
