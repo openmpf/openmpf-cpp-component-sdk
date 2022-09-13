@@ -25,52 +25,10 @@
       ],
       "properties": [
         {
-          "name": "SEARCH_REGION_ENABLE_DETECTION",
-          "description": "Enable cropping.",
-          "type": "BOOLEAN",
-          "defaultValue": "false"
-        },
-        {
-          "name": "SEARCH_REGION_TOP_LEFT_X_DETECTION",
-          "description": "X coordinate for top left corner of cropped frame. If this string contains the % sign, then its numeric value will be interpreted as a percentage of the width of the frame, and its value will be capped between 0% and 100%, inclusive. If this string does not contain the % sign, then it will be interpreted as a pixel position. If negative, the top left X position will be set to 0.",
-          "type": "STRING",
-          "defaultValue": "-1"
-        },
-        {
-          "name": "SEARCH_REGION_TOP_LEFT_Y_DETECTION",
-          "description": "Y coordinate for top left corner of cropped frame. If this string contains the % sign, then its numeric value will be interpreted as a percentage of the height of the frame, and its value will be capped between 0% and 100%, inclusive. If this string does not contain the % sign, then it will be interpreted as a pixel position. If negative, the top left Y position will be set to 0.",
-          "type": "STRING",
-          "defaultValue": "-1"
-        },
-        {
-          "name": "SEARCH_REGION_BOTTOM_RIGHT_X_DETECTION",
-          "description": "X coordinate for bottom right corner of cropped frame. If this string contains the % sign, then its numeric value will be interpreted as a percentage of the width of the frame, and its value will be capped between 0% and 100%, inclusive. If this string does not contain the % sign, then it will be interpreted as a pixel position. If zero or negative, the bottom right X position will be set to the width of the frame.",
-          "type": "STRING",
-          "defaultValue": "-1"
-        },
-        {
-          "name": "SEARCH_REGION_BOTTOM_RIGHT_Y_DETECTION",
-          "description": "Y coordinate for bottom right corner of cropped frame. If this string contains the % sign, then its numeric value will be interpreted as a percentage of the height of the frame, and its value will be capped between 0% and 100%, inclusive. If this string does not contain the % sign, then it will be interpreted as a pixel position. If zero or negative, the bottom right Y position will be set to the height of the frame.",
-          "type": "STRING",
-          "defaultValue": "-1"
-        },
-        {
-          "name": "ROTATION",
-          "description": "Specifies the number of degrees in the clockwise direction that the media will be rotated. Only 90, 180 and 270 degrees are supported.",
-          "type": "INT",
-          "defaultValue": "0"
-        },
-        {
-          "name": "HORIZONTAL_FLIP",
-          "description": "Specifies whether or not the original media is flipped. Rotation occurs before flipping.",
-          "type": "BOOLEAN",
-          "defaultValue": "false"
-        },
-        {
-          "name": "FRAME_INTERVAL",
-          "description": "Controls whether the component performs detection on every frame in the video segment, or skips some frames at a regular interval. Must be greater than or equal to 0. If the frame_interval is set to 0 or 1, a frame_interval of 1 will be used, so that detections are performed on every frame. For a frame interval N > 1, every N-1 frames will be skipped.",
-          "type": "INT",
-          "defaultValue": "1"
+          "name": "CONFIDENCE_THRESHOLD",
+          "description": "The minimum confidence score which must be met or exceeded. Detections below this threshold are silently discarded.",
+          "type": "DOUBLE",
+          "defaultValue": "0.6"
         }
       ]
     }
