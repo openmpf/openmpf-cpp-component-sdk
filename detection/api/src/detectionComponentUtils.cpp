@@ -64,22 +64,29 @@ namespace DetectionComponentUtils {
         }
     }
 
-    template<>
-    bool GetProperty<bool>(const Properties &props,
-                           const string &key,
-                           bool defaultValue) {
-        const string &propValue = GetProperty<string>(props, key, "");
-        if (propValue.empty()) {
-            return defaultValue;
+    namespace detail {
+        bool ToBool(const std::string& str) {
+            if (str == "1") {
+                return true;
+            }
+            static const string trueString = "TRUE";
+            return std::equal(trueString.begin(), trueString.end(), str.begin(),
+                              [](char trueChar, char propChar) {
+                                  return trueChar == std::toupper(propChar);
+                              });
         }
-        if (propValue == "1") {
-            return true;
-        }
+    }
 
-        static const string trueString = "TRUE";
-        return std::equal(trueString.begin(), trueString.end(), propValue.begin(), [](char trueChar, char propChar) {
-            return trueChar == std::toupper(propChar);
-        });
+    bool GetProperty(const Properties &props,
+                     const string &key,
+                     bool defaultValue) {
+        return GetProperty<bool>(props, key).value_or(defaultValue);
+    }
+
+    std::string GetProperty(const MPF::COMPONENT::Properties &props,
+                            const std::string &key,
+                            const char* defaultValue) {
+        return GetProperty<std::string>(props, key, defaultValue);
     }
 
 

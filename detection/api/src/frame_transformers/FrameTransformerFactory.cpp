@@ -28,6 +28,7 @@
 
 #include <iostream>
 #include <map>
+#include <optional>
 #include <stdexcept>
 #include <string>
 #include <utility>
@@ -51,7 +52,7 @@
 
 using DetectionComponentUtils::GetProperty;
 
-namespace MPF { namespace COMPONENT { namespace FrameTransformerFactory {
+namespace MPF::COMPONENT::FrameTransformerFactory {
 
 
 namespace {
@@ -129,35 +130,47 @@ namespace {
     }
 
 
-    void AddTransformersIfNeeded(const Properties &jobProperties, const Properties &mediaProperties,
-                                 const cv::Size &inputVideoSize, IFrameTransformer::Ptr &currentTransformer) {
-        static const std::string rotationKey = "ROTATION";
-
-        double rotation = 0;
-        if (DetectionComponentUtils::GetProperty(jobProperties, "AUTO_ROTATE", false)) {
-            rotation = DetectionComponentUtils::GetProperty(mediaProperties, rotationKey, 0.0);
+    std::optional<double> GetJobRotation(const Properties &jobProperties,
+                                         const Properties &mediaProperties) {
+        if (auto optJobRotation = GetProperty<double>(jobProperties, "ROTATION");
+                    optJobRotation) {
+            return optJobRotation;
+        }
+        else if (GetProperty(jobProperties, "AUTO_ROTATE", true)) {
+            return GetProperty<double>(mediaProperties, "ROTATION");
         }
         else {
-            rotation = DetectionComponentUtils::GetProperty(jobProperties, rotationKey, 0.0);
+            return {};
         }
-        rotation = DetectionComponentUtils::NormalizeAngle(rotation);
+    }
 
-        double rotationThreshold = DetectionComponentUtils::GetProperty(
-                jobProperties, "ROTATION_THRESHOLD", 0.1);
+    std::optional<bool> GetJobFlip(const Properties &jobProperties,
+                                   const Properties &mediaProperties) {
+        if (auto optFlip = GetProperty<bool>(jobProperties, "HORIZONTAL_FLIP");
+                optFlip) {
+            return optFlip;
+        }
+        else if (GetProperty(jobProperties, "AUTO_FLIP", true)) {
+            return GetProperty<bool>(mediaProperties, "HORIZONTAL_FLIP");
+        }
+        else {
+            return {};
+        }
+    }
+
+
+    void AddTransformersIfNeeded(const Properties &jobProperties, const Properties &mediaProperties,
+                                 const cv::Size &inputVideoSize, IFrameTransformer::Ptr &currentTransformer) {
+        double rotation = GetJobRotation(jobProperties, mediaProperties).value_or(0);
+
+        double rotationThreshold = GetProperty(jobProperties, "ROTATION_THRESHOLD", 0.1);
         bool rotationRequired = !DetectionComponentUtils::RotationAnglesEqual(
                 rotation, 0, rotationThreshold);
         if (!rotationRequired) {
             rotation = 0;
         }
 
-        bool flipRequired;
-        if (DetectionComponentUtils::GetProperty(jobProperties, "AUTO_FLIP", false)) {
-            flipRequired = DetectionComponentUtils::GetProperty(mediaProperties, "HORIZONTAL_FLIP", false);
-        }
-        else {
-            flipRequired = DetectionComponentUtils::GetProperty(jobProperties, "HORIZONTAL_FLIP", false);
-        }
-
+        bool flipRequired = GetJobFlip(jobProperties, mediaProperties).value_or(false);
 
         SearchRegion searchRegion = GetSearchRegion(jobProperties);
 
@@ -203,27 +216,18 @@ namespace {
                       << "Only feed forward cropping will occur." << std::endl;
         }
 
-        bool hasJobLevelRotation;
+        bool hasJobLevelRotation = false;
         double jobLevelRotation = 0;
-        {
-            bool autoRotate = DetectionComponentUtils::GetProperty(jobProperties, "AUTO_ROTATE", false);
-            const auto &props = autoRotate ? mediaProperties : jobProperties;
-            auto rotationIter = props.find("ROTATION");
-            hasJobLevelRotation = rotationIter != props.end();
-            if (hasJobLevelRotation) {
-                jobLevelRotation = DetectionComponentUtils::NormalizeAngle(std::stod(rotationIter->second));
-            }
+        if (auto optRotation = GetJobRotation(jobProperties, mediaProperties); optRotation) {
+            hasJobLevelRotation = true;
+            jobLevelRotation = *optRotation;
         }
 
-        bool hasJobLevelFlip;
+        bool hasJobLevelFlip = false;
         bool jobLevelFlip = false;
-        {
-            bool autoFlip = DetectionComponentUtils::GetProperty(jobProperties, "AUTO_FLIP", false);
-            const auto &props = autoFlip ? mediaProperties : jobProperties;
-            hasJobLevelFlip = props.count("HORIZONTAL_FLIP") == 1;
-            if (hasJobLevelFlip) {
-                jobLevelFlip = DetectionComponentUtils::GetProperty(props, "HORIZONTAL_FLIP", false);
-            }
+        if (auto optFlip = GetJobFlip(jobProperties, mediaProperties); optFlip) {
+            hasJobLevelFlip = true;
+            jobLevelFlip = *optFlip;
         }
 
 
@@ -368,4 +372,4 @@ IFrameTransformer::Ptr GetTransformer(const MPFStreamingVideoJob &job, const cv:
     AddTransformersIfNeeded(job.job_properties, job.media_properties, inputVideoSize, transformer);
     return transformer;
 }
-}}} // End MPF::COMPONENT::FrameTransformerFactory
+} // End MPF::COMPONENT::FrameTransformerFactory

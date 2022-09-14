@@ -29,7 +29,9 @@
 #define OPENMPF_CPP_COMPONENT_SDK_DETECTIONCOMPONENTUTILS_H
 
 
+#include <optional>
 #include <string>
+#include <type_traits>
 #include <utility>
 
 #include <boost/lexical_cast.hpp>
@@ -39,47 +41,58 @@
 
 namespace DetectionComponentUtils {
 
-
-    // Allow string literals to be passed to GetProperty without wrapping them in an std::string.
-    // For example, instead of GetProperty(props, "KEY", std::string("default")) you can just use
-    // GetProperty(props, "KEY", "default")
-    template <typename T>
-    using t_unless_char_ptr_then_string
-        = typename std::conditional<
-                std::is_same<T, const char*>::value,
-                std::string,
-                T
-          >::type;
+    namespace detail {
+        bool ToBool(const std::string& str);
+    }
 
     template<typename T>
-    t_unless_char_ptr_then_string<T> GetProperty(const MPF::COMPONENT::Properties &props,
-                                                 const std::string &key,
-                                                 T defaultValue) {
+    std::optional<T> GetProperty(
+            const MPF::COMPONENT::Properties &props,
+            const std::string &key) {
         auto iter = props.find(key);
         if (iter == props.end()) {
-            return defaultValue;
+            return {};
+        }
+
+        if constexpr (std::is_same_v<T, bool>) {
+            return detail::ToBool(iter->second);
         }
 
         try {
-            return boost::lexical_cast<t_unless_char_ptr_then_string<T>>(iter->second);
+            return boost::lexical_cast<T>(iter->second);
         }
         catch (const boost::bad_lexical_cast &e) {
-            return defaultValue;
+            return {};
         }
     }
 
+
+    template<typename T>
+    T GetProperty(const MPF::COMPONENT::Properties &props,
+                  const std::string &key,
+                  T defaultValue) {
+        return GetProperty<T>(props, key)
+                        .value_or(std::move(defaultValue));
+    }
+
+
     /**
-     * Specialization of GetProperty to support converting the string "true" to a boolean.
-     * This specialization is necessary because boost::lexical_cast only considers the string "1" to be true.
+     * Overload of GetProperty to support converting the string "true" to a boolean.
+     * This overload is necessary because boost::lexical_cast only considers the string "1" to be true.
      * @param props
      * @param key
      * @param defaultValue
      * @return true if the property value is "true" (case-insensitive) or "1"; false otherwise
      */
-    template<>
     bool GetProperty(const MPF::COMPONENT::Properties &props,
                      const std::string &key,
                      bool defaultValue);
+
+    // Overload so that a std::string gets returned when a user passes in a string literal as the
+    // default value.
+    std::string GetProperty(const MPF::COMPONENT::Properties &props,
+                            const std::string &key,
+                            const char* defaultValue);
 
 
     /**
