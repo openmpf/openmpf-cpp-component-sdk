@@ -15,6 +15,7 @@
     "name": "HelloWorld",
     "description": "This is a dummy detection component.",
     "actionType": "DETECTION",
+    "outputChangedCounter" : 1,
     "requiresCollection": {
       "states": []
     },
