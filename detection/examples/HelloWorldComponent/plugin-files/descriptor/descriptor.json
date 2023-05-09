@@ -1,7 +1,7 @@
 {
   "componentName": "HelloWorldComponent",
-  "componentVersion": "7.1",
-  "middlewareVersion": "7.1",
+  "componentVersion": "7.2",
+  "middlewareVersion": "7.2",
   "sourceLanguage": "c++",
   "batchLibrary": "${MPF_HOME}/plugins/HelloWorldComponent/lib/libmpfHelloWorld.so",
   "streamLibrary": "${MPF_HOME}/plugins/HelloWorldComponent/lib/libmpfStreamingHelloWorld.so",
@@ -15,6 +15,7 @@
     "name": "HelloWorld",
     "description": "This is a dummy detection component.",
     "actionType": "DETECTION",
+    "outputChangedCounter" : 1,
     "requiresCollection": {
       "states": []
     },
