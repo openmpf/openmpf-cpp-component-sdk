@@ -218,9 +218,6 @@ bool HelloWorld::Supports(MPFDetectionDataType data_type) {
 }
 
 //-----------------------------------------------------------------------------
-std::string HelloWorld::GetDetectionType() {
-    return "HELLO";
-}
 
 MPF_COMPONENT_CREATOR(HelloWorld);
 MPF_COMPONENT_DELETER();

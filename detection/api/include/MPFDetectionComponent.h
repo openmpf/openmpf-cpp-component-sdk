@@ -213,8 +213,6 @@ namespace MPF { namespace COMPONENT {
 
         virtual bool Supports(MPFDetectionDataType data_type) = 0;
 
-        virtual std::string GetDetectionType() = 0;
-
         MPFComponentType GetComponentType() override { return MPF_DETECTION_COMPONENT; };
 
     protected:

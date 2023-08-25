@@ -46,8 +46,6 @@ public:
     std::vector<MPFGenericTrack> GetDetections(const MPFGenericJob &job) override;
 
     bool Supports(MPFDetectionDataType data_type) override;
-
-    std::string GetDetectionType() override;
 };
 
 

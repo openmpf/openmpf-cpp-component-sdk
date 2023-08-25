@@ -36,8 +36,6 @@ namespace MPF { namespace COMPONENT {
     class ImageTransformerComponent : public MPFImageDetectionComponentAdapter {
 
     public:
-        std::string GetDetectionType() override { return "IMAGE_DATA"; }
-
         bool Init() override;
 
         bool Close() override;
