@@ -80,8 +80,6 @@ namespace MPF { namespace COMPONENT {
     public:
         virtual ~MPFStreamingDetectionComponent() = default;
 
-        virtual std::string GetDetectionType() = 0;
-
         // Optional
         virtual void BeginSegment(const VideoSegmentInfo &segment_info) { };
 
