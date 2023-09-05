@@ -42,3 +42,4 @@ cmake-build-debug/
 # IDE
 *.iml
 *.idea*
+.vscode
