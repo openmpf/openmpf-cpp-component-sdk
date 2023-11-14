@@ -84,9 +84,6 @@ bool GenericComponent::Supports(MPFDetectionDataType data_type) {
 }
 
 //-----------------------------------------------------------------------------
-std::string GenericComponent::GetDetectionType() {
-    return "GENERIC";
-}
 
 MPF_COMPONENT_CREATOR(GenericComponent);
 MPF_COMPONENT_DELETER();

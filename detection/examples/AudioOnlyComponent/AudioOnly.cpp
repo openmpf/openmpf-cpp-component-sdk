@@ -74,9 +74,6 @@ std::vector<MPFAudioTrack> AudioOnly::GetDetections(const MPFAudioJob &job) {
 }
 
 //-----------------------------------------------------------------------------
-std::string AudioOnly::GetDetectionType() {
-    return "TEST_AUDIO";
-}
 
 MPF_COMPONENT_CREATOR(AudioOnly);
 MPF_COMPONENT_DELETER();

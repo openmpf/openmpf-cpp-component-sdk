@@ -45,8 +45,6 @@ public:
     bool Close() override;
 
     std::vector<MPFAudioTrack> GetDetections(const MPFAudioJob &job) override;
-
-    std::string GetDetectionType() override;
 };
 
 #endif //OPENMPF_CPP_COMPONENT_SDK_AUDIOONLY_H
