@@ -1,6 +1,6 @@
 # BUILD
 
-NOTE: To build and run this component, OpenCV 4.5.0
+NOTE: To build and run this component, OpenCV 4.9.0
       must be installed first.
 
 NOTE: You must build the MPF Component API library before
@@ -8,9 +8,12 @@ NOTE: You must build the MPF Component API library before
       in the README at the top-level component API
       directory.
 
-Before you build, edit the src/CMakeLists.txt file, and change
-the "find_package" command so that the PATHS option specifies
-the root directory of your OpenCV 4.5.0 installation.
+The CMakeLists.txt file for this example is written to look for
+OpenCV 4.9.0 installed at `/opt/opencv-4.9.0`. If your local
+installation is in a different location, edit the CMakeLists.txt
+file in this directory to change the `find_package` command so
+that the PATHS option specifies the root directory of your
+OpenCV 4.9.0 installation.
 
 Run the following commands:
 ```
