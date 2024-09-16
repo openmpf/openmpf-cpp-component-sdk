@@ -33,8 +33,13 @@ set(CMAKE_CXX_STANDARD 17)
 find_package(GTest)
 if (${GTEST_FOUND})
     enable_testing()
-    add_executable(DetectionComponentUtilsTest test_models_ini_parser.cpp)
-    target_link_libraries(DetectionComponentUtilsTest GTest::GTest GTest::Main mpfComponentUtils mpfDetectionComponentApi)
+    add_executable(ModelsIniParserTest test_models_ini_parser.cpp)
+    target_link_libraries(ModelsIniParserTest GTest::GTest GTest::Main
+                          mpfComponentUtils mpfDetectionComponentApi)
+    add_test(NAME ModelsIniParserTest COMMAND ModelsIniParserTest)
 
-    add_test(NAME DetectionComponentUtilsTest COMMAND DetectionComponentUtilsTest)
+    add_executable(ParseListFromStringTest test_parse_list_from_string.cpp)
+    target_link_libraries(ParseListFromStringTest GTest::GTest GTest::Main
+                          mpfComponentUtils mpfDetectionComponentApi)
+    add_test(NAME ParseListFromStringTest COMMAND ParseListFromStringTest)
 endif()

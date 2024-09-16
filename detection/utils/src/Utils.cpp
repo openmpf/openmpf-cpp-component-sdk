@@ -111,6 +111,48 @@ namespace MPF { namespace COMPONENT { namespace Utils {
         return "";
     }
 
+    vector<string> ParseListFromString(const string &listOfStrings) {
+        if (listOfStrings.empty())
+            return {};
+        if ((listOfStrings.find(';') == string::npos) &&
+             (listOfStrings.find('\\') == string::npos)) {
+                // Nothing to parse; return the original string
+                return {listOfStrings};
+        }
+        vector<string> values;
+        string currentSegment;
+        bool inEscapeSequence = false;
+        for (int i = 0; i < listOfStrings.length(); ++i) {
+            char ch = listOfStrings.at(i);
+            if (inEscapeSequence) {
+                inEscapeSequence = false;
+                currentSegment += ch;
+                continue;
+            }
+            switch (ch) {
+                case '\\':
+                    inEscapeSequence = true;
+                    break;
+                case ';':
+                    trim(currentSegment);
+                    if ( !currentSegment.empty() ) {
+                        values.push_back(currentSegment);
+                    }
+                    currentSegment.clear();
+                    break;
+                default:
+                    currentSegment += ch;
+            }
+        }
+
+        if (!currentSegment.empty()) {
+            trim(currentSegment);
+            if (!currentSegment.empty()) {
+                values.push_back(currentSegment);
+            }
+        }
+        return values;
+    }
 
     void trim(std::string &str) {
         boost::trim(str);
