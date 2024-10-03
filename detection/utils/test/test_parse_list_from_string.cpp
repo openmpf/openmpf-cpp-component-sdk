@@ -73,7 +73,7 @@ TEST(ParseListFromString, ParseListWithSingleBackslash) {
 
 }
 
-TEST(ParseListFromString, ParseListWithExtraEscapedDelimiter) {
+TEST(ParseListFromString, ParseListWithExtraBackslash) {
     string test_string("Hello\\\;World");
     vector<string> result = Utils::ParseListFromString(test_string);
     ASSERT_EQ(result.size(), 1);
@@ -81,7 +81,7 @@ TEST(ParseListFromString, ParseListWithExtraEscapedDelimiter) {
 
 }
 
-TEST(ParseListFromString, ParseListWithExtraNotEscapedDelimiter) {
+TEST(ParseListFromString, ParseListWithExtraDelimiter) {
     string test_string("Hello;;World");
     vector<string> result = Utils::ParseListFromString(test_string);
     ASSERT_EQ(result.size(), 2);
