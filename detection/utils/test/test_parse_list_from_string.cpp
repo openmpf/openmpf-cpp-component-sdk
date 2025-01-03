@@ -32,7 +32,6 @@ TEST(ParseListFromString, ParseEmptyList) {
     string test_string;
     vector<string> result = Utils::ParseListFromString(test_string);
     ASSERT_TRUE(result.empty());
-
 }
 
 TEST(ParseListFromString, ParseListWithSingleString) {
@@ -40,7 +39,6 @@ TEST(ParseListFromString, ParseListWithSingleString) {
     vector<string> result = Utils::ParseListFromString(test_string);
     ASSERT_EQ(result.size(), 1);
     ASSERT_TRUE(result[0] == test_string);
-
 }
 
 TEST(ParseListFromString, ParseDelimitedList) {
@@ -50,8 +48,6 @@ TEST(ParseListFromString, ParseDelimitedList) {
     ASSERT_TRUE(result[0] == "Hey");
     ASSERT_TRUE(result[1] == "Hello");
     ASSERT_TRUE(result[2] == "World");
-
-
 }
 
 TEST(ParseListFromString, ParseListWithEscapedDelimiter) {
@@ -60,7 +56,6 @@ TEST(ParseListFromString, ParseListWithEscapedDelimiter) {
     ASSERT_EQ(result.size(), 2);
     ASSERT_TRUE(result[0] == "Hey");
     ASSERT_TRUE(result[1] == "Hello;World");
-
 }
 
 TEST(ParseListFromString, ParseListWithSingleBackslash) {
@@ -70,7 +65,6 @@ TEST(ParseListFromString, ParseListWithSingleBackslash) {
     ASSERT_TRUE(result[0] == "Hey");
     ASSERT_TRUE(result[1] == "Hello");
     ASSERT_TRUE(result[2] == "World");
-
 }
 
 TEST(ParseListFromString, ParseListWithExtraBackslash) {
@@ -78,7 +72,46 @@ TEST(ParseListFromString, ParseListWithExtraBackslash) {
     vector<string> result = Utils::ParseListFromString(test_string);
     ASSERT_EQ(result.size(), 1);
     ASSERT_TRUE(result[0] == "Hello;World");
+}
 
+TEST(ParseListFromString, ParseListWithUnnecessarySingleBackslash) {
+    string test_string("Hey\Hello;World");
+    vector<string> result = Utils::ParseListFromString(test_string);
+    ASSERT_EQ(result.size(), 2);
+    ASSERT_TRUE(result[0] == "HeyHello");
+    ASSERT_TRUE(result[1] == "World");
+}
+
+TEST(ParseListFromString, ParseListWithUnnecessaryDoubleBackslash) {
+    string test_string("Hey\\Hello;World");
+    vector<string> result = Utils::ParseListFromString(test_string);
+    ASSERT_EQ(result.size(), 2);
+    ASSERT_TRUE(result[0] == "HeyHello");
+    ASSERT_TRUE(result[1] == "World");
+}
+
+TEST(ParseListFromString, ParseListWithQuadrupleBackslash) {
+    string test_string("Hey\\\\Hello;World");
+    vector<string> result = Utils::ParseListFromString(test_string);
+    ASSERT_EQ(result.size(), 2);
+    ASSERT_TRUE(result[0] == "Hey\\Hello");
+    ASSERT_TRUE(result[1] == "World");
+}
+
+TEST(ParseListFromString, ParseListWithNewlines) {
+    string test_string("Hey\nHello;World\\\nFoo\\nBar");
+    vector<string> result = Utils::ParseListFromString(test_string);
+    ASSERT_EQ(result.size(), 2);
+    ASSERT_TRUE(result[0] == "Hey\nHello");
+    ASSERT_TRUE(result[1] == "World\nFoonBar");
+}
+
+TEST(ParseListFromString, ParseListWith8BackslashesAndNewline) {
+    string test_string("Hey\\\\\\\\\nHello;World");
+    vector<string> result = Utils::ParseListFromString(test_string);
+    ASSERT_EQ(result.size(), 2);
+    ASSERT_TRUE(result[0] == "Hey\\\\\nHello");
+    ASSERT_TRUE(result[1] == "World");
 }
 
 TEST(ParseListFromString, ParseListWithExtraDelimiter) {
@@ -87,7 +120,6 @@ TEST(ParseListFromString, ParseListWithExtraDelimiter) {
     ASSERT_EQ(result.size(), 2);
     ASSERT_TRUE(result[0] == "Hello");
     ASSERT_TRUE(result[1] == "World");
-
 }
 
 int main(int argc, char **argv) {
