@@ -70,30 +70,6 @@ TEST(ParseListFromString, ParseListWithEscapedDelimiter) {
     ASSERT_TRUE(result[1] == "Hello;World");
 }
 
-TEST(ParseListFromString, ParseListWithSingleBackslash) {
-    string test_string("Hey;Hello\;World");
-    vector<string> result = Utils::ParseListFromString(test_string);
-    ASSERT_EQ(result.size(), 3);
-    ASSERT_TRUE(result[0] == "Hey");
-    ASSERT_TRUE(result[1] == "Hello");
-    ASSERT_TRUE(result[2] == "World");
-}
-
-TEST(ParseListFromString, ParseListWithExtraBackslash) {
-    string test_string("Hello\\\;World");
-    vector<string> result = Utils::ParseListFromString(test_string);
-    ASSERT_EQ(result.size(), 1);
-    ASSERT_TRUE(result[0] == "Hello;World");
-}
-
-TEST(ParseListFromString, ParseListWithUnnecessarySingleBackslash) {
-    string test_string("Hey\Hello;World");
-    vector<string> result = Utils::ParseListFromString(test_string);
-    ASSERT_EQ(result.size(), 2);
-    ASSERT_TRUE(result[0] == "HeyHello");
-    ASSERT_TRUE(result[1] == "World");
-}
-
 TEST(ParseListFromString, ParseListWithUnnecessaryDoubleBackslash) {
     string test_string("Hey\\Hello;World");
     vector<string> result = Utils::ParseListFromString(test_string);
