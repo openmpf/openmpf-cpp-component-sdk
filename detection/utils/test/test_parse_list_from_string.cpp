@@ -1,0 +1,116 @@
+/******************************************************************************
+ * NOTICE                                                                     *
+ *                                                                            *
+ * This software (or technical data) was produced for the U.S. Government     *
+ * under contract, and is subject to the Rights in Data-General Clause        *
+ * 52.227-14, Alt. IV (DEC 2007).                                             *
+ *                                                                            *
+ * Copyright 2024 The MITRE Corporation. All Rights Reserved.                 *
+ ******************************************************************************/
+
+/******************************************************************************
+ * Copyright 2024 The MITRE Corporation                                       *
+ *                                                                            *
+ * Licensed under the Apache License, Version 2.0 (the "License");            *
+ * you may not use this file except in compliance with the License.           *
+ * You may obtain a copy of the License at                                    *
+ *                                                                            *
+ *    http://www.apache.org/licenses/LICENSE-2.0                              *
+ *                                                                            *
+ * Unless required by applicable law or agreed to in writing, software        *
+ * distributed under the License is distributed on an "AS IS" BASIS,          *
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.   *
+ * See the License for the specific language governing permissions and        *
+ * limitations under the License.                                             *
+ ******************************************************************************/
+
+#include <gtest/gtest.h>
+#include <log4cxx/basicconfigurator.h>
+
+#include <Utils.h>
+
+
+using namespace std;
+using namespace MPF;
+using namespace COMPONENT;
+
+bool init_logging() {
+    log4cxx::BasicConfigurator::configure();
+    return true;
+}
+bool logging_initialized = init_logging();
+
+TEST(ParseListFromString, ParseEmptyList) {
+    string test_string;
+    vector<string> result = Utils::ParseListFromString(test_string);
+    ASSERT_TRUE(result.empty());
+}
+
+TEST(ParseListFromString, ParseListWithSingleString) {
+    string test_string("Hello");
+    vector<string> result = Utils::ParseListFromString(test_string);
+    ASSERT_EQ(result.size(), 1);
+    ASSERT_TRUE(result[0] == test_string);
+}
+
+TEST(ParseListFromString, ParseDelimitedList) {
+    string test_string("Hey;Hello;World");
+    vector<string> result = Utils::ParseListFromString(test_string);
+    ASSERT_EQ(result.size(), 3);
+    ASSERT_TRUE(result[0] == "Hey");
+    ASSERT_TRUE(result[1] == "Hello");
+    ASSERT_TRUE(result[2] == "World");
+}
+
+TEST(ParseListFromString, ParseListWithEscapedDelimiter) {
+    string test_string("Hey;Hello\\;World");
+    vector<string> result = Utils::ParseListFromString(test_string);
+    ASSERT_EQ(result.size(), 2);
+    ASSERT_TRUE(result[0] == "Hey");
+    ASSERT_TRUE(result[1] == "Hello;World");
+}
+
+TEST(ParseListFromString, ParseListWithUnnecessaryDoubleBackslash) {
+    string test_string("Hey\\Hello;World");
+    vector<string> result = Utils::ParseListFromString(test_string);
+    ASSERT_EQ(result.size(), 2);
+    ASSERT_TRUE(result[0] == "HeyHello");
+    ASSERT_TRUE(result[1] == "World");
+}
+
+TEST(ParseListFromString, ParseListWithQuadrupleBackslash) {
+    string test_string("Hey\\\\Hello;World");
+    vector<string> result = Utils::ParseListFromString(test_string);
+    ASSERT_EQ(result.size(), 2);
+    ASSERT_TRUE(result[0] == "Hey\\Hello");
+    ASSERT_TRUE(result[1] == "World");
+}
+
+TEST(ParseListFromString, ParseListWithNewlines) {
+    string test_string("Hey\nHello;World\\\nFoo\\nBar");
+    vector<string> result = Utils::ParseListFromString(test_string);
+    ASSERT_EQ(result.size(), 2);
+    ASSERT_TRUE(result[0] == "Hey\nHello");
+    ASSERT_TRUE(result[1] == "World\nFoonBar");
+}
+
+TEST(ParseListFromString, ParseListWith8BackslashesAndNewline) {
+    string test_string("Hey\\\\\\\\\nHello;World");
+    vector<string> result = Utils::ParseListFromString(test_string);
+    ASSERT_EQ(result.size(), 2);
+    ASSERT_TRUE(result[0] == "Hey\\\\\nHello");
+    ASSERT_TRUE(result[1] == "World");
+}
+
+TEST(ParseListFromString, ParseListWithExtraDelimiter) {
+    string test_string("Hello;;World");
+    vector<string> result = Utils::ParseListFromString(test_string);
+    ASSERT_EQ(result.size(), 2);
+    ASSERT_TRUE(result[0] == "Hello");
+    ASSERT_TRUE(result[1] == "World");
+}
+
+int main(int argc, char **argv) {
+    testing::InitGoogleTest(&argc, argv);
+    return RUN_ALL_TESTS();
+}

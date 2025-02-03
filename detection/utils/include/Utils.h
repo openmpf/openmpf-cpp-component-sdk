@@ -53,6 +53,10 @@ namespace MPF { namespace COMPONENT { namespace Utils {
     // not be used.
     std::string expandFileName(const std::string &filename, std::string &exp_filename);
 
+    // This function takes a string that contains a list of semi-colon delimited strings and
+    // parses it into a vector of strings. The parsing checks for escaped delimiters.
+    std::vector<std::string> ParseListFromString(const std::string &listToParse);
+
     void trim(std::string &str);
 
     cv::Mat ConvertToGray(const cv::Mat &image);
