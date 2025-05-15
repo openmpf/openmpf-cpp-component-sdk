@@ -98,6 +98,46 @@ namespace MPF { namespace COMPONENT {
     };
 
 
+    struct MPFMultiTrackVideoJob : MPFJob {
+        const int start_frame;
+        const int stop_frame;
+        const bool has_feed_forward_tracks;
+        const std::vector<MPFVideoTrack> feed_forward_tracks;
+
+        MPFMultiTrackVideoJob(std::string job_name,
+                              std::string data_uri,
+                              int start_frame,
+                              int stop_frame,
+                              Properties job_properties,
+                              Properties media_properties)
+                : MPFJob(std::move(job_name),
+                         std::move(data_uri),
+                         std::move(job_properties),
+                         std::move(media_properties))
+                , start_frame(start_frame)
+                , stop_frame(stop_frame)
+                , has_feed_forward_tracks(false) {
+        }
+
+        MPFMultiTrackVideoJob(std::string job_name,
+                              std::string data_uri,
+                              int start_frame,
+                              int stop_frame,
+                              std::vector<MPFVideoTrack> tracks,
+                              Properties job_properties,
+                              Properties media_properties)
+                : MPFJob(std::move(job_name),
+                         std::move(data_uri),
+                         std::move(job_properties),
+                         std::move(media_properties))
+                , start_frame(start_frame)
+                , stop_frame(stop_frame)
+                , has_feed_forward_tracks(true)
+                , feed_forward_tracks(std::move(tracks)) {
+        }
+    };
+
+
     struct MPFImageJob : MPFJob {
         const bool has_feed_forward_location;
         const MPFImageLocation feed_forward_location;
@@ -204,6 +244,10 @@ namespace MPF { namespace COMPONENT {
     public:
 
         virtual std::vector<MPFVideoTrack> GetDetections(const MPFVideoJob &job) = 0;
+
+        virtual std::vector<MPFVideoTrack> GetDetections(const MPFMultiTrackVideoJob &job) {
+            throw std::runtime_error{"MPFMultiTrackVideoJob is not currently supported."};  
+        }
 
         virtual std::vector<MPFImageLocation> GetDetections(const MPFImageJob &job) = 0;
 
