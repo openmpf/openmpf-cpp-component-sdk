@@ -98,13 +98,13 @@ namespace MPF { namespace COMPONENT {
     };
 
 
-    struct MPFMultiTrackVideoJob : MPFJob {
+    struct MPFAllVideoTracksJob : MPFJob {
         const int start_frame;
         const int stop_frame;
         const bool has_feed_forward_tracks;
         const std::vector<MPFVideoTrack> feed_forward_tracks;
 
-        MPFMultiTrackVideoJob(std::string job_name,
+        MPFAllVideoTracksJob(std::string job_name,
                               std::string data_uri,
                               int start_frame,
                               int stop_frame,
@@ -119,7 +119,7 @@ namespace MPF { namespace COMPONENT {
                 , has_feed_forward_tracks(false) {
         }
 
-        MPFMultiTrackVideoJob(std::string job_name,
+        MPFAllVideoTracksJob(std::string job_name,
                               std::string data_uri,
                               int start_frame,
                               int stop_frame,
@@ -245,8 +245,8 @@ namespace MPF { namespace COMPONENT {
 
         virtual std::vector<MPFVideoTrack> GetDetections(const MPFVideoJob &job) = 0;
 
-        virtual std::vector<MPFVideoTrack> GetDetections(const MPFMultiTrackVideoJob &job) {
-            throw std::runtime_error{"MPFMultiTrackVideoJob is not currently supported."};  
+        virtual std::vector<MPFVideoTrack> GetDetections(const MPFAllVideoTracksJob &job) {
+            throw std::runtime_error{"MPFAllVideoTracksJob is not currently supported."};  
         }
 
         virtual std::vector<MPFImageLocation> GetDetections(const MPFImageJob &job) = 0;
