@@ -245,10 +245,6 @@ namespace MPF { namespace COMPONENT {
 
         virtual std::vector<MPFVideoTrack> GetDetections(const MPFVideoJob &job) = 0;
 
-        virtual std::vector<MPFVideoTrack> GetDetections(const MPFAllVideoTracksJob &job) {
-            throw std::runtime_error{"MPFAllVideoTracksJob is not currently supported."};  
-        }
-
         virtual std::vector<MPFImageLocation> GetDetections(const MPFImageJob &job) = 0;
 
         virtual std::vector<MPFAudioTrack> GetDetections(const MPFAudioJob &job) = 0;
