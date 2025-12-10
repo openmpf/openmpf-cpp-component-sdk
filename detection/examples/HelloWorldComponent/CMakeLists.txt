@@ -34,7 +34,7 @@ include(../ComponentSetup.cmake)
 
 find_package(mpfComponentInterface REQUIRED)
 find_package(mpfDetectionComponentApi REQUIRED)
-find_package(OpenCV 4.9.0 EXACT REQUIRED PATHS /opt/opencv-4.9.0 COMPONENTS opencv_core)
+find_package(OpenCV 4.13.0 EXACT REQUIRED PATHS /opt/opencv-4.13.0 COMPONENTS opencv_core)
 find_package(PkgConfig)
 pkg_search_module(LOG4CXX REQUIRED liblog4cxx)
 
@@ -52,4 +52,3 @@ configure_mpf_component(HelloWorldComponent TARGETS mpfHelloWorld mpfStreamingHe
 
 add_executable(sample_hello_world_detector sample_hello_world_detector.cpp)
 target_link_libraries(sample_hello_world_detector mpfHelloWorld)
-
