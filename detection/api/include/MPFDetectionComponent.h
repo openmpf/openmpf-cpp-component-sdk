@@ -208,6 +208,46 @@ namespace MPF { namespace COMPONENT {
     };
 
 
+    struct MPFAllAudioTracksJob : MPFJob {
+        const int start_time;
+        const int stop_time;
+        const bool has_feed_forward_tracks;
+        const std::vector<MPFAudioTrack> feed_forward_tracks;
+
+        MPFAllAudioTracksJob(std::string job_name,
+                              std::string data_uri,
+                              int start_time,
+                              int stop_time,
+                              Properties job_properties,
+                              Properties media_properties)
+                : MPFJob(std::move(job_name),
+                         std::move(data_uri),
+                         std::move(job_properties),
+                         std::move(media_properties))
+                , start_time(start_time)
+                , stop_time(stop_time)
+                , has_feed_forward_tracks(false) {
+        }
+
+        MPFAllAudioTracksJob(std::string job_name,
+                              std::string data_uri,
+                              int start_time,
+                              int stop_time,
+                              std::vector<MPFAudioTrack> tracks,
+                              Properties job_properties,
+                              Properties media_properties)
+                : MPFJob(std::move(job_name),
+                         std::move(data_uri),
+                         std::move(job_properties),
+                         std::move(media_properties))
+                , start_time(start_time)
+                , stop_time(stop_time)
+                , has_feed_forward_tracks(true)
+                , feed_forward_tracks(std::move(tracks)) {
+        }
+    };
+
+
     struct MPFGenericJob : MPFJob {
         const bool has_feed_forward_track;
         const MPFGenericTrack feed_forward_track;
