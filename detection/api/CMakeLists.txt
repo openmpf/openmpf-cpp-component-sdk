@@ -109,12 +109,12 @@ set(SOURCE_FILES
     )
 
 add_library(mpfDetectionComponentApi SHARED ${SOURCE_FILES})
-target_link_libraries(mpfDetectionComponentApi mpfComponentInterface ${OpenCV_LIBS})
 
-
+target_link_libraries(
+    mpfDetectionComponentApi
+    PUBLIC mpfComponentInterface ${OpenCV_LIBS}
+    PRIVATE mpfInternalObjLib)
 
 export_mpf_lib(mpfDetectionComponentApi)
 
-
 add_subdirectory(test)
-
