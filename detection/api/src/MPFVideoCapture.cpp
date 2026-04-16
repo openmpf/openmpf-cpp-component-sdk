@@ -36,6 +36,7 @@
 #include "IntervalFrameFilter.h"
 #include "KeyFrameFilter.h"
 #include "MPFDetectionException.h"
+#include "MPFBreaker.h"
 
 #include "MPFVideoCapture.h"
 
@@ -207,6 +208,7 @@ namespace MPF { namespace COMPONENT {
 
 
     bool MPFVideoCapture::Read(cv::Mat &frame) {
+        MPFBreaker::check();
         int originalPosBeforeRead = framePosition_;
         if (frameFilter_->IsPastEndOfSegment(originalPosBeforeRead)) {
             frame.release();
