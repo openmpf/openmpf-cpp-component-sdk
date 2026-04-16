@@ -5,11 +5,11 @@
 # under contract, and is subject to the Rights in Data-General Clause       #
 # 52.227-14, Alt. IV (DEC 2007).                                            #
 #                                                                           #
-# Copyright 2024 The MITRE Corporation. All Rights Reserved.                #
+# Copyright 2026 The MITRE Corporation. All Rights Reserved.                #
 #############################################################################
 
 #############################################################################
-# Copyright 2024 The MITRE Corporation                                      #
+# Copyright 2026 The MITRE Corporation                                      #
 #                                                                           #
 # Licensed under the Apache License, Version 2.0 (the "License");           #
 # you may not use this file except in compliance with the License.          #
@@ -24,55 +24,25 @@
 # limitations under the License.                                            #
 #############################################################################
 
-
 cmake_minimum_required(VERSION 3.6)
-project(openmpf-cpp-component-sdk)
+project(openmpf-internal)
 
 set(CMAKE_CXX_STANDARD 17)
 
-# Configure install location for SDK libs
-if(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT) # prefix path not provided on command line
-    if(DEFINED ENV{MPF_SDK_INSTALL_PATH})
-        set(CMAKE_INSTALL_PREFIX "$ENV{MPF_SDK_INSTALL_PATH}" CACHE PATH "..." FORCE)
-    else()
-        set(CMAKE_INSTALL_PREFIX "$ENV{HOME}/mpf-sdk-install" CACHE PATH "..." FORCE)
-    endif()
-endif()
+include_directories(include)
 
+set(SOURCE_FILES
+        include/MPFBreaker.h
+        src/MPFBreaker.cpp)
 
-function(export_mpf_lib targetName)
-    install(TARGETS ${targetName} EXPORT ${targetName}Config
-            ARCHIVE  DESTINATION lib
-            LIBRARY  DESTINATION lib
-            RUNTIME  DESTINATION bin
-            INCLUDES DESTINATION include
-            )
+add_library(mpfInternalObjLib OBJECT ${SOURCE_FILES})
 
-    install(DIRECTORY include/ DESTINATION include)
+# Position-independent code is required because MPFBreaker uses a global variable that should be
+# shared with any library linking to this one.
+set_target_properties(mpfInternalObjLib PROPERTIES
+        INTERFACE_POSITION_INDEPENDENT_CODE ON
+        POSITION_INDEPENDENT_CODE ON)
 
-    # Generate CMake config file that will install ${targetName}
-    export(TARGETS ${targetName} FILE ${targetName}Config.cmake EXPORT_LINK_INTERFACE_LIBRARIES)
+add_library(mpfInternal SHARED $<TARGET_OBJECTS:mpfInternalObjLib>)
 
-    # Make it so ${targetName} can be found with find_package
-    export(PACKAGE ${targetName})
-
-    # Copy CMake config file to install location so dependencies can find it.
-    install(EXPORT ${targetName}Config DESTINATION lib/cmake/${targetName} EXPORT_LINK_INTERFACE_LIBRARIES)
-endfunction()
-
-add_subdirectory(internal)
-include_directories(internal/include)
-
-add_subdirectory(interface)
-include_directories(interface/include)
-
-add_subdirectory(detection/api)
-include_directories(detection/api/include)
-
-add_subdirectory(detection/utils)
-include_directories(detection/utils/include)
-
-add_subdirectory(detection/testUtils)
-include_directories(detection/testUtils/include)
-
-add_subdirectory(mpf-cmake-helpers)
+export_mpf_lib(mpfInternal)
