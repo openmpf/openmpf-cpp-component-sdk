@@ -34,7 +34,7 @@ include(../ComponentSetup.cmake)
 
 find_package(mpfComponentInterface REQUIRED)
 find_package(mpfDetectionComponentApi REQUIRED)
-find_package(OpenCV 4.9.0 EXACT REQUIRED PATHS /opt/opencv-4.9.0 COMPONENTS opencv_core)
+find_package(OpenCV 4.13.0 EXACT REQUIRED PATHS /opt/opencv-4.13.0 COMPONENTS opencv_core)
 
 
 set(AUDIO_ONLY_COMPONENT_SOURCES AudioOnly.cpp AudioOnly.h)
@@ -47,4 +47,3 @@ configure_mpf_component(AudioOnlyComponent TARGETS mpfAudioOnly)
 
 add_executable(sample_audio_only_detector sample_audio_only_detector.cpp)
 target_link_libraries(sample_audio_only_detector mpfAudioOnly)
-
