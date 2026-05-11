@@ -168,6 +168,36 @@ namespace MPF { namespace COMPONENT {
     };
 
 
+    struct MPFAllImageLocationsJob : MPFJob {
+        const bool has_feed_forward_locations;
+        const std::vector<MPFImageLocation> feed_forward_locations;
+
+        MPFAllImageLocationsJob(std::string job_name,
+                                std::string data_uri,
+                                Properties job_properties,
+                                Properties media_properties)
+                : MPFJob(std::move(job_name),
+                         std::move(data_uri),
+                         std::move(job_properties),
+                         std::move(media_properties))
+                , has_feed_forward_locations(false) {
+        }
+
+        MPFAllImageLocationsJob(std::string job_name,
+                                std::string data_uri,
+                                std::vector<MPFImageLocation> locations,
+                                Properties job_properties,
+                                Properties media_properties)
+                : MPFJob(std::move(job_name),
+                         std::move(data_uri),
+                         std::move(job_properties),
+                         std::move(media_properties))
+                , has_feed_forward_locations(true)
+                , feed_forward_locations(std::move(locations)) {
+        }
+    };
+
+
     struct MPFAudioJob : MPFJob {
         const int start_time;
         const int stop_time;
@@ -274,6 +304,36 @@ namespace MPF { namespace COMPONENT {
                          std::move(media_properties))
                 , has_feed_forward_track(true)
                 , feed_forward_track(std::move(track)) {
+        }
+    };
+
+
+    struct MPFAllGenericTracksJob : MPFJob {
+        const bool has_feed_forward_tracks;
+        const std::vector<MPFGenericTrack> feed_forward_tracks;
+
+        MPFAllGenericTracksJob(std::string job_name,
+                               std::string data_uri,
+                               Properties job_properties,
+                               Properties media_properties)
+                : MPFJob(std::move(job_name),
+                         std::move(data_uri),
+                         std::move(job_properties),
+                         std::move(media_properties))
+                , has_feed_forward_tracks(false) {
+        }
+
+        MPFAllGenericTracksJob(std::string job_name,
+                               std::string data_uri,
+                               std::vector<MPFGenericTrack> tracks,
+                               Properties job_properties,
+                               Properties media_properties)
+                : MPFJob(std::move(job_name),
+                         std::move(data_uri),
+                         std::move(job_properties),
+                         std::move(media_properties))
+                , has_feed_forward_tracks(true)
+                , feed_forward_tracks(std::move(tracks)) {
         }
     };
 
