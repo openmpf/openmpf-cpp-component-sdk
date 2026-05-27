@@ -34,7 +34,7 @@ include(../ComponentSetup.cmake)
 
 find_package(mpfComponentInterface REQUIRED)
 find_package(mpfDetectionComponentApi REQUIRED)
-find_package(OpenCV 4.9.0 EXACT REQUIRED PATHS /opt/opencv-4.9.0 COMPONENTS opencv_core opencv_highgui)
+find_package(OpenCV 4.13.0 EXACT REQUIRED PATHS /opt/opencv-4.13.0 COMPONENTS opencv_core opencv_highgui)
 
 
 set(IMAGE_TRANSFORMER_COMPONENT_SOURCES ImageTransformerComponent.h ImageTransformerComponent.cpp)
@@ -47,4 +47,3 @@ configure_mpf_component(ImageTransformerComponent TARGETS mpfImageTransformer)
 
 add_executable(sample_image_transformer sample_image_transformer.cpp)
 target_link_libraries(sample_image_transformer mpfImageTransformer)
-

@@ -34,7 +34,7 @@ include(../ComponentSetup.cmake)
 
 find_package(mpfComponentInterface REQUIRED)
 find_package(mpfDetectionComponentApi REQUIRED)
-find_package(OpenCV 4.9.0 EXACT REQUIRED PATHS /opt/opencv-4.9.0 COMPONENTS opencv_core opencv_highgui)
+find_package(OpenCV 4.13.0 EXACT REQUIRED PATHS /opt/opencv-4.13.0 COMPONENTS opencv_core opencv_highgui)
 
 
 set(VIDEO_CAPTURE_COMPONENT_SOURCES VideoCaptureComponent.h VideoCaptureComponent.cpp)
@@ -47,4 +47,3 @@ configure_mpf_component(VideoCaptureComponent TARGETS mpfVideoCapture)
 
 add_executable(sample_video_capture_component sample_video_capture_component.cpp)
 target_link_libraries(sample_video_capture_component mpfVideoCapture)
-
